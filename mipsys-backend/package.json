@@ -17,7 +17,12 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed": "ts-node src/db/seed.ts",
+    "db:push": "npx drizzle-kit push && npm run seed",
+    "db:reset": "ts-node src/db/reset.ts",
+    "db:clean": "C:\\xampp\\mysql\\bin\\mysql -u root -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS part_requests, service_requests, shipments, part_mappings, locations, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\""
+    "db:fresh": "npm run db:clean && npm run db:push && npm run seed"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -40,7 +45,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.19.17",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^6.0.2",
     "drizzle-kit": "^0.31.10",

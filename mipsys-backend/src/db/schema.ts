@@ -1,17 +1,28 @@
-import { mysqlTable, int, varchar, serial, date, bigint } from 'drizzle-orm/mysql-core';
-
+// 1. TABEL LOKASI (Gunakan int().autoincrement())
 export const locations = mysqlTable('locations', {
-  // Gunakan int().autoincrement() untuk kompatibilitas penuh dengan MariaDB
   id: int('id').autoincrement().primaryKey(), 
   name: varchar('name', { length: 255 }).notNull(),
-  warehouse_id: int('warehouse_id'), // Berisi data seperti 8700 [cite: 20]
-  cost_center: varchar('cost_center', { length: 50 }), // Berisi data seperti E5SGTB [cite: 20]
+  warehouse_id: int('warehouse_id'),
+  cost_center: varchar('cost_center', { length: 50 }),
 });
 
-export const shipments = mysqlTable('shipments', {
-  id: varchar('id', { length: 36 }).primaryKey(), // UUID manual atau otomatis
-  location_id: int('location_id').references(() => locations.id),
-  status: varchar('status', { length: 50 }), // AWB OK [cite: 131, 156]
-  issue_date: date('issue_date'), // 20/10/2025 [cite: 131]
-  picklist_no: varchar('picklist_no', { length: 100 }).unique(), // T43791 [cite: 133]
+// 2. TABEL PART REQUEST
+export const partRequests = mysqlTable('part_requests', {
+  id: int('id').autoincrement().primaryKey(), // Ganti dari serial ke int
+  sr_id: varchar('sr_id', { length: 36 }).references(() => serviceRequests.id, { onDelete: 'cascade' }),
+  part_no: varchar('part_no', { length: 100 }),
+  quantity: int('quantity').default(1),
+  request_status: varchar('request_status', { length: 20 }).default('WAITING'),
+  created_at: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  partIdx: index('part_no_idx').on(table.part_no),
+}));
+
+// 3. TABEL PART MAPPINGS
+export const partMappings = mysqlTable('part_mappings', {
+  id: int('id').autoincrement().primaryKey(), // Ganti dari serial ke int
+  keyword: varchar('keyword', { length: 100 }).notNull(),
+  machine_type: varchar('machine_type', { length: 100 }),
+  part_no: varchar('part_no', { length: 100 }).notNull(),
+  part_name: varchar('part_name', { length: 255 }),
 });
