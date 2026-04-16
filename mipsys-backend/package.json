@@ -21,7 +21,7 @@
     "seed": "ts-node src/db/seed.ts",
     "db:push": "npx drizzle-kit push && npm run seed",
     "db:reset": "ts-node src/db/reset.ts",
-    "db:clean": "C:\\xampp\\mysql\\bin\\mysql -u root -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS part_requests, service_requests, shipments, part_mappings, locations, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\"",
+    "db:clean": "C:\\xampp\\mysql\\bin\\mysql -u root db_mipsys -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS part_requests, service_requests, shipments, part_mappings, locations, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\"",
     "db:fresh": "npm run db:clean && npm run db:push && npm run seed"
   },
   "dependencies": {
@@ -30,6 +30,8 @@
     "@nestjs/platform-express": "^11.0.1",
     "axios": "^1.15.0",
     "cheerio": "^1.2.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "dotenv": "^17.4.1",
     "drizzle-orm": "^0.45.2",
     "mysql2": "^3.22.0",

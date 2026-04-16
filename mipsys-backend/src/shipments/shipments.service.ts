@@ -1,17 +1,20 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
-import { ShipmentsRepository } from './shipments.repository';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import * as crypto from 'crypto'; // Generator UUID untuk Drizzle ORM
+import * as crypto from 'crypto';
+import { db } from '../db/db'; // Import koneksi langsung
+import { shipments } from '../db/schema'; // Import tabel
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class ShipmentsService {
-  private readonly logger = new Logger(ShipmentsService.name);
+  private readonly logger = new Logger('ShipmentSiphon');
 
-  constructor(private readonly repo: ShipmentsRepository) {}
+  constructor() {} // Tidak butuh Repo lagi
 
   async findAll() {
-    return await this.repo.findAll();
+    // Ambil data langsung lewat Drizzle
+    return await db.select().from(shipments);
   }
 
   async syncFromLegacy() {
@@ -21,23 +24,15 @@ export class ShipmentsService {
     const dataUrl = `${baseUrl}/EASPSHPSTART.asp`; 
 
     try {
-      this.logger.log('--- [START] Operasi Siphoning Data Dimulai ---');
+      this.logger.log('--- [START] Siphoning Logistik Dimulai ---');
 
-      // =========================================================
-      // PENGINGAT KRUSIAL:
-      // Pastikan tabel `locations` di database kamu TIDAK KOSONG.
-      // Harus ada data dengan id = 1 agar Foreign Key tidak gagal.
-      // =========================================================
-
-      // ---------------------------------------------------------
-      // ZONA 1: NETWORK & AUTHENTICATION (JALUR MANUSIA)
-      // ---------------------------------------------------------
+      // 1. Persiapan Data Login
       const formData = new URLSearchParams();
       formData.append('varUSERID', process.env.LEGACY_USER ?? '');
       formData.append('varPASSWORD', process.env.LEGACY_PASS ?? '');
       formData.append('submit1', 'SignOn');
 
-      // 1. Ketuk Pintu Depan (Login)
+      // 2. Proses Authentication (Login)
       const loginResponse = await axios.post(loginUrl, formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         maxRedirects: 0, 
@@ -45,107 +40,69 @@ export class ShipmentsService {
       });
 
       const cookies = loginResponse.headers['set-cookie'];
-      const redirectLocation = loginResponse.headers['location'];
-      if (!cookies) throw new Error('Akses Ditolak: Session Cookie tidak ditemukan.');
+      if (!cookies) throw new Error('Session Cookie tidak ditemukan.');
 
-      // 2. Ikuti Arah Redirect secara Manual (Sambil Bawa Cookie)
-      if (redirectLocation) {
-        const redirectUrl = redirectLocation.startsWith('http') 
-            ? redirectLocation 
-            : `${baseUrl}/${redirectLocation.replace(/^\//, '')}`;
-        await axios.get(redirectUrl, { headers: { 'Cookie': cookies.join('; ') } });
-      }
-
-      // 3. Mampir ke Lobi (Wajib untuk mengunci Session 8700 Semarang)
+      // 3. Mengunci Session ke Lokasi Semarang (Lobby)
       await axios.get(lobbyUrl, { headers: { 'Cookie': cookies.join('; ') } });
 
-      // 4. Buka Pintu Gudang Penerimaan Barang (Target Asli)
-      this.logger.log(`Menuju ruang penerimaan barang: ${dataUrl}`);
+      // 4. Ambil Data HTML Penerimaan Barang
       const { data: html } = await axios.get(dataUrl, {
         headers: { 'Cookie': cookies.join('; ') }
       });
 
-      // ---------------------------------------------------------
-      // ZONA 2: PARSING & FILTERING 
-      // ---------------------------------------------------------
       const $ = cheerio.load(html);
-      let newEntriesCount = 0;
-      let skippedCount = 0;
+      let added = 0;
+      let skipped = 0;
 
       const rows = $('tr').toArray();
-      this.logger.log(`Memindai ${rows.length} baris HTML...`);
 
       for (const el of rows) {
         const cols = $(el).find('td');
 
-        // KACAMATA PINTAR: Baris data asli memiliki minimal 11 kolom
+        // Pastikan baris memiliki data (Mipsys biasanya > 11 kolom untuk logistik)
         if (cols.length >= 11) {
-          const statusVal = $(cols[0]).text().trim();    // Kolom 0: TC (ex: "TF")
-          const rawDate = $(cols[3]).text().trim();      // Kolom 3: ISSUEDATE (ex: "20/10/2025")
-          const picklistNo = $(cols[4]).text().trim();   // Kolom 4: PICKLIST (ex: "T43791")
+          const statusVal = $(cols[0]).text().trim();
+          const rawDate = $(cols[3]).text().trim();
+          const picklistNo = $(cols[4]).text().trim();
 
+          // Validasi: Pastikan ini baris data asli, bukan header
           if (picklistNo && picklistNo !== 'PICKLIST' && rawDate.includes('/')) {
             
-            // ---------------------------------------------------------
-            // ZONA 3: DATABASE INTEGRITY CHECK & INSERTION
-            // ---------------------------------------------------------
-            const existing = await this.repo.findByPicklist(picklistNo);
+            // QUERY LANGSUNG: Cek apakah picklist sudah ada
+            const [existing] = await db
+              .select()
+              .from(shipments)
+              .where(eq(shipments.picklist_no, picklistNo))
+              .limit(1);
             
-            if (existing.length === 0) {
-              // FORMAT TANGGAL MYSQL: Ubah 20/10/2025 menjadi 2025-10-20
+            if (!existing) {
               const [d, m, y] = rawDate.split('/');
               const mysqlDateStr = `${y}-${m}-${d}`; 
 
-              // GENERATE UUID: Syarat mutlak untuk Drizzle ORM varchar(36)
-              const newUuid = crypto.randomUUID();
-
-              await this.repo.create({
-                id: newUuid,           // Sandi VIP untuk Drizzle
-                location_id: 1,        // Merujuk ke id: 1 di tabel locations
+              // INSERT LANGSUNG: Simpan ke MySQL
+              await db.insert(shipments).values({
+                id: crypto.randomUUID(),
+                location_id: 1, // EASC Semarang
                 status: statusVal,
                 issue_date: mysqlDateStr as any, 
                 picklist_no: picklistNo,
               });
               
-              newEntriesCount++;
-              this.logger.log(`[DATA BARU] Berhasil masuk MySQL! ID: ${newUuid.substring(0,8)}... | Picklist: ${picklistNo}`);
+              added++;
+              this.logger.log(`[SHIPMENT] New Picklist: ${picklistNo}`);
             } else {
-              skippedCount++; // Duplikat
+              skipped++;
             }
-          } else {
-            skippedCount++; // Baris sampah
           }
-        } else {
-          skippedCount++; // Bukan baris data
         }
       }
 
-      this.logger.log(`--- [FINISH] Sukses! Ditambah: ${newEntriesCount} | Dilewati: ${skippedCount} ---`);
-      return { 
-        success: true, 
-        message: 'Sinkronisasi selesai',
-        inserted: newEntriesCount, 
-        skipped: skippedCount 
-      };
+      this.logger.log(`--- [FINISH] Ditambah: ${added} | Lewati: ${skipped} ---`);
+      return { success: true, inserted: added, skipped };
 
     } catch (error: any) {
-      // ---------------------------------------------------------
-      // ERROR HANDLING PROFESIONAL
-      // ---------------------------------------------------------
-      console.error('\n[DATABASE ERROR RAW]:', error.sqlMessage || error.message, '\n');
-
-      let errorMessage = 'Terjadi kesalahan sistem.';
-      let statusCode = '500';
-
-      if (axios.isAxiosError(error)) {
-        statusCode = error.response?.status?.toString() ?? 'Network Error';
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      this.logger.error(`[GAGAL] Detail: ${statusCode} - ${errorMessage}`);
-      throw new InternalServerErrorException(`Siphoning gagal: ${errorMessage}`);
+      this.logger.error(`Siphoning Gagal: ${error.message}`);
+      throw new InternalServerErrorException(`Gagal tarik data logistik: ${error.message}`);
     }
   }
 }

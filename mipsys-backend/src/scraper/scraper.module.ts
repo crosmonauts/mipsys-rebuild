@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'; // <--- INI KTM YANG HILANG!
+import { Module } from '@nestjs/common';
 import { ScraperService } from './scraper.service';
 
 @Module({
