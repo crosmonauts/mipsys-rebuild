@@ -1,13 +1,13 @@
-import { IsString, IsNumber, IsNotEmpty, IsOptional } from "class-validator";
+import { IsString, IsNumber, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class PartItemDto {
   @IsOptional()
   @IsString()
-  part_no?: string;
+  partNo?: string;
 
   @IsString()
   @IsNotEmpty()
-  part_name!: string;
+  partName!: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -15,5 +15,5 @@ export class PartItemDto {
 
   @IsNumber()
   @IsNotEmpty()
-  unit_price!: number;
+  unitPrice!: number;
 }

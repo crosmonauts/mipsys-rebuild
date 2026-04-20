@@ -1,4 +1,4 @@
-import { Type } from "class-transformer";
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -6,11 +6,12 @@ import {
   IsInt,
   ValidateNested,
   IsArray,
-} from "class-validator";
-import { PartItemDto } from "./part-item.dto"; // <--- Import dari file baru
+  IsEnum,
+} from 'class-validator';
+import { PartItemDto } from './part-item.dto';
 
 export class UpdateTechRequestDto {
-  @IsInt({ message: "ID Teknisi harus berupa angka (int)" })
+  @IsInt({ message: 'ID Teknisi harus berupa angka (int)' })
   @IsNotEmpty()
   technicianFixId!: number;
 
@@ -18,13 +19,16 @@ export class UpdateTechRequestDto {
   @IsNotEmpty()
   problemDescription!: string;
 
-  @IsOptional()
-  @IsString()
-  statusService?: string;
+  @IsEnum(['PENDING APPROVAL', 'PENDING PART', 'SERVICE', 'DONE', 'CANCEL'], {
+    message:
+      'Status harus salah satu dari: PENDING APPROVAL, PENDING PART, SERVICE, DONE, atau CANCEL',
+  })
+  @IsNotEmpty()
+  statusService!: string;
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => PartItemDto) // <--- Sekarang mengambil dari import di atas
+  @Type(() => PartItemDto)
   parts?: PartItemDto[];
 }

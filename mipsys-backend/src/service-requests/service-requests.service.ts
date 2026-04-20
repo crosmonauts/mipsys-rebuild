@@ -116,101 +116,114 @@ export class ServiceRequestService {
   }
 
   /**
-   * 3. CREATE ENTRY (Resepsionis Mendaftarkan Servis Baru)
+   * 3. CREATE ENTRY (MAKSIMAL: Transaction + Audit Admin + Unique Check)
    */
-  async createEntry(dto: CreateServiceRequestDto) {
-    // A. Cari atau Buat Customer
-    let customerId: number;
-    const existingCustomer = await this.db
-      .select()
-      .from(customers)
-      .where(eq(customers.name, dto.customerName || ''))
-      .limit(1);
+  async createEntry(dto: CreateServiceRequestDto, adminId: number) {
+    // Memulai Transaksi Database
+    return await this.db.transaction(async (tx) => {
+      // --- A. HANDLING CUSTOMER (Cek Berdasarkan Nama) ---
+      let customerId: number;
+      const [existingCust] = await tx
+        .select()
+        .from(customers)
+        .where(eq(customers.name, dto.customerName || ''))
+        .limit(1);
 
-    if (existingCustomer.length > 0) {
-      customerId = existingCustomer[0].id;
-    } else {
-      const [{ insertId }] = await this.db.insert(customers).values({
-        name: dto.customerName || 'Tanpa Nama',
-        address: dto.address,
-        customerType: dto.customerType,
+      if (existingCust) {
+        customerId = existingCust.id;
+      } else {
+        const [{ insertId }] = await tx.insert(customers).values({
+          name: dto.customerName || 'Tanpa Nama',
+          address: dto.address,
+          customerType: dto.customerType || 'PERSONAL',
+        });
+        customerId = insertId;
+
+        // Simpan nomor HP untuk customer baru
+        await tx.insert(customerPhones).values({
+          customerId,
+          phone: dto.phone || '-',
+        });
+      }
+
+      // --- B. HANDLING PRODUCT (Cek Berdasarkan Serial Number) ---
+      let productId: number;
+      const [existingProd] = await tx
+        .select()
+        .from(products)
+        .where(eq(products.serialNumber, dto.serialNumber || ''))
+        .limit(1);
+
+      if (existingProd) {
+        productId = existingProd.id; // Gunakan produk yang sudah terdaftar
+      } else {
+        const [{ insertId }] = await tx.insert(products).values({
+          serialNumber: dto.serialNumber || 'SN-UNKNOWN',
+          modelName: dto.modelName || 'UNKNOWN MODEL',
+        });
+        productId = insertId;
+      }
+
+      // --- C. GENERATE TICKET NUMBER ---
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const newTicketNumber = `SR-${dateStr}-${randomNum}`;
+
+      // --- D. INSERT SERVICE REQUEST (DENGAN ADMIN ID) ---
+      await tx.insert(serviceRequests).values({
+        ticketNumber: newTicketNumber,
+        serviceType: dto.serviceType || 'NON_WARRANTY',
+        customerId: customerId,
+        productId: productId,
+        adminId: adminId,
+        problemDescription: dto.problemDescription,
+        statusService: 'WAITING CHECK',
+        statusSystem: 'OPEN',
+        incomingDate: new Date(),
       });
-      customerId = insertId;
 
-      // Insert nomor HP (Wajib memiliki setidaknya 1 fallback)
-      await this.db
-        .insert(customerPhones)
-        .values({ customerId, phone: dto.phone || '-' });
-    }
-
-    // B. Cari atau Buat Product
-    let productId: number;
-    const existingProduct = await this.db
-      .select()
-      .from(products)
-      .where(eq(products.serialNumber, dto.serialNumber || ''))
-      .limit(1);
-
-    if (existingProduct.length > 0) {
-      productId = existingProduct[0].id;
-    } else {
-      const [{ insertId }] = await this.db.insert(products).values({
-        serialNumber: dto.serialNumber || 'SN-UNKNOWN',
-        modelName: dto.modelName || 'UNKNOWN MODEL',
-      });
-      productId = insertId;
-    }
-
-    // C. Buat Nomor Tiket Otomatis (Format: SR-YYYYMMDD-XXXX)
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const newTicketNumber = `SR-${dateStr}-${randomNum}`;
-
-    // D. Insert Service Request Utama
-    await this.db.insert(serviceRequests).values({
-      ticketNumber: newTicketNumber,
-      serviceType: dto.serviceType || 'NON_WARRANTY',
-      customerId: customerId,
-      productId: productId,
-      problemDescription: dto.problemDescription,
-      statusService: 'WAITING CHECK',
-      statusSystem: 'OPEN',
-      incomingDate: new Date(),
+      return {
+        success: true,
+        ticketNumber: newTicketNumber,
+        message: 'Data lengkap berhasil tersimpan di sistem.',
+      };
     });
-
-    return {
-      success: true,
-      ticketNumber: newTicketNumber,
-      message: 'Tiket berhasil dibuat',
-    };
   }
 
   /**
    * 4. UPDATE OLEH TEKNISI (Diagnosis & Perbaikan)
    */
   async updateTechDiagnosis(ticketNumber: string, dto: UpdateTechRequestDto) {
-    // Logika hitung total biaya part dari array DTO
+    // A. Inisialisasi Kalkulator
     let totalPartFee = 0;
+
+    // B. Logika Perulangan Kalkulasi (Looping)
     if (dto.parts && dto.parts.length > 0) {
-      totalPartFee = dto.parts.reduce((total, item) => {
-        return total + item.quantity * item.unit_price;
+      // Kita hitung menggunakan metode .reduce() agar lebih bersih (Clean Code)
+      totalPartFee = dto.parts.reduce((acc, part) => {
+        const subtotal = (part.quantity || 0) * (part.unitPrice || 0);
+        return acc + subtotal;
       }, 0);
     }
 
+    // C. Update Database
     await this.db
       .update(serviceRequests)
       .set({
         problemDescription: dto.problemDescription,
         statusService: dto.statusService,
         technicianFixId: dto.technicianFixId,
-        partFee: totalPartFee.toString(), // Masukkan kalkulasi part ke database
-        readyDate: dto.statusService === 'DONE' ? new Date() : null, // Set Ready Date otomatis jika selesai
+        // Drizzle menyimpan decimal sebagai string, jadi kita konversi .toString()
+        partFee: totalPartFee.toString(),
+        // Jika status DONE, set tanggal siap ambil sekarang
+        readyDate: dto.statusService === 'DONE' ? new Date() : null,
       })
       .where(eq(serviceRequests.ticketNumber, ticketNumber));
 
     return {
       success: true,
-      message: `Diagnosis teknisi untuk tiket ${ticketNumber} berhasil disimpan.`,
+      totalCalculated: totalPartFee,
+      message: `Diagnosis & rincian biaya Rp ${totalPartFee.toLocaleString()} berhasil disimpan.`,
     };
   }
 
@@ -222,9 +235,9 @@ export class ServiceRequestService {
       .update(serviceRequests)
       .set({
         serviceFee: dto.serviceFee.toString(),
-        partFee: dto.partFee.toString(), // Kasir bisa menimpa/memastikan total part fee
+        partFee: dto.partFee.toString(),
         statusSystem: 'CLOSED',
-        pickUpDate: new Date(), // Barang diambil hari ini
+        pickUpDate: new Date(),
       })
       .where(eq(serviceRequests.ticketNumber, ticketNumber));
 

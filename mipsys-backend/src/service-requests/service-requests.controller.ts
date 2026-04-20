@@ -42,7 +42,7 @@ export class ServiceRequestsController {
   // 2. Form Entry Baru / Resepsionis (POST)
   @Post('entry')
   async create(@Body() createDto: CreateServiceRequestDto) {
-    return await this.srService.createEntry(createDto);
+    return await this.srService.createEntry(createDto, createDto.adminId);
   }
 
   // 3. Update Teknisi & Input Sparepart (PATCH)
