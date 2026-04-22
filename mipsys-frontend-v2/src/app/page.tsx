@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/src/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -8,7 +8,7 @@ export default function HomePage() {
         <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
           Mipsys Rebuild
         </h1>
-        <p className="text-xl text-muted-foreground max-w-[600px] mx-auto">
+        <p className="text-xl text-muted-foreground max-w-150 mx-auto">
           Sistem Manajemen Enterprise untuk Pelacakan Service Request dan Operasional Teknisi.
         </p>
       </div>

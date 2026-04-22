@@ -179,6 +179,8 @@ export class ServiceRequestService {
         problemDescription: dto.problemDescription,
         statusService: 'WAITING CHECK',
         statusSystem: 'OPEN',
+        serviceFee: dto.serviceFee ? dto.serviceFee.toString() : '0',
+        partFee: '0',
         incomingDate: new Date(),
       });
 

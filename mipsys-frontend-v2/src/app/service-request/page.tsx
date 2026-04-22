@@ -1,6 +1,6 @@
-import { DashboardTable } from "@/src/features/service-request/components/DashboardTable";
+import { DashboardTable } from "@/src/features/service-request/service-ui/DashboardTable";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/src/components/ui/button";
 
 export default function ServiceRequestDashboardPage() {
   return (

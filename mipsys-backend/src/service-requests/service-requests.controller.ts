@@ -17,7 +17,7 @@ import { UpdateTechRequestDto } from './dto/update-tech-request.dto';
 import { InputBiayaDto } from './dto/input-biaya.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@Controller('service-requests')
+@Controller('service-request')
 export class ServiceRequestsController {
   constructor(private readonly srService: ServiceRequestService) {}
 

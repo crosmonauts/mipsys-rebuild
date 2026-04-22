@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/src/components/ui/button';
+import { Input } from '@/src/components/ui/input';
+import { Label } from '@/src/components/ui/label';
 import { srApi } from '../services/sr-api';
 
 export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
@@ -64,17 +64,6 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
                 onChange={(e) => setLaborFee(Number(e.target.value))}
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-slate-600 font-bold">Biaya Onsite</Label>
-              <Input
-                type="number"
-                min="0"
-                className="text-lg font-medium h-12"
-                placeholder="Rp 0..."
-                value={onsiteFee === 0 ? '' : onsiteFee}
-                onChange={(e) => setOnsiteFee(Number(e.target.value))}
-              />
-            </div>
           </div>
 
           <div className="p-5 bg-slate-50 rounded-xl space-y-3 border border-slate-200 shadow-inner">
@@ -92,16 +81,6 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
                 <span className="text-slate-500 font-medium">Biaya Jasa:</span>
                 <span className="font-bold text-slate-700">
                   {formatIDR(laborFee)}
-                </span>
-              </div>
-            )}
-            {onsiteFee > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 font-medium">
-                  Biaya Kunjungan:
-                </span>
-                <span className="font-bold text-slate-700">
-                  {formatIDR(onsiteFee)}
                 </span>
               </div>
             )}

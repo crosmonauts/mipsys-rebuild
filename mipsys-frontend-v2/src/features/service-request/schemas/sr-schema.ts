@@ -24,15 +24,7 @@ export const serviceRequestSchema = z.object({
     .min(1, 'Keluhan wajib diisi untuk panduan teknisi'),
 
   // --- INFORMASI BIAYA AWAL (PENTING!) ---
-  onsite_cost: z.coerce
-    .number({ message: 'Biaya onsite harus berupa angka' })
-    .min(0, 'Biaya tidak boleh negatif')
-    .default(0),
-
-  other_cost: z.coerce
-    .number({ message: 'Biaya lain harus berupa angka' })
-    .min(0)
-    .default(0),
+  serviceFee: z.coerce.number().default(0),
 });
 
 export type SRFormValues = z.infer<typeof serviceRequestSchema>;

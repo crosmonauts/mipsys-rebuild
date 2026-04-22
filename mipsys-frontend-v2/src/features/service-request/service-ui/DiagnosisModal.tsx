@@ -7,18 +7,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from '@/src/components/ui/dialog';
+import { Button } from '@/src/components/ui/button';
+import { Input } from '@/src/components/ui/input';
+import { Label } from '@/src/components/ui/label';
+import { Textarea } from '@/src/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/src/components/ui/select';
 import {
   Plus,
   Trash2,
@@ -93,7 +93,7 @@ export function DiagnosisModal({
     setIsLoading(true);
     try {
       // Kita kirim data mentah, biar sr-api.ts yang melakukan mapping final
-      await srApi.updateTechnician(sr.id, {
+      await srApi.updateTechnician(sr.ticketNumber, {
         techId: Number(techId),
         remarks,
         status,
@@ -121,7 +121,7 @@ export function DiagnosisModal({
       >
         {/* HEADER: Kesan Dark & Professional */}
         <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
-          <div className="absolute right-[-20px] top-[-20px] opacity-10">
+          <div className="absolute right-5 top-5 opacity-10">
             <Wrench size={120} />
           </div>
           <div className="flex items-center gap-4 relative z-10">
@@ -186,7 +186,7 @@ export function DiagnosisModal({
               Analisa Kerusakan & Tindakan
             </Label>
             <Textarea
-              className="min-h-[120px] border-slate-200 rounded-xl focus:ring-slate-900 text-sm p-4 bg-slate-50/50"
+              className="min-h-30 border-slate-200 rounded-xl focus:ring-slate-900 text-sm p-4 bg-slate-50/50"
               placeholder="Jelaskan secara teknis apa yang rusak dan apa yang sudah diganti..."
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}

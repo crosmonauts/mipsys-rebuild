@@ -13,6 +13,7 @@ export interface ServiceRequest {
   serviceType: 'WARRANTY' | 'NON_WARRANTY';
   statusService:
     | 'WAITING CHECK'
+    | 'PENDING CHECK'
     | 'PENDING APPROVAL'
     | 'PENDING PART'
     | 'SERVICE'
@@ -31,9 +32,8 @@ export interface ServiceRequest {
   technicianFixId?: number | null;
 
   // FINANSIAL (Pisahkan sesuai kebutuhan bisnis)
-  partFee: string; // Biaya sparepart
-  serviceFee: string; // Biaya jasa teknisi
-  onsiteFee: string; // Biaya kunjungan/transport
+  partFee: string;
+  serviceFee: string;
 }
 
 export interface UpdateDiagnosisPayload {

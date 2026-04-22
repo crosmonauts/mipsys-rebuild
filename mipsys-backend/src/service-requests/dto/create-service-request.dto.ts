@@ -57,13 +57,7 @@ export class CreateServiceRequestDto {
   @IsOptional()
   problemDescription?: string; // Sesuai text("problem_description")
 
-  @IsNumber()
-  @IsOptional() // Beri Optional karena di Zod ada default(0)
-  @Min(0)
-  onsite_cost?: number;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(0)
-  other_cost?: number;
+  @IsNumber({}, { message: 'Biaya servis harus berupa angka' })
+  @Min(0, { message: 'Biaya servis tidak boleh negatif' })
+  serviceFee?: number; // Sesuai decimal("service_fee", 10, 2)
 }
