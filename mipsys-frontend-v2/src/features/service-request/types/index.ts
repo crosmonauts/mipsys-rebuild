@@ -21,9 +21,11 @@ export interface ServiceRequest {
     | 'CANCEL';
 
   statusSystem: 'OPEN' | 'CLOSED';
+  parts: UpdateDiagnosisPayload['parts'] | null;
 
   // DESKRIPSI & TANGGAL
   problemDescription: string;
+  remarksHistory: string;
   incomingDate: string;
   createdAt: string;
 
@@ -37,9 +39,10 @@ export interface ServiceRequest {
 }
 
 export interface UpdateDiagnosisPayload {
+  ticketNumber: string;
   technicianFixId: number;
-  problemDescription: string;
-  statusService: ServiceRequest['statusService']; // Ambil tipe dari interface utama
+  remarksHistory: string;
+  statusService: ServiceRequest['statusService'];
   parts: {
     partName: string;
     quantity: number;

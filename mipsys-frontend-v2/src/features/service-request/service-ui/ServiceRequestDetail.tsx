@@ -21,6 +21,8 @@ import {
   Loader2,
   Wrench,
   Receipt,
+  RefreshCcw,
+  Settings2, // Icon tambahan untuk update status
 } from 'lucide-react';
 import Link from 'next/link';
 import { srApi } from '../services/sr-api';
@@ -28,7 +30,7 @@ import { DiagnosisModal } from './DiagnosisModal';
 import { ServiceRequest } from '../types';
 
 interface ServiceRequestDetailProps {
-  id: string; // Ticket Number dari URL
+  id: string;
 }
 
 export default function ServiceRequestDetail({
@@ -38,7 +40,6 @@ export default function ServiceRequestDetail({
   const [loading, setLoading] = useState(true);
   const [isDiagnosisOpen, setIsDiagnosisOpen] = useState(false);
 
-  // --- 1. LOGIKA TARIK DATA ---
   const fetchTicketDetail = useCallback(async () => {
     try {
       setLoading(true);
@@ -56,24 +57,17 @@ export default function ServiceRequestDetail({
     if (id) fetchTicketDetail();
   }, [id, fetchTicketDetail]);
 
-  // --- 2. HELPER UI ---
-  const isChecked = !['WAITING CHECK', 'PENDING CHECK', 'OPEN'].includes(
-    data?.statusService?.toUpperCase() || '',
-  );
+  const isChecked = !!data?.remarksHistory;
 
-  const canDiagnose = [
-    'WAITING CHECK',
-    'PENDING CHECK',
-    'OPEN',
-    'SERVICE',
-  ].includes(data?.statusService?.toUpperCase() || '');
+  // Tombol tetap muncul selama status sistem belum CLOSED
+  const showDiagnosisButton = data?.statusSystem !== 'CLOSED';
 
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'WAITING CHECK':
         return 'bg-blue-600 hover:bg-blue-600';
-      case 'PENDING CHECK':
-        return 'bg-orange-500 hover:bg-orange-500';
+      case 'PENDING PART':
+        return 'bg-amber-500 hover:bg-amber-500';
       case 'SERVICE':
         return 'bg-indigo-600 hover:bg-indigo-600';
       case 'DONE':
@@ -87,55 +81,40 @@ export default function ServiceRequestDetail({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-100 space-y-4">
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
         <p className="text-sm font-bold text-slate-400 animate-pulse uppercase tracking-widest">
-          Menghubungkan ke Server MIP...
+          Sinkronisasi Data Mipsys...
         </p>
       </div>
     );
   }
 
-  if (!data) {
-    return (
-      <div className="p-10 text-center">
-        <AlertCircle className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-        <p className="text-slate-500 italic">
-          Tiket tidak ditemukan di database.
-        </p>
-        <Link
-          href="/service-request"
-          className="text-blue-600 font-bold underline mt-4 block"
-        >
-          Kembali ke Dashboard
-        </Link>
-      </div>
-    );
-  }
+  if (!data) return null; // Logic handling data null sudah ada di percakapan sebelumnya
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 font-sans animate-in fade-in duration-500">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl border shadow-sm gap-4 text-left">
-        <div className="space-y-1">
+      {/* --- HEADER SECTION --- */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm gap-4">
+        <div className="space-y-1 text-left">
           <Link
             href="/service-request"
-            className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-blue-600 transition-colors"
+            className="text-[10px] font-black text-slate-400 flex items-center gap-1 hover:text-blue-600 transition-all uppercase tracking-widest"
           >
-            <ArrowLeft size={14} /> KEMBALI KE DASHBOARD
+            <ArrowLeft size={12} strokeWidth={3} /> Kembali ke List
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black tracking-tighter text-slate-900">
+            <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
               {data.ticketNumber}
             </h1>
             <Badge
-              className={`${getStatusColor(data.statusService)} text-white border-none px-3 py-1 text-[10px] font-bold uppercase`}
+              className={`${getStatusColor(data.statusService)} text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/10`}
             >
               {data.statusService}
             </Badge>
           </div>
-          <p className="text-sm text-slate-500">
-            Diterima pada:{' '}
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">
+            Penerimaan:{' '}
             {new Date(data.incomingDate).toLocaleDateString('id-ID', {
               day: 'numeric',
               month: 'long',
@@ -145,205 +124,216 @@ export default function ServiceRequestDetail({
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
-          {canDiagnose && (
+          {showDiagnosisButton && (
             <Button
               onClick={() => setIsDiagnosisOpen(true)}
-              className="bg-[#0f172a] hover:bg-slate-800 text-white gap-2 flex-1 md:flex-none h-10 shadow-lg shadow-slate-200"
+              className={`
+                flex-1 md:flex-none h-12 px-6 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-xl
+                ${
+                  isChecked
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+                    : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/20'
+                }
+              `}
             >
-              <Stethoscope size={18} /> Isi Diagnosa
+              {isChecked ? (
+                <>
+                  <RefreshCcw size={18} className="mr-2" /> Update Progres
+                </>
+              ) : (
+                <>
+                  <Stethoscope size={18} className="mr-2" /> Isi Diagnosa
+                </>
+              )}
             </Button>
           )}
-          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
-            <Printer size={18} />
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0 h-12 w-12 rounded-xl border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            <Printer size={20} />
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* KOLOM KIRI: PELANGGAN & GARANSI */}
+        {/* --- KOLOM INFO (KIRI) --- */}
         <div className="space-y-6">
-          <Card className="border shadow-sm bg-white overflow-hidden text-left">
-            <CardHeader className="bg-slate-50/50 border-b py-3">
-              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Informasi Pelanggan
+          <Card className="border-slate-200 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-left">
+                Data Pelanggan
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6 space-y-5 text-left">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Nama Customer
-                </label>
-                <p className="font-bold text-slate-800 flex items-center gap-2 capitalize">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Nama
+                </p>
+                <p className="font-black text-slate-800 flex items-center gap-2 text-sm uppercase">
                   <User size={14} className="text-blue-500" />{' '}
                   {data.customerName}
                 </p>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Kontak
-                </label>
-                <p className="font-medium text-slate-700 flex items-center gap-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Telepon
+                </p>
+                <p className="font-bold text-slate-700 flex items-center gap-2 text-sm font-mono">
                   <Smartphone size={14} className="text-blue-500" />{' '}
                   {data.customerPhone}
                 </p>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   Alamat
-                </label>
-                <p className="text-sm text-slate-600 flex items-start gap-2 leading-relaxed">
-                  <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />{' '}
+                </p>
+                <p className="text-xs font-bold text-slate-500 leading-relaxed flex items-start gap-2">
+                  <MapPin size={14} className="text-blue-500 mt-0.5 shrink-0" />{' '}
                   {data.customerAddress}
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <div className="bg-blue-900 text-white p-6 rounded-xl shadow-xl shadow-blue-100 relative overflow-hidden text-left">
+          <div className="bg-[#020617] text-white p-6 rounded-2xl shadow-2xl relative overflow-hidden text-left border border-white/5">
             <div className="relative z-10">
-              <p className="text-[10px] font-bold opacity-60 uppercase mb-1">
-                Tipe Servis
+              <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-2">
+                Tipe Unit
               </p>
-              <h2 className="text-2xl font-black tracking-tighter uppercase">
+              <h2 className="text-2xl font-black tracking-tighter uppercase leading-none">
                 {data.serviceType}
               </h2>
-              <p className="text-[10px] opacity-80 mt-4 italic font-medium">
+              <div className="mt-4 inline-flex items-center px-2 py-1 bg-white/10 rounded text-[9px] font-bold uppercase tracking-widest border border-white/10">
                 Mode: Carry-In Service
-              </p>
+              </div>
             </div>
-            <PrinterIcon className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10 rotate-12" />
+            <PrinterIcon className="absolute -right-6 -bottom-6 w-28 h-28 opacity-10 rotate-12" />
           </div>
         </div>
 
-        {/* KOLOM KANAN: UNIT & HASIL PEMERIKSAAN */}
+        {/* --- KOLOM KONTEN (KANAN) --- */}
         <div className="md:col-span-2 space-y-6">
-          <Card className="border shadow-sm bg-white overflow-hidden text-left">
+          {/* Unit & Deskripsi Masalah */}
+          <Card className="border-slate-200 shadow-sm bg-white overflow-hidden rounded-2xl">
             <CardContent className="p-0">
               <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="p-6 space-y-6 border-r border-slate-100">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
-                    Unit Perangkat
+                <div className="p-6 space-y-5 border-r border-slate-100 text-left">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Identitas Perangkat
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase">
-                        Model Mesin
-                      </label>
+                  <div className="flex items-center gap-6">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Model
+                      </p>
                       <p className="text-2xl font-black text-slate-900 tracking-tighter uppercase">
                         {data.modelName}
                       </p>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                         Serial Number
-                      </label>
-                      <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-mono text-sm font-bold w-fit uppercase border border-blue-100">
+                      </p>
+                      <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-mono text-sm font-black border border-blue-100 uppercase tracking-wider">
                         {data.serialNumber}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="p-6 bg-red-50/30">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="p-6 bg-red-50/20 text-left relative overflow-hidden group">
+                  <div className="flex items-center gap-2 mb-3">
                     <AlertCircle size={14} className="text-red-500" />
-                    <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
-                      Keluhan Awal
+                    <label className="text-[10px] font-black text-red-400 uppercase tracking-widest">
+                      Keluhan Pelanggan
                     </label>
                   </div>
-                  <p className="text-lg font-bold text-red-700 leading-tight italic">
+                  <p className="text-lg font-black text-red-700 leading-tight italic relative z-10">
                     "{data.problemDescription}"
                   </p>
+                  <AlertCircle className="absolute -right-2 -bottom-2 w-16 h-16 text-red-500/5 rotate-12" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* SECTION HASIL DIAGNOSA DINAMIS */}
-          <Card className="border shadow-sm bg-white overflow-hidden text-left">
-            <CardHeader className="bg-slate-50/50 border-b py-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Hasil Pemeriksaan Teknisi
-              </CardTitle>
+          {/* HASIL DIAGNOSA */}
+          <Card className="border-slate-200 shadow-xl shadow-slate-200/50 bg-white overflow-hidden rounded-[2rem]">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-8 flex flex-row items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Settings2 size={16} className="text-slate-400" />
+                <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  Laporan Pemeriksaan Teknisi
+                </CardTitle>
+              </div>
               {isChecked && (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none text-[9px] font-black">
-                  SUDAH DICEK
+                <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px] font-black uppercase tracking-tighter rounded-full px-3">
+                  Verification Complete
                 </Badge>
               )}
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-8 text-left">
               {!isChecked ? (
-                <div className="py-10 flex flex-col items-center justify-center text-center space-y-4 border-2 border-dashed border-slate-100 rounded-2xl">
-                  <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
-                    <Stethoscope size={24} />
+                <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 border-2 border-dashed border-slate-100 rounded-[2.5rem] bg-slate-50/30">
+                  <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-slate-300 border border-slate-100">
+                    <Wrench size={28} />
                   </div>
-                  <div className="max-w-xs">
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Unit menunggu antrean pengecekan. Silakan klik tombol{' '}
-                      <b>Isi Diagnosa</b> untuk memperbarui laporan.
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+                      Queueing Phase
+                    </p>
+                    <p className="text-xs text-slate-400 font-medium max-w-[200px] leading-relaxed">
+                      Unit sedang menunggu antrean pengerjaan teknisi.
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Bagian Analisa Teknis */}
-                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 relative overflow-hidden">
-                    <div className="absolute right-4 top-4 text-slate-200">
-                      <Wrench size={40} />
+                <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
+                  <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 relative overflow-hidden shadow-inner">
+                    <div className="absolute right-6 top-6 text-slate-200/50">
+                      <Wrench size={60} strokeWidth={3} />
                     </div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
-                      Analisa & Tindakan Akhir
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] block mb-4">
+                      Final Technical Analysis
                     </label>
-                    <p className="text-sm text-slate-700 leading-relaxed font-semibold relative z-10">
-                      {data.problemDescription ||
-                        'Teknisi belum memberikan catatan detail.'}
+                    <p className="text-base text-slate-700 leading-relaxed font-bold relative z-10 max-w-2xl">
+                      {data.remarksHistory}
                     </p>
                   </div>
 
-                  {/* Rincian Biaya */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-2xl border border-slate-100 bg-white shadow-sm">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
-                        Biaya Part
-                      </label>
-                      <p className="text-xl font-black text-slate-900">
-                        <span className="text-xs text-blue-600 mr-1">Rp</span>
-                        {Number(data.partFee).toLocaleString('id-ID')}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-2xl border border-slate-100 bg-white shadow-sm">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
-                        Jasa Servis
-                      </label>
-                      <p className="text-xl font-black text-slate-900">
-                        <span className="text-xs text-blue-600 mr-1">Rp</span>
-                        {Number(data.serviceFee).toLocaleString('id-ID')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Estimasi Total Tagihan */}
-                  <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                        <Receipt size={24} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-6 rounded-[1.5rem] border border-slate-100 bg-white shadow-sm flex items-center gap-5 group hover:border-blue-200 transition-colors">
+                      <div className="p-3 bg-blue-50 rounded-2xl text-blue-600 transition-transform group-hover:scale-110">
+                        <Receipt size={24} strokeWidth={2.5} />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          Total Estimasi Biaya
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                          Total Billing Estimation
                         </p>
-                        <p className="text-3xl font-black text-blue-600 tracking-tighter">
-                          Rp{' '}
+                        <p className="text-3xl font-black text-[#020617] tracking-tighter">
+                          <span className="text-sm text-blue-600 mr-1 font-bold">
+                            IDR
+                          </span>
                           {(
-                            Number(data.partFee) + Number(data.serviceFee)
+                            Number(data.partFee || 0) +
+                            Number(data.serviceFee || 0)
                           ).toLocaleString('id-ID')}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                      <span className="text-[10px] font-black text-amber-700 uppercase">
-                        Menunggu Pembayaran Kasir
-                      </span>
+
+                    <div className="p-6 rounded-[1.5rem] border border-amber-100 bg-amber-50/30 flex items-center gap-5">
+                      <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                      <div>
+                        <p className="text-[9px] font-black text-amber-600/60 uppercase tracking-widest mb-1">
+                          Current Maintenance Status
+                        </p>
+                        <p className="text-xl font-black text-amber-700 uppercase tracking-widest italic">
+                          {data.statusService}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -353,7 +343,6 @@ export default function ServiceRequestDetail({
         </div>
       </div>
 
-      {/* MODAL INTEGRASI */}
       <DiagnosisModal
         sr={data}
         isOpen={isDiagnosisOpen}

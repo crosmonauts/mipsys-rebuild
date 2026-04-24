@@ -79,7 +79,8 @@ export class ServiceRequestService {
         id: serviceRequests.id,
         ticketNumber: serviceRequests.ticketNumber,
         serviceType: serviceRequests.serviceType,
-        problemDescription: serviceRequests.problemDescription, // Untuk Keluhan
+        problemDescription: serviceRequests.problemDescription,
+        remarksHistory: serviceRequests.remarksHistory,
         statusService: serviceRequests.statusService,
         statusSystem: serviceRequests.statusSystem,
 
@@ -196,36 +197,32 @@ export class ServiceRequestService {
    * 4. UPDATE OLEH TEKNISI (Diagnosis & Perbaikan)
    */
   async updateTechDiagnosis(ticketNumber: string, dto: UpdateTechRequestDto) {
-    // A. Inisialisasi Kalkulator
     let totalPartFee = 0;
 
-    // B. Logika Perulangan Kalkulasi (Looping)
     if (dto.parts && dto.parts.length > 0) {
-      // Kita hitung menggunakan metode .reduce() agar lebih bersih (Clean Code)
       totalPartFee = dto.parts.reduce((acc, part) => {
-        const subtotal = (part.quantity || 0) * (part.unitPrice || 0);
+        const subtotal =
+          (Number(part.quantity) || 0) * (Number(part.unitPrice) || 0);
         return acc + subtotal;
       }, 0);
     }
 
-    // C. Update Database
     await this.db
       .update(serviceRequests)
       .set({
-        problemDescription: dto.problemDescription,
         statusService: dto.statusService,
+        remarksHistory: dto.remarksHistory, // Sekarang sudah ada kolomnya di DB
         technicianFixId: dto.technicianFixId,
-        // Drizzle menyimpan decimal sebagai string, jadi kita konversi .toString()
         partFee: totalPartFee.toString(),
-        // Jika status DONE, set tanggal siap ambil sekarang
         readyDate: dto.statusService === 'DONE' ? new Date() : null,
+        // JANGAN masukkan problemDescription di sini agar keluhan awal pelanggan tetap terjaga
       })
       .where(eq(serviceRequests.ticketNumber, ticketNumber));
 
     return {
       success: true,
       totalCalculated: totalPartFee,
-      message: `Diagnosis & rincian biaya Rp ${totalPartFee.toLocaleString()} berhasil disimpan.`,
+      message: `Diagnosis berhasil disimpan ke riwayat.`,
     };
   }
 

@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/src/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/src/components/ui/dialog';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
@@ -23,12 +17,13 @@ import {
   Plus,
   Trash2,
   Wrench,
+  RefreshCcw,
+  Save,
   PackagePlus,
-  Calculator,
-  UserCheck,
+  ArrowRightCircle,
 } from 'lucide-react';
 import { srApi } from '../services/sr-api';
-import { ServiceRequest } from '../types';
+import { ServiceRequest, UpdateDiagnosisPayload } from '../types';
 
 interface DiagnosisModalProps {
   sr: ServiceRequest | null;
@@ -45,66 +40,73 @@ export function DiagnosisModal({
 }: DiagnosisModalProps) {
   // --- STATE MANAGEMENT ---
   const [techId, setTechId] = useState<string>('');
-  const [status, setStatus] = useState<string>('SERVICE');
+  const [status, setStatus] =
+    useState<ServiceRequest['statusService']>('SERVICE');
   const [remarks, setRemarks] = useState('');
-  const [parts, setParts] = useState<any[]>([]);
+  const [parts, setParts] = useState<UpdateDiagnosisPayload['parts']>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // MOCK DATA: Dalam produksi, ini diambil dari API /staff?role=TECHNICIAN
   const technicianList = [
     { id: 2, name: 'ADAM' },
-    { id: 3, name: 'ARRA' }, // Contoh tambahan sesuai DB Mas Irgi
+    { id: 3, name: 'ARRA' },
   ];
 
+  // --- LOGIKA AUTO-FILL (CRITICAL: Inilah yang menjaga isi tidak berubah) ---
   useEffect(() => {
-    if (isOpen) {
-      setTechId('');
-      setStatus('SERVICE');
-      setRemarks('');
-      setParts([]);
+    if (isOpen && sr) {
+      // Kita isi state modal dengan data saat ini dari ServiceRequest
+      setTechId(sr.technicianFixId?.toString() || '');
+      setStatus(sr.statusService || 'SERVICE');
+      setRemarks(sr.remarksHistory || ''); // Meload teks diagnosa lama
+      setParts(sr.parts || []); // Meload daftar part yang sudah ada
     }
-  }, [isOpen]);
+  }, [isOpen, sr]);
 
-  // --- LOGIKA SPAREPART ---
   const addPart = () => {
     setParts([...parts, { partName: '', quantity: 1, unitPrice: 0 }]);
+  };
+
+  const updatePart = (index: number, field: string, value: any) => {
+    const newParts = [...parts];
+    // @ts-ignore
+    newParts[index][field] = value;
+    setParts(newParts);
   };
 
   const removePart = (index: number) => {
     setParts(parts.filter((_, i) => i !== index));
   };
 
-  const updatePart = (index: number, field: string, value: any) => {
-    const newParts = [...parts];
-    newParts[index][field] = value;
-    setParts(newParts);
-  };
-
-  // Kalkulasi Subtotal Sparepart
   const subtotalParts = parts.reduce(
     (acc, p) => acc + Number(p.quantity) * Number(p.unitPrice),
     0,
   );
 
-  // --- SUBMIT KE BACKEND ---
   const handleSubmit = async () => {
-    if (!sr || !techId) return alert('Pilih Teknisi dan isi Diagnosa!');
+    if (!sr || !techId) return alert('Mohon pilih Teknisi terlebih dahulu!');
+
+    // Bersihkan part yang namanya kosong sebelum kirim
+    const validParts = parts.filter((p) => p.partName.trim() !== '');
 
     setIsLoading(true);
     try {
-      // Kita kirim data mentah, biar sr-api.ts yang melakukan mapping final
+      // Mengirimkan data sesuai Interface UpdateDiagnosisPayload
       await srApi.updateTechnician(sr.ticketNumber, {
-        techId: Number(techId),
-        remarks,
-        status,
-        parts,
+        ticketNumber: sr.ticketNumber,
+        technicianFixId: Number(techId),
+        remarksHistory: remarks, // Jika user tidak ubah textarea, ini kirim data lama
+        statusService: status, // Status baru yang dipilih
+        parts: validParts, // Part lama + part baru jika ada
       });
 
       onSuccess();
       onClose();
     } catch (error: any) {
-      const msg = error.response?.data?.message;
-      alert('Error: ' + (Array.isArray(msg) ? msg[0] : 'Gagal menyimpan data'));
+      const serverError = error.response?.data?.message;
+      alert(
+        'Gagal: ' +
+          (Array.isArray(serverError) ? serverError[0] : 'Error Sistem'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -114,42 +116,69 @@ export function DiagnosisModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* Overlay dengan efek blur agar fokus */}
-      <DialogContent
-        aria-describedby={undefined}
-        className="w-[95vw] sm:max-w-4xl bg-white rounded-3xl overflow-hidden p-0 border-none shadow-2xl transition-all"
-      >
-        {/* HEADER: Kesan Dark & Professional */}
-        <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
-          <div className="absolute right-5 top-5 opacity-10">
-            <Wrench size={120} />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 bg-blue-500 rounded-2xl shadow-lg shadow-blue-500/20">
-              <Wrench className="h-6 w-6 text-white" />
+      <DialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl outline-none">
+        {/* HEADER */}
+        <div
+          className={`p-8 text-white relative overflow-hidden transition-colors duration-500 ${sr?.remarksHistory ? 'bg-[#1e293b]' : 'bg-[#020617]'}`}
+        >
+          <div className="flex items-center gap-5 relative z-10">
+            <div
+              className={`p-4 rounded-2xl shadow-lg ${sr?.remarksHistory ? 'bg-amber-500' : 'bg-blue-600'}`}
+            >
+              <Wrench className="h-7 w-7" />
             </div>
-            <div>
-              <DialogTitle className="text-2xl font-black tracking-tight">
-                Update Diagnosa
+            <div className="text-left">
+              <DialogTitle className="text-2xl font-black uppercase tracking-tight">
+                {sr?.remarksHistory
+                  ? 'Update Progres & Status'
+                  : 'Diagnosa Kerusakan'}
               </DialogTitle>
-              <p className="text-slate-400 text-xs font-mono mt-1 flex items-center gap-2">
-                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                TICKET: {sr?.ticketNumber}
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                  {sr?.statusService}
+                </span>
+                <ArrowRightCircle size={14} className="text-blue-400" />
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-widest">
+                  {status}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="p-8 space-y-8 max-h-[65vh] overflow-y-auto custom-scrollbar">
-          {/* SEKSI 1: INPUT UTAMA */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-slate-500 tracking-widest">
+        <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto">
+          {/* BARIS 1: STATUS & TEKNISI */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+            <div className="space-y-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner">
+              <Label className="text-[11px] font-black uppercase text-blue-600 tracking-widest ml-1">
+                Ubah Status Servis:
+              </Label>
+              <Select onValueChange={(v) => setStatus(v as any)} value={status}>
+                <SelectTrigger className="h-12 border-none rounded-xl font-black text-blue-700 bg-white shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WAITING CHECK">
+                    🛠️ WAITING CHECK
+                  </SelectItem>
+                  <SelectItem value="SERVICE">
+                    ⚙️ SERVICE (Dikerjakan)
+                  </SelectItem>
+                  <SelectItem value="PENDING PART">
+                    ⏳ PENDING PART (Tunggu Part)
+                  </SelectItem>
+                  <SelectItem value="DONE">✅ DONE (Selesai)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-[11px] font-black uppercase text-slate-400 tracking-widest ml-1">
                 Teknisi Penanggung Jawab
               </Label>
               <Select onValueChange={setTechId} value={techId}>
-                <SelectTrigger className="h-12 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 transition-all">
-                  <SelectValue placeholder="Pilih Nama Teknisi" />
+                <SelectTrigger className="h-12 border-slate-200 rounded-xl font-bold">
+                  <SelectValue placeholder="Pilih Teknisi" />
                 </SelectTrigger>
                 <SelectContent>
                   {technicianList.map((t) => (
@@ -160,75 +189,57 @@ export function DiagnosisModal({
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-slate-500 tracking-widest">
-                Status Unit Saat Ini
-              </Label>
-              <Select onValueChange={setStatus} defaultValue={status}>
-                <SelectTrigger className="h-12 border-slate-200 rounded-xl font-bold text-blue-600">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SERVICE">SERVICE (Dikerjakan)</SelectItem>
-                  <SelectItem value="PENDING PART">
-                    PENDING PART (Tunggu Part)
-                  </SelectItem>
-                  <SelectItem value="DONE">DONE (Selesai/Ready)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
-          {/* SEKSI 2: CATATAN */}
-          <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase text-slate-500 tracking-widest">
-              Analisa Kerusakan & Tindakan
+          {/* BARIS 2: ANALISA */}
+          <div className="space-y-3 text-left">
+            <Label className="text-[11px] font-black uppercase text-slate-400 tracking-widest ml-1">
+              Analisa Teknis (Diagnosa)
             </Label>
             <Textarea
-              className="min-h-30 border-slate-200 rounded-xl focus:ring-slate-900 text-sm p-4 bg-slate-50/50"
-              placeholder="Jelaskan secara teknis apa yang rusak dan apa yang sudah diganti..."
+              className="min-h-[120px] border-slate-200 rounded-2xl p-5 bg-slate-50/50 font-medium"
+              placeholder="Isi diagnosa kerusakan..."
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
             />
           </div>
 
-          {/* SEKSI 3: SPAREPART DENGAN CARD STYLE */}
-          <div className="space-y-4">
+          {/* BARIS 3: SPAREPART */}
+          <div className="space-y-4 pt-4 border-t border-slate-100 text-left">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <PackagePlus className="h-4 w-4 text-blue-600" />
-                <Label className="text-sm font-black uppercase text-slate-800">
-                  Estimasi Sparepart
+                <PackagePlus size={18} className="text-blue-600" />
+                <Label className="text-sm font-black uppercase text-slate-900">
+                  Suku Cadang
                 </Label>
               </div>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={addPart}
-                className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 font-bold px-4"
+                className="rounded-xl border-blue-200 text-blue-600 font-bold hover:bg-blue-600 hover:text-white transition-all"
               >
-                <Plus className="h-4 w-4 mr-1" /> Tambah Item
+                <Plus size={16} className="mr-1" strokeWidth={3} /> Tambah Item
               </Button>
             </div>
 
             <div className="space-y-3">
               {parts.length === 0 ? (
-                <div className="py-10 border-2 border-dashed border-slate-100 rounded-2xl text-center text-slate-400 text-xs italic">
-                  Belum ada penambahan suku cadang.
+                <div className="py-10 border-2 border-dashed border-slate-100 rounded-[2rem] text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest bg-slate-50/30">
+                  Belum ada penggantian suku cadang
                 </div>
               ) : (
                 parts.map((p, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-12 gap-3 items-end bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
+                    className="grid grid-cols-12 gap-4 items-end bg-white p-5 rounded-3xl border border-slate-100 shadow-sm animate-in slide-in-from-right-4"
                   >
                     <div className="col-span-6 space-y-1">
-                      <Label className="text-[10px] font-bold text-slate-400 uppercase">
+                      <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
                         Nama Barang
                       </Label>
                       <Input
-                        className="h-10 bg-slate-50/50 border-none font-medium"
+                        className="h-11 bg-slate-50 border-none rounded-xl font-bold"
                         value={p.partName}
                         onChange={(e) =>
                           updatePart(i, 'partName', e.target.value)
@@ -236,39 +247,39 @@ export function DiagnosisModal({
                       />
                     </div>
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[10px] font-bold text-slate-400 uppercase">
+                      <Label className="text-[9px] font-black text-slate-400 uppercase text-center block">
                         Qty
                       </Label>
                       <Input
+                        className="h-11 bg-slate-50 border-none rounded-xl text-center font-black"
                         type="number"
-                        className="h-10 bg-slate-50/50 border-none text-center font-bold"
                         value={p.quantity}
                         onChange={(e) =>
-                          updatePart(i, 'quantity', e.target.value)
+                          updatePart(i, 'quantity', Number(e.target.value))
                         }
                       />
                     </div>
                     <div className="col-span-3 space-y-1">
-                      <Label className="text-[10px] font-bold text-slate-400 uppercase">
+                      <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
                         Harga Satuan
                       </Label>
                       <Input
+                        className="h-11 bg-slate-50 border-none rounded-xl font-black text-blue-600"
                         type="number"
-                        className="h-10 bg-slate-50/50 border-none font-bold"
                         value={p.unitPrice}
                         onChange={(e) =>
-                          updatePart(i, 'unitPrice', e.target.value)
+                          updatePart(i, 'unitPrice', Number(e.target.value))
                         }
                       />
                     </div>
-                    <div className="col-span-1 pb-1 flex justify-center">
+                    <div className="col-span-1 pb-0.5 flex justify-center">
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-10 w-10 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                        className="h-11 w-11 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
                         onClick={() => removePart(i)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 size={18} />
                       </Button>
                     </div>
                   </div>
@@ -278,31 +289,37 @@ export function DiagnosisModal({
           </div>
         </div>
 
-        {/* FOOTER: HIGHLIGHT TOTAL */}
+        {/* FOOTER */}
         <div className="p-8 bg-slate-50 border-t flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-white px-8 py-4 rounded-[1.5rem] border border-slate-200 shadow-inner flex items-baseline gap-3">
             <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-              Total Suku Cadang
+              Total Part:
             </p>
-            <p className="text-3xl font-black text-slate-900 mt-1">
-              <span className="text-blue-600 mr-1">Rp</span>
+            <p className="text-3xl font-black text-[#020617] tracking-tighter">
+              <span className="text-blue-600 text-sm mr-1 italic">IDR</span>
               {subtotalParts.toLocaleString('id-ID')}
             </p>
           </div>
+
           <div className="flex gap-3 w-full md:w-auto">
             <Button
               variant="ghost"
               onClick={onClose}
-              className="flex-1 md:flex-none h-14 px-8 font-bold text-slate-500 hover:bg-slate-100 rounded-2xl"
+              className="h-14 px-8 font-bold text-slate-400 hover:bg-slate-200 rounded-2xl transition-all"
             >
               Batal
             </Button>
             <Button
               disabled={isLoading}
               onClick={handleSubmit}
-              className="flex-1 md:flex-none h-14 px-12 bg-slate-900 text-white font-black rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 transition-all"
+              className={`h-14 px-12 text-white font-black rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2 ${sr?.remarksHistory ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/20' : 'bg-slate-900 hover:bg-blue-600'}`}
             >
-              {isLoading ? 'PROSES...' : 'SIMPAN DIAGNOSA'}
+              {isLoading ? (
+                <RefreshCcw className="animate-spin" />
+              ) : (
+                <Save size={20} />
+              )}
+              {sr?.remarksHistory ? 'SIMPAN PERUBAHAN' : 'SIMPAN DIAGNOSA'}
             </Button>
           </div>
         </div>

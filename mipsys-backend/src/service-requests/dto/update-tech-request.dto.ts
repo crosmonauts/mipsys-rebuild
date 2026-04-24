@@ -16,12 +16,12 @@ export class UpdateTechRequestDto {
   technicianFixId!: number;
 
   @IsString()
-  @IsNotEmpty()
-  problemDescription!: string;
+  @IsNotEmpty({ message: 'Hasil diagnosa teknisi tidak boleh kosong' })
+  remarksHistory!: string;
 
-  @IsEnum(['PENDING APPROVAL', 'PENDING PART', 'SERVICE', 'DONE', 'CANCEL'], {
+  @IsEnum(['WAITING CHECK', 'PENDING PART', 'SERVICE', 'DONE', 'CANCEL'], {
     message:
-      'Status harus salah satu dari: PENDING APPROVAL, PENDING PART, SERVICE, DONE, atau CANCEL',
+      'Status harus salah satu dari: WAITING CHECK, PENDING PART, SERVICE, DONE, atau CANCEL',
   })
   @IsNotEmpty()
   statusService!: string;

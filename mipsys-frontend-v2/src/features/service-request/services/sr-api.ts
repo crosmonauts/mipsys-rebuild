@@ -19,25 +19,25 @@ export const srApi = {
   getOne: (id: string | number) =>
     api.get(`/service-request/${id}`).then((r) => r.data),
 
-  // 3. Create: Menangani Entry Baru
-  // FIX: Hapus 's' di service-requests agar cocok dengan @Post('entry')
   create: async (rawData: any) => {
     const payload = {
       ...rawData,
-      adminId: 1, // Hardcoded sementara sesuai kebutuhan Mas Nanda
-      onsite_cost: Number(rawData.onsite_cost || 0),
-      other_cost: Number(rawData.other_cost || 0),
+      adminId: 1,
     };
     const response = await api.post('/service-request/entry', payload);
     return response.data;
   },
 
   // 4. Update Technician (Diagnosa)
-  updateTechnician: async (id: string | number, rawData: any) => {
+  updateTechnician: async (ticketNumber: string | number, rawData: any) => {
+    // Mapping ulang payload agar sesuai dengan UpdateTechRequestDto di Backend
     const payload = {
-      technicianFixId: Number(rawData.techId),
-      problemDescription: rawData.remarks,
-      statusService: rawData.status,
+      technicianFixId: Number(rawData.techId || rawData.technicianFixId),
+
+      // PERBAIKAN DI SINI: Ubah dari problemDescription ke remarksHistory
+      remarksHistory: rawData.remarks || rawData.remarksHistory,
+
+      statusService: rawData.status || rawData.statusService,
       parts: (rawData.parts || []).map((p: any) => ({
         partName: p.partName,
         quantity: Number(p.quantity),
@@ -46,21 +46,21 @@ export const srApi = {
     };
 
     const response = await api.patch(
-      `/service-request/${id}/technician`,
+      `/service-request/${ticketNumber}/technician`,
       payload,
     );
     return response.data;
   },
 
   // 5. Proses Kasir (Finalize)
-  prosesKasir: (id: string | number, rawData: any) => {
+  prosesKasir: (ticketNumber: string | number, rawData: any) => {
     const payload = {
       ...rawData,
       onsiteFee: Number(rawData.onsiteFee || 0),
       serviceFee: Number(rawData.serviceFee || 0),
     };
     return api
-      .patch(`/service-request/${id}/kasir`, payload)
+      .patch(`/service-request/${ticketNumber}/kasir`, payload)
       .then((r) => r.data);
   },
 };
