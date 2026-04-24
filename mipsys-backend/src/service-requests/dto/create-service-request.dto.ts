@@ -56,14 +56,4 @@ export class CreateServiceRequestDto {
   @IsString()
   @IsOptional()
   problemDescription?: string; // Sesuai text("problem_description")
-
-  @IsNumber()
-  @IsOptional() // Beri Optional karena di Zod ada default(0)
-  @Min(0)
-  onsite_cost?: number;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(0)
-  other_cost?: number;
 }

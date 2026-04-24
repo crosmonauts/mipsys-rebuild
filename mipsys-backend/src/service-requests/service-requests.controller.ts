@@ -28,9 +28,12 @@ export class ServiceRequestsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
   ) {
-    // Tidak perlu lagi if-else manual di sini!
-    // NestJS sudah menjamin 'page' dan 'limit' pasti berupa angka yang valid.
     return await this.srService.getAllDashboard(search, page, limit);
+  }
+
+  @Get('technicians')
+  async getTechnicians() {
+    return await this.srService.findAllTechnicians();
   }
 
   // Parameter 'id' di sini idealnya diisi dengan Ticket Number (contoh: IDW5-123)
@@ -46,7 +49,7 @@ export class ServiceRequestsController {
   }
 
   // 3. Update Teknisi & Input Sparepart (PATCH)
-  @Patch(':id/technician')
+  @Patch(':id/diagnosis')
   async updateTechnician(
     @Param('id') id: string, // Gunakan Ticket Number
     @Body() updateTechDto: UpdateTechRequestDto
