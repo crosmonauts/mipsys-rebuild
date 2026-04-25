@@ -56,7 +56,11 @@ function parseDate(dateStr: string | undefined): Date | null {
 
 async function runSeeder() {
   console.log('🚀 Memulai penarikan data dari Excel ke Database...');
-  const filePath = path.join(__dirname, 'data', 'dataset warranty 2026.csv');
+  const filePath = path.join(
+    __dirname,
+    'data',
+    'dataset mipsys non warranty 2026.csv'
+  );
 
   const rawData = await readCSV(filePath);
 

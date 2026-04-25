@@ -9,6 +9,7 @@ import {
   customerPhones,
   hardwareChecks,
   orderParts,
+  spareParts,
   staff,
 } from 'src/db/schema';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
@@ -79,47 +80,64 @@ export class ServiceRequestService {
    * 2. DETAIL TIKET (Pencarian menggunakan Ticket Number)
    */
   async getDetailByTicketNumber(ticketNumber: string) {
-    const result = await this.db
+    // 1. QUERY UTAMA: Ambil data Header, Customer, dan Produk
+    const mainRows = await this.db
       .select({
-        // Data Utama Tiket
         id: serviceRequests.id,
         ticketNumber: serviceRequests.ticketNumber,
         serviceType: serviceRequests.serviceType,
-        problemDescription: serviceRequests.problemDescription,
-        remarksHistory: serviceRequests.remarksHistory,
         statusService: serviceRequests.statusService,
         statusSystem: serviceRequests.statusSystem,
-
-        // Data Waktu & Biaya
-        incomingDate: serviceRequests.incomingDate,
-        readyDate: serviceRequests.readyDate,
-        pickUpDate: serviceRequests.pickUpDate,
+        problemDescription: serviceRequests.problemDescription,
+        remarksHistory: serviceRequests.remarksHistory,
         partFee: serviceRequests.partFee,
         serviceFee: serviceRequests.serviceFee,
-        createdAt: serviceRequests.createdAt,
-        updatedAt: serviceRequests.updatedAt,
-
-        // Data Relasi (JOIN) untuk mengisi kekosongan UI Frontend
+        incomingDate: serviceRequests.incomingDate,
+        technicianFixId: serviceRequests.technicianFixId,
+        // Data Join Customer
         customerName: customers.name,
         customerAddress: customers.address,
-        customerPhone: customerPhones.phone, // Untuk Kontak
+        // Data Join Produk
         modelName: products.modelName,
         serialNumber: products.serialNumber,
       })
       .from(serviceRequests)
       .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
       .leftJoin(products, eq(serviceRequests.productId, products.id))
-      // Join ekstra untuk mengambil nomor telepon
-      .leftJoin(customerPhones, eq(customers.id, customerPhones.customerId))
       .where(eq(serviceRequests.ticketNumber, ticketNumber))
       .limit(1);
 
-    if (result.length === 0) {
-      throw new NotFoundException(
-        `Tiket dengan nomor ${ticketNumber} tidak ditemukan`
-      );
+    if (mainRows.length === 0) {
+      throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
     }
-    return result[0];
+
+    const ticket = mainRows[0];
+
+    // 2. QUERY RINCIAN: Ambil data Suku Cadang (Terpisah agar aman dari LATERAL error)
+    const partsRows = await this.db
+      .select({
+        id: orderParts.id,
+        sparePartId: orderParts.sparePartId,
+        savedPartName: orderParts.partName,
+        masterPartName: spareParts.partName,
+        quantity: orderParts.quantity,
+        unitPrice: orderParts.priceAtAction,
+      })
+      .from(orderParts)
+      .leftJoin(spareParts, eq(orderParts.sparePartId, spareParts.id))
+      .where(eq(orderParts.serviceRequestId, ticket.id));
+
+    // 3. GABUNGKAN DATA: Format agar sesuai dengan interface Frontend
+    return {
+      ...ticket,
+      // Pastikan field yang diharapkan frontend ada di sini
+      parts: partsRows.map((p) => ({
+        sparePartId: p.sparePartId,
+        partName: p.savedPartName || p.masterPartName || 'Sparepart',
+        quantity: Number(p.quantity),
+        unitPrice: Number(p.unitPrice),
+      })),
+    };
   }
 
   /**
@@ -210,31 +228,30 @@ export class ServiceRequestService {
    * 4. UPDATE OLEH TEKNISI (Diagnosis & Perbaikan)
    */
   async updateTechDiagnosis(ticketNumber: string, dto: UpdateTechRequestDto) {
-    // 1. Cari ID Service Request berdasarkan Ticket Number
     const existingSR = await this.db.query.serviceRequests.findFirst({
       where: eq(serviceRequests.ticketNumber, ticketNumber),
     });
 
     if (!existingSR) {
-      throw new Error(`Ticket ${ticketNumber} tidak ditemukan di sistem.`);
+      throw new Error(`Ticket ${ticketNumber} tidak ditemukan.`);
     }
 
     // 2. Kalkulasi Total Biaya Part secara internal untuk partFee
-    const totalPartFee = (dto.parts || []).reduce((acc, part) => {
-      return acc + part.quantity * Number(part.priceAtAction || 0);
-    }, 0);
+    const totalPartFee = (dto.parts || []).reduce(
+      (acc, p) => acc + Number(p.quantity) * Number(p.unitPrice),
+      0
+    );
 
     // 3. Eksekusi Database Transaction (Atomic Process)
     return await this.db.transaction(async (tx) => {
       try {
-        // STEP A: Update Tabel Utama (service_requests)
         await tx
           .update(serviceRequests)
           .set({
             statusService: dto.statusService,
             technicianFixId: dto.technicianFixId,
             remarksHistory: dto.remarksHistory,
-            serviceFee: dto.serviceFee?.toString() || '0.00',
+            serviceFee: (dto.serviceFee ?? existingSR.serviceFee)?.toString(),
             partFee: totalPartFee.toString(),
             readyDate:
               dto.statusService === 'DONE' ? new Date() : existingSR.readyDate,
@@ -242,9 +259,22 @@ export class ServiceRequestService {
           })
           .where(eq(serviceRequests.id, existingSR.id));
 
+        await tx
+          .delete(orderParts)
+          .where(eq(orderParts.serviceRequestId, existingSR.id));
+
+        if (dto.parts && dto.parts.length > 0) {
+          const partsToInsert = dto.parts.map((p) => ({
+            serviceRequestId: existingSR.id,
+            sparePartId: p.sparePartId || null,
+            quantity: p.quantity,
+            priceAtAction: p.unitPrice.toString(),
+          }));
+          await tx.insert(orderParts).values(partsToInsert);
+        }
+
         // STEP B: Sync Hardware Checks (PH, MB, PS)
         if (dto.hardwareCheck) {
-          // Gunakan teknik Delete & Insert atau Upsert untuk tabel Hardware Checks
           await tx
             .delete(hardwareChecks)
             .where(eq(hardwareChecks.serviceRequestId, existingSR.id));
@@ -261,37 +291,20 @@ export class ServiceRequestService {
         await tx
           .update(serviceRequests)
           .set({
-            remarksHistory: dto.remarksHistory, // Simpan hasil teknisi di sini
-            // problemDescription tidak diupdate kecuali ada revisi keluhan
+            remarksHistory: dto.remarksHistory,
             statusService: dto.statusService,
             technicianFixId: dto.technicianFixId,
             updatedAt: new Date(),
           })
           .where(eq(serviceRequests.id, existingSR.id));
 
-        await tx
-          .delete(orderParts)
-          .where(eq(orderParts.serviceRequestId, existingSR.id));
-
-        // Masukkan rincian part baru dari array DTO
-        if (dto.parts && dto.parts.length > 0) {
-          const partsToInsert = dto.parts.map((p) => ({
-            serviceRequestId: existingSR.id,
-            sparePartId: p.sparePartId || null,
-            quantity: p.quantity,
-            priceAtAction: p.priceAtAction.toString(),
-          }));
-
-          await tx.insert(orderParts).values(partsToInsert);
-        }
-
         return {
           success: true,
           message: `Diagnosis SR-${ticketNumber} berhasil disinkronkan.`,
-          totalBill: Number(dto.serviceFee || 0) + totalPartFee,
+          totalBill:
+            Number(dto.serviceFee ?? existingSR.serviceFee) + totalPartFee,
         };
       } catch (error) {
-        // Jika terjadi error di salah satu step, Drizzle otomatis melakukan ROLLBACK
         console.error('Transaction Error:', error);
         throw error;
       }

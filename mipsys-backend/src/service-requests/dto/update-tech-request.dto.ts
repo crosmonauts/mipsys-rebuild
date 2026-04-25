@@ -10,13 +10,7 @@ import {
   IsObject,
 } from 'class-validator';
 import { PartItemDto } from './part-item.dto';
-
-class HardwareCheckDto {
-  @IsString() @IsOptional() phStatus!: string;
-  @IsString() @IsOptional() mbStatus!: string;
-  @IsString() @IsOptional() psStatus!: string;
-  @IsString() @IsOptional() othersStatus!: string;
-}
+import { HardwareCheckDto } from './hardware-check.dto';
 
 export class UpdateTechRequestDto {
   @IsInt({ message: 'ID Teknisi harus berupa angka (int)' })
@@ -27,7 +21,6 @@ export class UpdateTechRequestDto {
   @IsNotEmpty()
   remarksHistory!: string;
 
-  // Kita tambahkan Service Fee di sini
   @IsString()
   @IsOptional()
   serviceFee?: string;
@@ -46,7 +39,6 @@ export class UpdateTechRequestDto {
   @IsNotEmpty()
   statusService!: string;
 
-  // Tambahkan Hardware Check Object
   @IsOptional()
   @IsObject()
   @ValidateNested()

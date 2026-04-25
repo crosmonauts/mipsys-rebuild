@@ -43,22 +43,18 @@ export function DiagnosisModal({
   const [status, setStatus] =
     useState<ServiceRequest['statusService']>('SERVICE');
   const [remarks, setRemarks] = useState('');
-  const [parts, setParts] = useState<UpdateDiagnosisPayload['parts']>([]);
+  const [parts, setParts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const technicianList = [
-    { id: 2, name: 'ADAM' },
-    { id: 3, name: 'ARRA' },
-  ];
+  const technicianList = [{ id: 2, name: 'ADAM' }];
 
-  // --- LOGIKA AUTO-FILL (CRITICAL: Inilah yang menjaga isi tidak berubah) ---
   useEffect(() => {
     if (isOpen && sr) {
-      // Kita isi state modal dengan data saat ini dari ServiceRequest
       setTechId(sr.technicianFixId?.toString() || '');
       setStatus(sr.statusService || 'SERVICE');
-      setRemarks(sr.remarksHistory || ''); // Meload teks diagnosa lama
-      setParts(sr.parts || []); // Meload daftar part yang sudah ada
+      setRemarks(sr.remarksHistory || '');
+      const historyParts = sr.parts || (sr as any).orderParts || [];
+      setParts(historyParts);
     }
   }, [isOpen, sr]);
 
@@ -84,8 +80,6 @@ export function DiagnosisModal({
 
   const handleSubmit = async () => {
     if (!sr || !techId) return alert('Mohon pilih Teknisi terlebih dahulu!');
-
-    // Bersihkan part yang namanya kosong sebelum kirim
     const validParts = parts.filter((p) => p.partName.trim() !== '');
 
     setIsLoading(true);
@@ -94,9 +88,10 @@ export function DiagnosisModal({
       await srApi.updateTechnician(sr.ticketNumber, {
         ticketNumber: sr.ticketNumber,
         technicianFixId: Number(techId),
-        remarksHistory: remarks, // Jika user tidak ubah textarea, ini kirim data lama
-        statusService: status, // Status baru yang dipilih
-        parts: validParts, // Part lama + part baru jika ada
+        remarksHistory: remarks,
+        statusService: status,
+        serviceFee: Number(sr.serviceFee),
+        parts: parts.filter((p) => p.partName.trim() !== ''),
       });
 
       onSuccess();

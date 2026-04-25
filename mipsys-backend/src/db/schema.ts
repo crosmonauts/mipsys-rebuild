@@ -9,27 +9,25 @@ import {
   timestamp,
   index,
 } from 'drizzle-orm/mysql-core';
+import { relations, eq } from 'drizzle-orm';
 
-// 1. Staff (Menampung kolom ADMIN, TECH CHK, TECH FIX)
 export const staff = mysqlTable('staff', {
-  id: int('id').autoincrement().primaryKey(), // <--- UBAH DI SINI
+  id: int('id').autoincrement().primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
   role: mysqlEnum('role', ['ADMIN', 'TECHNICIAN']).notNull(),
 });
 
-// 2. Customers
 export const customers = mysqlTable('customers', {
-  id: int('id').autoincrement().primaryKey(), // <--- UBAH DI SINI
+  id: int('id').autoincrement().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   address: text('address'),
   customerType: varchar('customer_type', { length: 50 }),
 });
 
-// 3. Customer Phones
 export const customerPhones = mysqlTable(
   'customer_phones',
   {
-    id: int('id').autoincrement().primaryKey(), // <--- UBAH DI SINI
+    id: int('id').autoincrement().primaryKey(),
     customerId: int('customer_id').references(() => customers.id),
     phone: varchar('phone', { length: 50 }).notNull(),
   },
@@ -38,21 +36,19 @@ export const customerPhones = mysqlTable(
   })
 );
 
-// 4. Products
 export const products = mysqlTable('products', {
-  id: int('id').autoincrement().primaryKey(), // <--- UBAH DI SINI
+  id: int('id').autoincrement().primaryKey(),
   modelName: varchar('model_name', { length: 100 }).notNull(),
   serialNumber: varchar('serial_number', { length: 100 }).unique().notNull(),
 });
 
-// 5. Service Requests (Main Transaction)
 export const serviceRequests = mysqlTable(
   'service_requests',
   {
     id: int('id').autoincrement().primaryKey(),
-    ticketNumber: varchar('ticket_number', { length: 100 }).notNull(), // Gabungan/Custom
-    rmaNo: varchar('rma_no', { length: 100 }), // Khusus WRNTY
-    incNo: varchar('inc_no', { length: 100 }), // Khusus NWRNTY
+    ticketNumber: varchar('ticket_number', { length: 100 }).notNull(),
+    rmaNo: varchar('rma_no', { length: 100 }),
+    incNo: varchar('inc_no', { length: 100 }),
     serviceType: mysqlEnum('service_type', [
       'WARRANTY',
       'NON_WARRANTY',
@@ -64,23 +60,20 @@ export const serviceRequests = mysqlTable(
     technicianCheckId: int('tech_check_id').references(() => staff.id),
     technicianFixId: int('tech_fix_id').references(() => staff.id),
 
-    // Timeline & Tracking
     incomingDate: date('incoming_date').notNull(),
     checkDate: date('check_date'),
-    spDate: date('sp_date'), // Sparepart Date
+    spDate: date('sp_date'),
     approveDate: date('approve_date'),
     readyDate: date('ready_date'),
     closeDate: date('close_date'),
     pickUpDate: date('pick_up_date'),
     agingDays: int('aging_days').default(0),
 
-    // Detail & Status
     problemDescription: text('problem_description'),
-    statusService: varchar('status_service', { length: 50 }), // WITH PART, CANCEL, dll
-    statusSystem: varchar('status_system', { length: 50 }), // OPEN, CLOSED
-    remarksHistory: text('remarks_history'), // Penyatuan REMARKS II-VI
+    statusService: varchar('status_service', { length: 50 }),
+    statusSystem: varchar('status_system', { length: 50 }),
+    remarksHistory: text('remarks_history'),
 
-    // Financial
     serviceFee: decimal('service_fee', { precision: 12, scale: 2 }).default(
       '0.00'
     ),
@@ -98,7 +91,6 @@ export const serviceRequests = mysqlTable(
   })
 );
 
-// 6. Hardware Checks (Detail komponen PH, MB, PS)
 export const hardwareChecks = mysqlTable('hardware_checks', {
   id: int('id').autoincrement().primaryKey(),
   serviceRequestId: int('service_request_id').references(
@@ -109,23 +101,9 @@ export const hardwareChecks = mysqlTable('hardware_checks', {
   psStatus: varchar('ps_status', { length: 100 }),
   othersStatus: varchar('others_status', { length: 100 }),
   accessories: text('accessories'),
-  legacyOthersNotes: text('legacy_others_notes'), // Dari OTHERS (1-5)
+  legacyOthersNotes: text('legacy_others_notes'),
 });
 
-// 7. Service Logs (Audit Trail)
-export const serviceLogs = mysqlTable('service_logs', {
-  id: int('id').autoincrement().primaryKey(),
-  serviceRequestId: int('service_request_id').references(
-    () => serviceRequests.id
-  ),
-  changedBy: int('changed_by_id').references(() => staff.id),
-  previousStatus: varchar('previous_status', { length: 100 }),
-  currentStatus: varchar('current_status', { length: 100 }),
-  note: text('note'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-// 8. Spare Parts (Master Data)
 export const spareParts = mysqlTable('spare_parts', {
   id: int('id').autoincrement().primaryKey(),
   partName: varchar('part_name', { length: 255 }).notNull(),
@@ -134,24 +112,59 @@ export const spareParts = mysqlTable('spare_parts', {
   price: decimal('price', { precision: 12, scale: 2 }).default('0.00'),
 });
 
-// 9. Order Parts (Relasi Part yang digunakan di Servis)
 export const orderParts = mysqlTable('order_parts', {
   id: int('id').autoincrement().primaryKey(),
   serviceRequestId: int('service_request_id').references(
     () => serviceRequests.id
   ),
-  sparePartId: int('spare_part_id').references(() => spareParts.id),
+  sparePartId: int('spare_part_id'),
+  partName: varchar('part_name', { length: 255 }),
   quantity: int('quantity').default(1),
-  priceAtAction: decimal('price_at_action', { precision: 12, scale: 2 }), // Harga saat transaksi
+  priceAtAction: decimal('price_at_action', { precision: 12, scale: 2 }),
 });
 
-// 10. Attachments (Foto Unit/Nota)
-export const attachments = mysqlTable('attachments', {
-  id: int('id').autoincrement().primaryKey(),
-  serviceRequestId: int('service_request_id').references(
-    () => serviceRequests.id
-  ),
-  fileUrl: varchar('file_url', { length: 500 }).notNull(),
-  fileType: varchar('file_type', { length: 50 }),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export const serviceRequestsRelations = relations(
+  serviceRequests,
+  ({ one, many }) => ({
+    customer: one(customers, {
+      fields: [serviceRequests.customerId],
+      references: [customers.id],
+    }),
+    product: one(products, {
+      fields: [serviceRequests.productId],
+      references: [products.id],
+    }),
+    orderParts: many(orderParts),
+    hardwareCheck: one(hardwareChecks, {
+      fields: [serviceRequests.id],
+      references: [hardwareChecks.serviceRequestId],
+    }),
+    technicianFix: one(staff, {
+      fields: [serviceRequests.technicianFixId],
+      references: [staff.id],
+    }),
+  })
+);
+
+export const orderPartsRelations = relations(orderParts, ({ one }) => ({
+  serviceRequest: one(serviceRequests, {
+    fields: [orderParts.serviceRequestId],
+    references: [serviceRequests.id],
+  }),
+  sparePart: one(spareParts, {
+    fields: [orderParts.sparePartId],
+    references: [spareParts.id],
+  }),
+}));
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  phones: many(customerPhones),
+  requests: many(serviceRequests),
+}));
+
+export const customerPhonesRelations = relations(customerPhones, ({ one }) => ({
+  customer: one(customers, {
+    fields: [customerPhones.customerId],
+    references: [customers.id],
+  }),
+}));

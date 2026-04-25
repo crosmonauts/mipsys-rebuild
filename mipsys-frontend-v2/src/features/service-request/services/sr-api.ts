@@ -30,23 +30,20 @@ export const srApi = {
 
   // 4. Update Technician (Diagnosa)
   updateTechnician: async (ticketNumber: string | number, rawData: any) => {
-    // Mapping ulang payload agar sesuai dengan UpdateTechRequestDto di Backend
     const payload = {
       technicianFixId: Number(rawData.techId || rawData.technicianFixId),
-
-      // PERBAIKAN DI SINI: Ubah dari problemDescription ke remarksHistory
       remarksHistory: rawData.remarks || rawData.remarksHistory,
 
       statusService: rawData.status || rawData.statusService,
       parts: (rawData.parts || []).map((p: any) => ({
         partName: p.partName,
         quantity: Number(p.quantity),
-        unitPrice: Number(p.unitPrice),
+        unitPrice: String(p.unitPrice),
       })),
     };
 
     const response = await api.patch(
-      `/service-request/${ticketNumber}/technician`,
+      `/service-request/${ticketNumber}/diagnosis`,
       payload,
     );
     return response.data;

@@ -1,51 +1,44 @@
+export interface OrderPart {
+  id?: number;
+  sparePartId?: number;
+  partName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export interface ServiceRequest {
   id: number;
   ticketNumber: string;
-
-  // IDENTITAS (Hasil Join)
   customerName: string;
   customerPhone: string;
   customerAddress: string;
-
-  // PERANGKAT (Hasil Join)
+  serviceType: 'WARRANTY' | 'NON_WARRANTY';
   modelName: string;
   serialNumber: string;
-  serviceType: 'WARRANTY' | 'NON_WARRANTY';
   statusService:
     | 'WAITING CHECK'
-    | 'PENDING CHECK'
-    | 'PENDING APPROVAL'
     | 'PENDING PART'
     | 'SERVICE'
     | 'DONE'
     | 'CANCEL';
-
   statusSystem: 'OPEN' | 'CLOSED';
-  parts: UpdateDiagnosisPayload['parts'] | null;
-
-  // DESKRIPSI & TANGGAL
   problemDescription: string;
   remarksHistory: string;
-  incomingDate: string;
-  createdAt: string;
-
-  // ID STAFF
-  technicianCheckId?: number | null;
-  technicianFixId?: number | null;
-
-  // FINANSIAL (Pisahkan sesuai kebutuhan bisnis)
   partFee: string;
   serviceFee: string;
+  technicianFixId: number | null;
+  orderParts?: any[];
+  parts?: OrderPart[];
+
+  incomingDate: string;
+  createdAt: string;
 }
 
 export interface UpdateDiagnosisPayload {
   ticketNumber: string;
   technicianFixId: number;
   remarksHistory: string;
-  statusService: ServiceRequest['statusService'];
-  parts: {
-    partName: string;
-    quantity: number;
-    unitPrice: number;
-  }[];
+  statusService: string;
+  serviceFee: number;
+  parts: OrderPart[];
 }

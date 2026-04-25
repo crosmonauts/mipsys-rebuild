@@ -11,7 +11,7 @@ export class PartItemDto {
 
   @IsString()
   @IsNotEmpty()
-  priceAtAction!: string;
+  unitPrice!: string;
 
   @IsInt()
   @IsOptional()

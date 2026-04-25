@@ -59,7 +59,6 @@ export default function ServiceRequestDetail({
 
   const isChecked = !!data?.remarksHistory;
 
-  // Tombol tetap muncul selama status sistem belum CLOSED
   const showDiagnosisButton = data?.statusSystem !== 'CLOSED';
 
   const getStatusColor = (status: string) => {
@@ -90,7 +89,7 @@ export default function ServiceRequestDetail({
     );
   }
 
-  if (!data) return null; // Logic handling data null sudah ada di percakapan sebelumnya
+  if (!data) return null;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 font-sans animate-in fade-in duration-500">
