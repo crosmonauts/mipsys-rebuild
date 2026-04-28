@@ -119,16 +119,6 @@ export function DashboardTable() {
       {/* 1. HEADER HALAMAN (BACK, JUDUL, TOMBOL BARU) */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-2">
-          <Link
-            href="/"
-            className="inline-flex items-center text-xs font-bold text-blue-600 uppercase tracking-widest hover:gap-2 transition-all group"
-          >
-            <ChevronLeft
-              size={14}
-              className="mr-1 group-hover:scale-125 transition-transform"
-            />
-            Kembali ke Dashboard
-          </Link>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">
             Dashboard Service Request
           </h2>
@@ -137,13 +127,6 @@ export function DashboardTable() {
             Mipsys.
           </p>
         </div>
-
-        <Link href="/service-request/new">
-          <Button className="bg-slate-900 hover:bg-blue-600 text-white font-bold rounded-xl px-6 h-12 shadow-lg shadow-slate-900/10 transition-all flex gap-2">
-            <Plus size={18} strokeWidth={3} />
-            Buat SR Baru
-          </Button>
-        </Link>
       </div>
 
       {/* 2. SEKSI SEARCH BAR */}
@@ -164,6 +147,12 @@ export function DashboardTable() {
           >
             Cari
           </Button>
+          <Link href="/service-request/new">
+            <Button className="bg-slate-900 hover:bg-blue-600 text-white font-bold rounded-xl px-6 h-12 shadow-lg shadow-slate-900/10 transition-all flex gap-2">
+              <Plus size={18} strokeWidth={3} />
+              Buat SR Baru
+            </Button>
+          </Link>
         </form>
       </div>
 
