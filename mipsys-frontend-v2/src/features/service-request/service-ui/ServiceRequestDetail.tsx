@@ -76,6 +76,8 @@ export default function ServiceRequestDetail({
     switch (status?.toUpperCase()) {
       case 'WAITING CHECK':
         return 'bg-blue-600 hover:bg-blue-600';
+      case 'PENDING APPROVAL':
+        return 'bg-yellow-600 hover:bg-yellow-600';
       case 'PENDING PART':
         return 'bg-amber-500 hover:bg-amber-500';
       case 'SERVICE':

@@ -36,7 +36,7 @@ export const srApi = {
   // 4. Update Technician (Diagnosa & Hardware Check)
   updateTechnician: async (ticketNumber: string | number, rawData: any) => {
     const payload = {
-      technicianFixId: Number(rawData.techId || rawData.technicianFixId),
+      technicianCheckId: Number(rawData.techId || rawData.technicianCheckId),
       remarksHistory: rawData.remarks || rawData.remarksHistory,
       statusService: rawData.status || rawData.statusService,
 

@@ -17,6 +17,7 @@ export interface ServiceRequest {
   serialNumber: string;
   statusService:
     | 'WAITING CHECK'
+    | 'PENDING APPROVAL'
     | 'PENDING PART'
     | 'SERVICE'
     | 'DONE'
@@ -26,7 +27,7 @@ export interface ServiceRequest {
   remarksHistory: string;
   partFee: string;
   serviceFee: string;
-  technicianFixId: number | null;
+  technicianCheckId: number | null;
   orderParts?: any[];
   parts?: OrderPart[];
 
@@ -36,7 +37,7 @@ export interface ServiceRequest {
 
 export interface UpdateDiagnosisPayload {
   ticketNumber: string;
-  technicianFixId: number;
+  technicianCheckId: number;
   remarksHistory: string;
   statusService: string;
   serviceFee: number;

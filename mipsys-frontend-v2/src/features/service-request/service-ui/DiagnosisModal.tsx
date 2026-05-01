@@ -50,7 +50,7 @@ export function DiagnosisModal({
 
   useEffect(() => {
     if (isOpen && sr) {
-      setTechId(sr.technicianFixId?.toString() || '');
+      setTechId(sr.technicianCheckId?.toString() || '');
       setStatus(sr.statusService || 'SERVICE');
       setRemarks(sr.remarksHistory || '');
       const historyParts = sr.parts || (sr as any).orderParts || [];
@@ -87,7 +87,7 @@ export function DiagnosisModal({
       // Mengirimkan data sesuai Interface UpdateDiagnosisPayload
       await srApi.updateTechnician(sr.ticketNumber, {
         ticketNumber: sr.ticketNumber,
-        technicianFixId: Number(techId),
+        technicianCheckId: Number(techId),
         remarksHistory: remarks,
         statusService: status,
         serviceFee: Number(sr.serviceFee),
@@ -156,13 +156,13 @@ export function DiagnosisModal({
                   <SelectItem value="WAITING CHECK">
                     🛠️ WAITING CHECK
                   </SelectItem>
-                  <SelectItem value="SERVICE">
-                    ⚙️ SERVICE (Dikerjakan)
+                  <SelectItem value="SERVICE">⚙️ SERVICE</SelectItem>
+                  <SelectItem value="PENDING APPROVAL">
+                    ⏳ PENDING APPROVAL
                   </SelectItem>
-                  <SelectItem value="PENDING PART">
-                    ⏳ PENDING PART (Tunggu Part)
-                  </SelectItem>
-                  <SelectItem value="DONE">✅ DONE (Selesai)</SelectItem>
+                  <SelectItem value="PENDING PART">⏳ PENDING PART</SelectItem>
+                  <SelectItem value="DONE">✅ DONE</SelectItem>
+                  <SelectItem value="CANCEL">⛔ CANCEL</SelectItem>
                 </SelectContent>
               </Select>
             </div>

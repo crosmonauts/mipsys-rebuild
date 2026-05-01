@@ -67,9 +67,7 @@ export const ServicePrintTemplate = React.forwardRef<
           </p>
           <p className="text-sm text-slate-600 italic">
             Tipe:{' '}
-            {data.serviceType === 'WARRANTY'
-              ? 'Garansi (Warranty)'
-              : 'Non-Garansi'}
+            {data.serviceType === 'WARRANTY' ? 'WARRANTY' : 'NON-WARRANTY'}
           </p>
         </div>
       </div>
