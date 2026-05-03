@@ -3,7 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsInt,
-  IsNumberString,
+  IsNumber,
 } from 'class-validator';
 
 export class CreateSparePartDto {
@@ -31,7 +31,7 @@ export class CreateSparePartDto {
   @IsOptional()
   stock: number = 0;
 
-  @IsNumberString()
+  @IsNumber()
   @IsNotEmpty()
   price!: string;
 

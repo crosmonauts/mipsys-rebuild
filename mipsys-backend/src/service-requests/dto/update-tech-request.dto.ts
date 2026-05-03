@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsInt,
   ValidateNested,
@@ -21,9 +22,9 @@ export class UpdateTechRequestDto {
   @IsNotEmpty()
   remarksHistory!: string;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  serviceFee?: string;
+  serviceFee?: number;
 
   @IsEnum(
     [

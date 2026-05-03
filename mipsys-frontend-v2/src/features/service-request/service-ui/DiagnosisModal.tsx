@@ -70,11 +70,6 @@ export function DiagnosisModal({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'parts',
-  });
-
   // Watch untuk kalkulasi real-time (Lighthouse 100 Performance)
   const watchedParts = form.watch('parts');
   const subtotalParts = (watchedParts || []).reduce(
@@ -109,6 +104,10 @@ export function DiagnosisModal({
       alert('Gagal memperbarui data');
     }
   };
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'parts',
+  });
 
   if (!isOpen) return null;
 
@@ -249,12 +248,13 @@ export function DiagnosisModal({
                     onClick={() =>
                       append({
                         sparePartId: null,
+                        modelName: '',
                         partName: '',
                         quantity: 1,
-                        unitPrice: '0',
+                        unitPrice: 0,
                         ipStatus: 'Non IP',
                         partCode: '',
-                        modelName: '',
+                        refNo: '',
                         block: '',
                       })
                     }

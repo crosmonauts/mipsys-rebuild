@@ -274,7 +274,7 @@ export class ServiceRequestService {
         problemDescription: dto.problemDescription,
         statusService: 'WAITING CHECK',
         statusSystem: 'OPEN',
-        serviceFee: dto.serviceFee ? dto.serviceFee.toString() : '0',
+        serviceFee: dto.serviceFee ? String(dto.serviceFee) : '0',
         partFee: '0',
         incomingDate: new Date(),
       });
@@ -387,7 +387,7 @@ export class ServiceRequestService {
                     partName: p.partName,
                     modelName: p.modelName,
                     block: p.block || null,
-                    refNo: p.refNo || null,
+                    ref_no: p.refNo || null,
                     price: p.unitPrice.toString(),
                     stock: 0,
                     ipStatus: p.ipStatus || 'Non IP',

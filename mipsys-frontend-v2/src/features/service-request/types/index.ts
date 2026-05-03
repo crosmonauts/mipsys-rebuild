@@ -1,9 +1,10 @@
 export interface OrderPart {
   id?: number;
   sparePartId?: number | null;
+  refNo: string;
   partName: string;
   quantity: number;
-  unitPrice: string;
+  unitPrice: number;
   partCode?: string;
   modelName?: string;
   block?: string;

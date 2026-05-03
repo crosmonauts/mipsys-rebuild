@@ -19,10 +19,11 @@ export const serviceRequestSchema = z.object({
 // ==========================================
 export const partItemSchema = z
   .object({
-    sparePartId: z.number().nullable().optional(), // Null memicu Auto-Registration
+    sparePartId: z.number().nullable().optional(),
+    refNo: z.string().min(1, 'Ref wajib diisi'),
     partName: z.string().min(1, 'Nama barang wajib diisi'),
     quantity: z.coerce.number().min(1, 'Minimal 1 unit'),
-    unitPrice: z.coerce.string().min(1, 'Harga wajib diisi'),
+    unitPrice: z.coerce.number().min(1, 'Harga wajib diisi'),
 
     // Data Master (image_6c8256.jpg)
     partCode: z.string().optional(),

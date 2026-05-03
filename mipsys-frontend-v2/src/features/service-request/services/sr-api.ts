@@ -33,6 +33,11 @@ export const srApi = {
     return response.data;
   },
 
+  searchSpareParts: (query: string) =>
+    api
+      .get(`/spare-parts/search`, { params: { q: query } })
+      .then((r) => r.data),
+
   // 4. Update Technician (Diagnosa & Hardware Check)
   updateTechnician: async (ticketNumber: string | number, rawData: any) => {
     const payload = {
@@ -40,16 +45,13 @@ export const srApi = {
       remarksHistory: rawData.remarks || rawData.remarksHistory,
       statusService: rawData.status || rawData.statusService,
       serviceFee: Number(rawData.serviceFee || 0),
-
-      // Sync Hardware Check
       hardwareCheck: rawData.hardwareCheck || null,
-
-      // Mapping Spareparts untuk mendukung Auto-Registration
       parts: (rawData.parts || []).map((p: any) => ({
-        sparePartId: p.sparePartId || null, // Jika null, backend akan mendaftarkan baru
+        sparePartId: p.sparePartId || null,
+        refNo: p.sparePartId,
         partName: p.partName,
         quantity: Number(p.quantity),
-        unitPrice: String(p.unitPrice),
+        unitPrice: Number(p.unitPrice),
         partCode: p.partCode || null,
         modelName: p.modelName || null,
         block: p.block || null,

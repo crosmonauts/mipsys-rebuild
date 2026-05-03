@@ -108,7 +108,7 @@ export const spareParts = mysqlTable('spare_parts', {
   partCode: varchar('part_code', { length: 100 }).unique(),
   modelName: varchar('model_name', { length: 255 }),
   block: varchar('block', { length: 100 }),
-  refNo: varchar('ref_no', { length: 50 }),
+  ref_no: varchar('ref_no', { length: 50 }),
   partName: varchar('part_name', { length: 255 }).notNull(),
   standard: varchar('standard', { length: 255 }),
   type: varchar('type', { length: 100 }),

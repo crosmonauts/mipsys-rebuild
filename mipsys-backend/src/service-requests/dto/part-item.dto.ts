@@ -1,4 +1,10 @@
-import { IsString, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+} from 'class-validator';
 
 export class PartItemDto {
   @IsInt()
@@ -13,7 +19,7 @@ export class PartItemDto {
   @IsNotEmpty()
   quantity!: number;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
   unitPrice!: string;
 
