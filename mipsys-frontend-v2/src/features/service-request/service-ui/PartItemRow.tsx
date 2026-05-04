@@ -104,7 +104,7 @@ export function PartItemRow({ index, onRemove }: PartItemRowProps) {
 
           {/* DROPDOWN HASIL PENCARIAN */}
           {isOpen && results.length > 0 && (
-            <ul className="absolute z-[100] w-full mt-2 bg-white rounded-[1.5rem] shadow-2xl border-2 border-slate-100 overflow-hidden py-3 animate-in slide-in-from-top-2">
+            <ul className="absolute z-100 w-full mt-2 bg-white rounded-[1.5rem] shadow-2xl border-2 border-slate-100 overflow-hidden py-3 animate-in slide-in-from-top-2">
               {results.map((part) => (
                 <li
                   key={part.id}

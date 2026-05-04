@@ -20,31 +20,35 @@ export const serviceRequestSchema = z.object({
 export const partItemSchema = z
   .object({
     sparePartId: z.number().nullable().optional(),
-    refNo: z.string().min(1, 'Ref wajib diisi'),
+    refNo: z.string().optional().default(''),
     partName: z.string().min(1, 'Nama barang wajib diisi'),
     quantity: z.coerce.number().min(1, 'Minimal 1 unit'),
-    unitPrice: z.coerce.number().min(1, 'Harga wajib diisi'),
+    unitPrice: z.coerce.number().min(0, 'Harga wajib diisi'),
 
-    // Data Master (image_6c8256.jpg)
-    partCode: z.string().optional(),
-    modelName: z.string().optional(),
-    block: z.string().optional(),
+    // Transform string kosong atau null/undefined menjadi 'N/A' secara otomatis
+    partCode: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((val) => (val?.trim() ? val : 'N/A')),
+
+    modelName: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((val) => (val?.trim() ? val : 'N/A')),
+
+    block: z.string().optional().default(''),
     ipStatus: z.enum(['IP', 'Non IP']).default('Non IP'),
   })
   .superRefine((data, ctx) => {
-    // LOGIKA KRUSIAL: Jika barang baru, Code & Model wajib ada
-    if (!data.sparePartId) {
-      if (!data.partCode?.trim()) {
+    // Validasi tambahan hanya jika barang baru tanpa ID terdaftar
+    if (!data.sparePartId && data.partName) {
+      // Jika modelName masih bernilai 'N/A' dan ingin divalidasi ketat:
+      if (data.modelName === 'N/A') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Part Code wajib untuk barang baru',
-          path: ['partCode'],
-        });
-      }
-      if (!data.modelName?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Model Name wajib untuk barang baru',
+          message: 'Model Name wajib diisi untuk barang baru',
           path: ['modelName'],
         });
       }

@@ -40,24 +40,36 @@ export const srApi = {
 
   // 4. Update Technician (Diagnosa & Hardware Check)
   updateTechnician: async (ticketNumber: string | number, rawData: any) => {
+    // Ambil ID Teknisi dari segala kemungkinan field name di frontend
+    const techIdValue = Number(
+      rawData.technicianCheckId ||
+        rawData.technicianFixId ||
+        rawData.techId ||
+        0,
+    );
+
     const payload = {
-      technicianCheckId: Number(rawData.techId || rawData.technicianCheckId),
-      remarksHistory: rawData.remarks || rawData.remarksHistory,
-      statusService: rawData.status || rawData.statusService,
+      technicianCheckId: techIdValue,
+
+      remarksHistory: rawData.remarks || rawData.remarksHistory || '',
+      statusService: rawData.status || rawData.statusService || 'SERVICE',
       serviceFee: Number(rawData.serviceFee || 0),
       hardwareCheck: rawData.hardwareCheck || null,
+
       parts: (rawData.parts || []).map((p: any) => ({
         sparePartId: p.sparePartId || null,
-        refNo: p.sparePartId,
-        partName: p.partName,
-        quantity: Number(p.quantity),
-        unitPrice: Number(p.unitPrice),
-        partCode: p.partCode || null,
-        modelName: p.modelName || null,
-        block: p.block || null,
+        refNo: p.refNo || p.sparePartId?.toString() || 'N/A',
+        partName: p.partName || 'Sparepart',
+        quantity: Number(p.quantity || 1),
+        unitPrice: Number(p.unitPrice || 0),
+        partCode: p.partCode || 'N/A',
+        modelName: p.modelName || 'N/A',
+        block: p.block || 'N/A',
         ipStatus: p.ipStatus || 'Non IP',
       })),
     };
+
+    console.log('Payload Diagnosis yang dikirim ke Backend:', payload);
 
     const response = await api.patch(
       `/service-request/${ticketNumber}/diagnosis`,

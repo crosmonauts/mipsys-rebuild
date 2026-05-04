@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from 'react';
 import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +13,12 @@ import {
 } from 'lucide-react';
 
 // Shadcn UI Components
-import { Dialog, DialogContent, DialogTitle } from '@/src/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/src/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -31,7 +38,7 @@ import { Button } from '@/src/components/ui/button';
 import { Label } from '@/src/components/ui/label';
 import { Textarea } from '@/src/components/ui/textarea';
 
-// Internal Features (Logika Bisnis Anda)
+// Internal Features
 import { srApi } from '../services/sr-api';
 import { ServiceRequest } from '../types';
 import {
@@ -70,7 +77,7 @@ export function DiagnosisModal({
     },
   });
 
-  // Watch untuk kalkulasi real-time (Lighthouse 100 Performance)
+  // Watch untuk kalkulasi real-time
   const watchedParts = form.watch('parts');
   const subtotalParts = (watchedParts || []).reduce(
     (acc, p) => acc + (Number(p.quantity) || 0) * (Number(p.unitPrice) || 0),
@@ -95,15 +102,27 @@ export function DiagnosisModal({
     }
   }, [isOpen, sr, form]);
 
+  // Handler Sukses
   const onSubmit = async (data: UpdateDiagnosisValues) => {
     try {
+      console.log('Mengirim payload valid:', data);
       await srApi.updateTechnician(sr!.ticketNumber, data);
       onSuccess();
       onClose();
     } catch (error) {
-      alert('Gagal memperbarui data');
+      console.error('API Error:', error);
+      alert('Gagal memperbarui data dari server');
     }
   };
+
+  // --- LOGIKA PENANGKAP ERROR VALIDASI ---
+  const onInvalid = (errors: any) => {
+    console.error('❌ VALIDATION ERROR (Form Gagal Dikirim):', errors);
+    alert(
+      'Form gagal dikirim! Silakan periksa kembali input Anda atau lihat Console browser (F12) untuk detail error.',
+    );
+  };
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'parts',
@@ -114,12 +133,17 @@ export function DiagnosisModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl outline-none">
+        {/* Tambahkan DialogDescription agar tidak ada warning A11y di browser */}
+        <DialogDescription className="sr-only">
+          Form laporan pemeriksaan teknisi dan pemasangan suku cadang
+        </DialogDescription>
+
         <FormProvider {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, onInvalid)} // <-- onInvalid disisipkan di sini
             className="flex flex-col h-full"
           >
-            {/* 1. HEADER (Desain image_6ab49d_2.jpg) */}
+            {/* 1. HEADER */}
             <div
               className={`p-8 text-white relative transition-colors duration-500 ${sr?.remarksHistory ? 'bg-[#1e293b]' : 'bg-[#020617]'}`}
             >
@@ -148,7 +172,7 @@ export function DiagnosisModal({
               </div>
             </div>
 
-            {/* 2. BODY (Scrollable) */}
+            {/* 2. BODY */}
             <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto bg-white">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                 {/* Status Selector */}
@@ -180,11 +204,12 @@ export function DiagnosisModal({
                           <SelectItem value="DONE">✅ DONE</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage /> {/* Menampilkan error validasi */}
                     </FormItem>
                   )}
                 />
 
-                {/* Technician Selector (Hardcoded for now as per image_6ab49d_2.jpg) */}
+                {/* Technician Selector */}
                 <FormField
                   control={form.control}
                   name="technicianCheckId"
@@ -195,7 +220,7 @@ export function DiagnosisModal({
                       </FormLabel>
                       <Select
                         onValueChange={(v) => field.onChange(Number(v))}
-                        value={field.value.toString()}
+                        value={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger className="h-12 border-slate-200 rounded-xl font-bold">
@@ -206,6 +231,7 @@ export function DiagnosisModal({
                           <SelectItem value="2">ADAM</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage /> {/* Menampilkan error validasi teknisi */}
                     </FormItem>
                   )}
                 />
@@ -250,11 +276,11 @@ export function DiagnosisModal({
                         sparePartId: null,
                         modelName: '',
                         partName: '',
+                        refNo: '',
                         quantity: 1,
                         unitPrice: 0,
                         ipStatus: 'Non IP',
                         partCode: '',
-                        refNo: '',
                         block: '',
                       })
                     }
@@ -283,7 +309,7 @@ export function DiagnosisModal({
               </div>
             </div>
 
-            {/* 3. FOOTER (WCAG AAA & Performance Subtotal) */}
+            {/* 3. FOOTER */}
             <div className="p-8 bg-slate-50 border-t flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="bg-white px-8 py-4 rounded-[1.5rem] border border-slate-200 shadow-inner flex items-baseline gap-3">
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
