@@ -1,18 +1,17 @@
 import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../db/db';
 import { ServiceRequestsController } from './service-requests.controller';
 import { ServiceRequestService } from './service-requests.service';
-import { db } from '../db/db';
-import { SparePartsModule } from 'src/spare-parts/spare-parts.module';
 
+/**
+ * FIX: Modul sebelumnya me-redeclare DB_CONNECTION sendiri (konflik dengan DatabaseModule global)
+ * dan mengimpor SparePartsModule yang tidak diperlukan.
+ * Sekarang cukup impor DatabaseModule untuk mendapatkan DB_CONNECTION via @Global().
+ */
 @Module({
-  imports: [SparePartsModule],
+  imports: [DatabaseModule],
   controllers: [ServiceRequestsController],
-  providers: [
-    ServiceRequestService,
-    {
-      provide: 'DB_CONNECTION',
-      useValue: db,
-    },
-  ],
+  providers: [ServiceRequestService],
+  exports: [ServiceRequestService],
 })
 export class ServiceRequestsModule {}

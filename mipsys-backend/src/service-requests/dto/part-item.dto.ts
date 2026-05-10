@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsNumber,
+  Min,
 } from 'class-validator';
 
 export class PartItemDto {
@@ -16,12 +17,12 @@ export class PartItemDto {
   partName!: string;
 
   @IsInt()
-  @IsNotEmpty()
+  @Min(1, { message: 'Quantity minimal 1' })
   quantity!: number;
 
-  @IsNumber() // Pastikan ini number
-  @IsNotEmpty()
-  unitPrice!: number; // Ubah dari string ke number agar sinkron dengan @IsNumber
+  @IsNumber({}, { message: 'Unit price harus berupa angka' })
+  @Min(0, { message: 'Harga tidak boleh negatif' })
+  unitPrice!: number;
 
   @IsString()
   @IsOptional()

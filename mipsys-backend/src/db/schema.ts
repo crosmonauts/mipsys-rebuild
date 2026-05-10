@@ -7,9 +7,41 @@ import {
   mysqlEnum,
   int,
   timestamp,
+  datetime,
   index,
 } from 'drizzle-orm/mysql-core';
-import { relations, eq } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
+
+// ============================================================
+// ENUMS — Exported agar dapat dipakai di service & DTO
+// ============================================================
+
+export const StatusService = {
+  WAITING_CHECK: 'WAITING_CHECK', // Unit baru masuk, belum dicek
+  CHECK: 'CHECK', // Teknisi sedang melakukan pengecekan
+  WAITING_APPROVE: 'WAITING_APPROVE', // Menunggu persetujuan biaya/perbaikan
+  SERVICE: 'SERVICE', // Sedang dalam proses service
+  DONE: 'DONE', // Selesai, siap diambil
+  CANCEL: 'CANCEL', // Dibatalkan
+} as const;
+
+export type StatusServiceType =
+  (typeof StatusService)[keyof typeof StatusService];
+
+export const PurchaseOrderStatus = {
+  REQUESTED: 'REQUESTED',
+  ORDERED: 'ORDERED',
+  SHIPPED: 'SHIPPED',
+  RECEIVED: 'RECEIVED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export type PurchaseOrderStatusType =
+  (typeof PurchaseOrderStatus)[keyof typeof PurchaseOrderStatus];
+
+// ============================================================
+// TABLES
+// ============================================================
 
 export const staff = mysqlTable('staff', {
   id: int('id').autoincrement().primaryKey(),
@@ -46,9 +78,11 @@ export const serviceRequests = mysqlTable(
   'service_requests',
   {
     id: int('id').autoincrement().primaryKey(),
-    ticketNumber: varchar('ticket_number', { length: 100 }).notNull(),
+    ticketNumber: varchar('ticket_number', { length: 100 }).unique().notNull(),
     rmaNo: varchar('rma_no', { length: 100 }),
     incNo: varchar('inc_no', { length: 100 }),
+
+    // FIX: Gunakan mysqlEnum agar DB menolak nilai yang tidak valid
     serviceType: mysqlEnum('service_type', [
       'WARRANTY',
       'NON_WARRANTY',
@@ -61,15 +95,25 @@ export const serviceRequests = mysqlTable(
 
     incomingDate: date('incoming_date').notNull(),
     checkDate: date('check_date'),
-    spDate: date('sp_date'),
-    approveDate: date('approve_date'),
-    readyDate: date('ready_date'),
-    closeDate: date('close_date'),
+    spDate: date('sp_date'), // Tanggal naik ke WAITING_APPROVE
+    approveDate: date('approve_date'), // Tanggal mulai SERVICE
+    readyDate: date('ready_date'), // Tanggal DONE
+    closeDate: date('close_date'), // Tanggal DONE atau CANCEL
     pickUpDate: date('pick_up_date'),
     agingDays: int('aging_days').default(0),
 
     problemDescription: text('problem_description'),
-    statusService: varchar('status_service', { length: 50 }),
+
+    // FIX: statusService sebagai mysqlEnum, bukan varchar bebas
+    statusService: mysqlEnum('status_service', [
+      'WAITING_CHECK',
+      'CHECK',
+      'WAITING_APPROVE',
+      'SERVICE',
+      'DONE',
+      'CANCEL',
+    ]).default('WAITING_CHECK'),
+
     statusSystem: varchar('status_system', { length: 50 }),
     remarksHistory: text('remarks_history'),
 
@@ -107,43 +151,88 @@ export const spareParts = mysqlTable('spare_parts', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
+/**
+ * Tabel untuk mencatat part yang dipakai dalam service request.
+ * Ini adalah USAGE RECORD, bukan PO tracker.
+ */
 export const orderParts = mysqlTable('order_parts', {
   id: int('id').autoincrement().primaryKey(),
   serviceRequestId: int('service_request_id').references(
     () => serviceRequests.id
   ),
-
-  // sparePartId dibuat nullable agar bisa menampung input manual (part belum ada di master)
   sparePartId: int('spare_part_id').references(() => spareParts.id),
 
-  // Backup nama jika input manual atau stok kosong
+  // Backup nama part — dipakai jika input manual atau part dihapus dari master
   partName: varchar('part_name', { length: 255 }).notNull(),
   quantity: int('quantity').default(1).notNull(),
 
-  // Harga saat transaksi dilakukan (mengunci harga agar tidak berubah jika master part berubah)
+  // Harga dikunci saat transaksi agar tidak berubah jika harga master diupdate
   priceAtAction: decimal('price_at_action', {
     precision: 12,
     scale: 2,
   }).default('0.00'),
 
-  // Tracking Status
+  // Status ketersediaan saat dicatat
   status: mysqlEnum('status', [
     'IN_STOCK',
     'OUT_OF_STOCK',
     'MANUAL_NEW',
   ]).default('IN_STOCK'),
 
-  // Procurement Status
-  orderStatus: mysqlEnum('order_status', [
-    'NONE',
-    'PENDING',
-    'ORDERED',
-    'RECEIVED',
-    'CANCELLED',
-  ]).default('NONE'),
-
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+/**
+ * BARU: Tabel Purchase Order untuk workflow pengadaan spare part.
+ * Alur: REQUESTED → ORDERED → SHIPPED → RECEIVED (stok bertambah) / CANCELLED
+ */
+export const purchaseOrders = mysqlTable(
+  'purchase_orders',
+  {
+    id: int('id').autoincrement().primaryKey(),
+
+    // Nullable: PO bisa untuk part yang belum ada di master
+    sparePartId: int('spare_part_id').references(() => spareParts.id),
+
+    // Nama part wajib diisi (backup jika sparePartId null)
+    partName: varchar('part_name', { length: 255 }).notNull(),
+    quantity: int('quantity').default(1).notNull(),
+
+    // Harga beli per unit (opsional, bisa diisi setelah negosiasi dengan supplier)
+    unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).default(
+      '0.00'
+    ),
+
+    status: mysqlEnum('status', [
+      'REQUESTED',
+      'ORDERED',
+      'SHIPPED',
+      'RECEIVED',
+      'CANCELLED',
+    ]).default('REQUESTED'),
+
+    // Jumlah yang benar-benar diterima (support partial receipt)
+    receivedQuantity: int('received_quantity').default(0),
+
+    notes: text('notes'),
+
+    // Timestamp setiap milestone
+    orderedAt: datetime('ordered_at'),
+    shippedAt: datetime('shipped_at'),
+    receivedAt: datetime('received_at'),
+
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  },
+  (table) => ({
+    statusIdx: index('po_status_idx').on(table.status),
+    spIdx: index('po_sp_idx').on(table.sparePartId),
+  })
+);
+
+// ============================================================
+// RELATIONS
+// ============================================================
 
 export const serviceRequestsRelations = relations(
   serviceRequests,
@@ -156,11 +245,17 @@ export const serviceRequestsRelations = relations(
       fields: [serviceRequests.productId],
       references: [products.id],
     }),
-    orderParts: many(orderParts),
+    admin: one(staff, {
+      fields: [serviceRequests.adminId],
+      references: [staff.id],
+      relationName: 'admin',
+    }),
     technicianCheck: one(staff, {
       fields: [serviceRequests.technicianCheckId],
       references: [staff.id],
+      relationName: 'technician',
     }),
+    orderParts: many(orderParts),
   })
 );
 
@@ -175,6 +270,13 @@ export const orderPartsRelations = relations(orderParts, ({ one }) => ({
   }),
 }));
 
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one }) => ({
+  sparePart: one(spareParts, {
+    fields: [purchaseOrders.sparePartId],
+    references: [spareParts.id],
+  }),
+}));
+
 export const customersRelations = relations(customers, ({ many }) => ({
   phones: many(customerPhones),
   requests: many(serviceRequests),
@@ -185,4 +287,9 @@ export const customerPhonesRelations = relations(customerPhones, ({ one }) => ({
     fields: [customerPhones.customerId],
     references: [customers.id],
   }),
+}));
+
+export const sparePartsRelations = relations(spareParts, ({ many }) => ({
+  orderParts: many(orderParts),
+  purchaseOrders: many(purchaseOrders),
 }));

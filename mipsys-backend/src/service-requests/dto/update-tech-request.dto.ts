@@ -1,28 +1,20 @@
-import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsInt,
-  ValidateNested,
-  IsArray,
   IsEnum,
-  IsObject,
+  IsArray,
+  ValidateNested,
+  Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { StatusService } from 'src/db/schema';
 import { PartItemDto } from './part-item.dto';
 
-export enum StatusService {
-  WAITING_CHECK = 'WAITING CHECK',
-  PENDING_APPROVAL = 'PENDING APPROVAL',
-  PENDING_PART = 'PENDING PART',
-  SERVICE = 'SERVICE',
-  DONE = 'DONE',
-  CANCEL = 'CANCEL',
-}
-
 export class UpdateTechRequestDto {
-  @IsInt({ message: 'ID Teknisi harus berupa angka (int)' })
+  @IsInt()
   @IsNotEmpty()
   technicianCheckId!: number;
 
@@ -31,22 +23,20 @@ export class UpdateTechRequestDto {
   remarksHistory!: string;
 
   @IsNumber()
+  @Min(0)
   @IsOptional()
   serviceFee?: number;
 
-  @IsEnum(StatusService, { message: 'Status tidak valid' })
+  // FIX: Tipe sebelumnya 'any' — sekarang menggunakan StatusServiceType yang valid
+  @IsEnum(StatusService, {
+    message: `statusService harus salah satu dari: ${Object.values(StatusService).join(', ')}`,
+  })
   @IsNotEmpty()
-  statusService!: StatusService;
-
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => Object) // Pastikan HardwareCheckDto diimport jika ingin lebih spesifik
-  hardwareCheck?: any;
+  statusService!: string;
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => PartItemDto) // Ini kunci agar class-transformer bisa bekerja
+  @Type(() => PartItemDto)
   parts?: PartItemDto[];
 }

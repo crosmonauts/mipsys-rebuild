@@ -8,64 +8,85 @@ import {
   Query,
   ParseIntPipe,
   DefaultValuePipe,
+  Res,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ServiceRequestService } from './service-requests.service';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 import { UpdateTechRequestDto } from './dto/update-tech-request.dto';
-import { InputBiayaDto } from './dto/input-biaya.dto';
 
 @Controller('service-request')
 export class ServiceRequestsController {
   constructor(private readonly srService: ServiceRequestService) {}
 
-  // 1. DASHBOARD UTAMA (TABEL & PAGINASI)
+  // --- Dashboard & Stats ---
+
   @Get('dashboard')
   async getDashboard(
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return await this.srService.getAllDashboard(search, page, limit);
+    return this.srService.getAllDashboard(search, page, limit);
   }
 
-  // 2. STATISTIK COUNTER (PENTING: Harus di atas :ticketNumber)
-  // Endpoint: GET /service-request/stats
   @Get('stats')
   async getStats() {
-    return await this.srService.getDashboardStats();
+    return this.srService.getDashboardStats();
   }
 
-  // 3. LOG AKTIVITAS TERKINI
-  // Endpoint: GET /service-request/activities
   @Get('activities')
   async getActivities() {
-    return await this.srService.getLatestActivities();
+    return this.srService.getLatestActivities();
   }
 
-  // 4. DATA MASTER TEKNISI
   @Get('technicians')
   async getTechnicians() {
-    return await this.srService.findAllTechnicians();
+    return this.srService.findAllTechnicians();
   }
 
-  // 5. DETAIL TIKET (Diletakkan di bawah agar rute statis tidak ter-intercept)
+  /**
+   * Export seluruh data service request ke file Excel (.xlsx).
+   * Endpoint ini harus didefinisikan SEBELUM :ticketNumber agar tidak
+   * salah di-parse sebagai ticketNumber dengan nilai "export".
+   */
+  @Get('export')
+  async exportExcel(@Res() res: Response) {
+    const buffer = await this.srService.exportToExcel();
+    const today = new Date().toISOString().slice(0, 10);
+    const filename = `service-requests-${today}.xlsx`;
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+
+    res.send(buffer);
+  }
+
+  // --- CRUD ---
+
   @Get(':ticketNumber')
   async getDetail(@Param('ticketNumber') ticketNumber: string) {
-    return await this.srService.getDetailByTicketNumber(ticketNumber);
+    return this.srService.getDetailByTicketNumber(ticketNumber);
   }
 
-  // 6. ENTRY UNIT BARU
   @Post('entry')
+  @HttpCode(HttpStatus.CREATED)
   async create(@Body() createDto: CreateServiceRequestDto) {
-    return await this.srService.createEntry(createDto, createDto.adminId);
+    // TODO: Ganti createDto.adminId dengan user dari JWT Auth Guard
+    return this.srService.createEntry(createDto, createDto.adminId);
   }
 
-  // 7. DIAGNOSA TEKNISI (PATCH)
-  @Patch(':id/diagnosis')
+  @Patch(':ticketNumber/diagnosis')
   async updateTechnician(
-    @Param('id') id: string, // Menggunakan Ticket Number
-    @Body() updateTechDto: UpdateTechRequestDto
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() updateTechDto: UpdateTechRequestDto,
   ) {
-    return await this.srService.updateTechDiagnosis(id, updateTechDto);
+    return this.srService.updateTechDiagnosis(ticketNumber, updateTechDto);
   }
 }

@@ -4,8 +4,7 @@ import * as mysql from 'mysql2/promise';
 import * as schema from './schema';
 import 'dotenv/config';
 
-// 1. Inisialisasi koneksi (Tetap gunakan logika Anda)
-const connection = mysql.createPool({
+const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASS || '',
@@ -13,16 +12,20 @@ const connection = mysql.createPool({
   connectionLimit: 10,
 });
 
-export const db = drizzle(connection, { schema, mode: 'default' });
+export const db = drizzle(pool, { schema, mode: 'default' });
 
-@Global() // Membuat koneksi ini bisa diakses di semua folder tanpa impor manual
+/**
+ * DatabaseModule bersifat @Global() sehingga DB_CONNECTION tersedia
+ * di seluruh aplikasi tanpa perlu diimpor ulang di setiap modul.
+ */
+@Global()
 @Module({
   providers: [
     {
       provide: 'DB_CONNECTION',
-      useValue: db, // Mendaftarkan instance 'db' ke dalam sistem NestJS
+      useValue: db,
     },
   ],
-  exports: ['DB_CONNECTION'], // Mengekspor agar bisa di-inject
+  exports: ['DB_CONNECTION'],
 })
 export class DatabaseModule {}

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { SparePartsService } from './spare-parts.service';
+import { DatabaseModule } from '../db/db';
 import { SparePartsController } from './spare-parts.controller';
-import { DatabaseModule } from '../db/db'; // 1. Impor Module Database Anda
+import { SparePartsService } from './spare-parts.service';
 
 @Module({
   imports: [DatabaseModule],
