@@ -28,9 +28,8 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
 
   const handleSubmit = async () => {
     try {
-      // 3. GABUNGKAN KEMBALI SAAT DIKIRIM KE BACKEND (Agar DTO tidak marah)
       await srApi.prosesKasir(sr.ticketNumber, {
-        serviceFee: totalServiceFee, // labor + onsite disatukan di sini
+        serviceFee: totalServiceFee,
         partFee: partFee,
       });
       onSuccess();

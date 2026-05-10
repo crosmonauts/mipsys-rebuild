@@ -42,20 +42,14 @@ export const srApi = {
   updateTechnician: async (ticketNumber: string | number, rawData: any) => {
     // Ambil ID Teknisi dari segala kemungkinan field name di frontend
     const techIdValue = Number(
-      rawData.technicianCheckId ||
-        rawData.technicianFixId ||
-        rawData.techId ||
-        0,
+      rawData.technicianCheckId || rawData.techId || 0,
     );
 
     const payload = {
       technicianCheckId: techIdValue,
-
       remarksHistory: rawData.remarks || rawData.remarksHistory || '',
       statusService: rawData.status || rawData.statusService || 'SERVICE',
       serviceFee: Number(rawData.serviceFee || 0),
-      hardwareCheck: rawData.hardwareCheck || null,
-
       parts: (rawData.parts || []).map((p: any) => ({
         sparePartId: p.sparePartId || null,
         refNo: p.refNo || p.sparePartId?.toString() || 'N/A',

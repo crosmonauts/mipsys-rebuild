@@ -68,12 +68,6 @@ export function DiagnosisModal({
       statusService: 'SERVICE',
       serviceFee: 0,
       parts: [],
-      hardwareCheck: {
-        phStatus: 'GOOD',
-        mbStatus: 'GOOD',
-        psStatus: 'GOOD',
-        othersStatus: '',
-      },
     },
   });
 
@@ -92,12 +86,6 @@ export function DiagnosisModal({
         statusService: sr.statusService || 'SERVICE',
         serviceFee: Number(sr.serviceFee || 0),
         parts: sr.parts || [],
-        hardwareCheck: (sr as any).hardwareCheck || {
-          phStatus: 'GOOD',
-          mbStatus: 'GOOD',
-          psStatus: 'GOOD',
-          othersStatus: '',
-        },
       });
     }
   }, [isOpen, sr, form]);
