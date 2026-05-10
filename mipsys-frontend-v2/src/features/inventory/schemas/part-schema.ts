@@ -1,10 +1,19 @@
 import * as z from 'zod';
 
-export const addStockSchema = z.object({
-  quantity: z.coerce
-    .number()
-    .min(1, 'Jumlah restock minimal 1 unit')
-    .max(1000, 'Maksimal input restock 1000 unit per transaksi'),
-});
+export const stockActionSchema = z
+  .object({
+    type: z.enum(['ADD', 'SUBTRACT', 'RESET']),
+    quantity: z.coerce.number().min(0, 'Jumlah tidak boleh negatif'),
+  })
+  .refine(
+    (data) => {
+      if (data.type !== 'RESET' && data.quantity <= 0) return false;
+      return true;
+    },
+    {
+      message: 'Jumlah harus lebih dari 0',
+      path: ['quantity'],
+    },
+  );
 
-export type AddStockFormValues = z.infer<typeof addStockSchema>;
+export type StockActionValues = z.infer<typeof stockActionSchema>;
