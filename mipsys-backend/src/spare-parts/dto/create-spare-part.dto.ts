@@ -3,20 +3,21 @@ import {
   IsNotEmpty,
   IsOptional,
   IsInt,
-  IsNumber,
+  IsNumberString,
+  Min,
 } from 'class-validator';
 
 export class CreateSparePartDto {
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Part Code wajib diisi' })
   partCode!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Nama sparepart wajib diisi' })
   partName!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Model mesin wajib diisi' })
   modelName!: string;
 
   @IsString()
@@ -27,12 +28,14 @@ export class CreateSparePartDto {
   @IsOptional()
   refNo?: string;
 
-  @IsInt()
+  @IsInt({ message: 'Stok harus berupa angka bulat' })
+  @Min(0)
   @IsOptional()
   stock: number = 0;
 
-  @IsNumber()
-  @IsNotEmpty()
+  // PERBAIKAN: Gunakan IsNumberString agar sinkron dengan tipe string
+  @IsNumberString({}, { message: 'Harga harus berupa format angka' })
+  @IsNotEmpty({ message: 'Harga wajib diisi' })
   price!: string;
 
   @IsString()

@@ -1,102 +1,152 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { db } from '../db/db';
+import { eq, like, sql, or, desc, InferSelectModel } from 'drizzle-orm';
+import { MySql2Database } from 'drizzle-orm/mysql2';
+import * as schema from '../db/schema';
 import { spareParts } from '../db/schema';
-import { eq, sql, like } from 'drizzle-orm';
 import { CreateSparePartDto } from './dto/create-spare-part.dto';
 import { UpdateSparePartDto } from './dto/update-spare-part.dto';
 
+export type SparePart = InferSelectModel<typeof spareParts>;
+
 @Injectable()
 export class SparePartsService {
-  async findAll() {
-    return await db.select().from(spareParts);
-  }
+  constructor(
+    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+  ) {}
 
-  async findOne(id: number) {
-    const [result] = await db
+  // ==========================================
+  // 1. READ OPERATIONS
+  // ==========================================
+
+  async findAll() {
+    return await this.db
       .select()
       .from(spareParts)
-      .where(eq(spareParts.id, id));
+      .orderBy(desc(spareParts.createdAt));
+  }
+
+  async findOne(id: number): Promise<SparePart> {
+    const [result] = await this.db
+      .select()
+      .from(spareParts)
+      .where(eq(spareParts.id, id))
+      .limit(1);
+
     if (!result)
       throw new NotFoundException(`Suku cadang ID ${id} tidak ditemukan`);
     return result;
   }
 
   async findByCode(code: string) {
-    const [result] = await db
+    const [result] = await this.db
       .select()
       .from(spareParts)
-      .where(eq(spareParts.partCode, code));
+      .where(eq(spareParts.partCode, code))
+      .limit(1);
     return result;
   }
 
   async search(query: string) {
-    return await db
+    return await this.db
       .select()
       .from(spareParts)
-      .where(like(spareParts.partName, `%${query}%`));
+      .where(
+        or(
+          like(spareParts.partName, `%${query}%`),
+          like(spareParts.partCode, `%${query}%`),
+          like(spareParts.modelName, `%${query}%`)
+        )
+      )
+      .limit(20);
   }
 
-  async create(data: CreateSparePartDto) {
-    // Simpan hasil eksekusi Drizzle
-    const [result] = await db.insert(spareParts).values(data);
+  // ==========================================
+  // 2. WRITE OPERATIONS
+  // ==========================================
 
-    // Kembalikan objek yang lebih mudah dibaca Frontend
+  async create(data: CreateSparePartDto) {
+    // Ubah harga ke string jika di DB tipe DECIMAL untuk akurasi
+    const payload = {
+      ...data,
+      price: data.price?.toString() || '0',
+    };
+
+    const [result] = await this.db.insert(spareParts).values(payload as any);
+
     return {
+      success: true,
       message: 'Spare part berhasil ditambahkan',
       insertedId: result.insertId,
     };
   }
 
+  async update(id: number, data: UpdateSparePartDto) {
+    await this.findOne(id); // Guard: Pastikan barang ada
+
+    const result = await this.db
+      .update(spareParts)
+      .set({
+        ...data,
+        price: data.price?.toString(),
+        updatedAt: new Date(),
+      })
+      .where(eq(spareParts.id, id));
+
+    return {
+      success: true,
+      message: 'Data suku cadang berhasil diperbarui',
+    };
+  }
+
+  async remove(id: number) {
+    await this.findOne(id);
+    await this.db.delete(spareParts).where(eq(spareParts.id, id));
+    return { success: true, message: `Suku cadang ID ${id} berhasil dihapus` };
+  }
+
+  // ==========================================
+  // 3. INVENTORY LOGIC (STOCK CONTROL)
+  // ==========================================
+
   async addStock(id: number, quantity: number) {
     if (quantity <= 0)
       throw new BadRequestException('Jumlah penambahan harus lebih dari 0');
 
-    await this.findOne(id); // Validasi barang ada
+    await this.findOne(id);
 
-    return await db
+    return await this.db
       .update(spareParts)
-      .set({ stock: sql`${spareParts.stock} + ${quantity}` })
+      .set({
+        stock: sql`${spareParts.stock} + ${quantity}`,
+        updatedAt: new Date(),
+      })
       .where(eq(spareParts.id, id));
   }
 
-  // FUNGSI BARU: Update Data (Nama, Harga, dll)
-  async update(id: number, data: UpdateSparePartDto) {
-    const result = await db
-      .update(spareParts)
-      .set(data)
-      .where(eq(spareParts.id, id));
-
-    return {
-      message: 'Data suku cadang berhasil diperbarui',
-      affectedRows: result[0].affectedRows,
-    };
-  }
-
-  // FUNGSI BARU: Hapus Data
-  async remove(id: number) {
-    await this.findOne(id); // Cek dulu barangnya
-    return await db.delete(spareParts).where(eq(spareParts.id, id));
-  }
-
-  // FUNGSI KRUSIAL: Mengurangi stok saat servis
+  /**
+   * Mengurangi stok (Digunakan untuk transaksi di luar ServiceRequest)
+   */
   async reduceStock(id: number, quantity: number) {
     const item = await this.findOne(id);
-
     const currentStock = item.stock ?? 0;
 
     if (currentStock < quantity) {
       throw new BadRequestException(
-        `Stok tidak cukup. Sisa: ${currentStock}, Diminta: ${quantity}`
+        `Stok tidak cukup. Barang: ${item.partName}, Sisa: ${currentStock}, Diminta: ${quantity}`
       );
     }
 
-    return await db
+    return await this.db
       .update(spareParts)
-      .set({ stock: sql`${spareParts.stock} - ${quantity}` })
+      .set({
+        stock: sql`${spareParts.stock} - ${quantity}`,
+        updatedAt: new Date(),
+      })
       .where(eq(spareParts.id, id));
   }
 }

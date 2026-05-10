@@ -1,19 +1,23 @@
-import { IsString, IsOptional } from 'class-validator';
+// import { IsString, IsOptional, MaxLength } from 'class-validator';
 
-export class HardwareCheckDto {
-  @IsString()
-  @IsOptional()
-  phStatus!: string;
+// export class HardwareCheckDto {
+//   @IsString()
+//   @IsOptional()
+//   @MaxLength(50)
+//   phStatus?: string; // Physical Status
 
-  @IsString()
-  @IsOptional()
-  mbStatus!: string;
+//   @IsString()
+//   @IsOptional()
+//   @MaxLength(50)
+//   mbStatus?: string; // Mainboard Status
 
-  @IsString()
-  @IsOptional()
-  psStatus!: string;
+//   @IsString()
+//   @IsOptional()
+//   @MaxLength(50)
+//   psStatus?: string;
 
-  @IsString()
-  @IsOptional()
-  othersStatus!: string;
-}
+//   @IsString()
+//   @IsOptional()
+//   @MaxLength(255)
+//   othersStatus?: string;
+// }

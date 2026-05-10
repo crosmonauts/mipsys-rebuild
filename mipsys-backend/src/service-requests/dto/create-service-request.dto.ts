@@ -9,16 +9,21 @@ import {
   Min,
 } from 'class-validator';
 
+export enum ServiceType {
+  WARRANTY = 'WARRANTY',
+  NON_WARRANTY = 'NON_WARRANTY',
+}
+
 export class CreateServiceRequestDto {
   // --- Target: Tabel Customers ---
   @IsString()
-  @IsNotEmpty({ message: 'Nama pelanggan (customers.name) wajib diisi' })
-  @MaxLength(255) // Sesuai varchar(255)
-  customerName?: string;
+  @IsNotEmpty({ message: 'Nama pelanggan wajib diisi' })
+  @MaxLength(255)
+  customerName!: string; // Gunakan ! karena @IsNotEmpty
 
   @IsString()
   @IsOptional()
-  address?: string; // Sesuai text("address")
+  address?: string;
 
   @IsInt({ message: 'Admin ID harus berupa angka' })
   @IsNotEmpty({ message: 'Admin ID wajib disertakan' })
@@ -26,38 +31,39 @@ export class CreateServiceRequestDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(50) // Sesuai varchar(50)
+  @MaxLength(50)
   customerType?: string;
 
   // --- Target: Tabel Customer Phones ---
   @IsString()
-  @IsNotEmpty({ message: 'Nomor telepon (customer_phones.phone) wajib diisi' })
-  @MaxLength(50) // Sesuai varchar(50)
-  phone?: string;
+  @IsNotEmpty({ message: 'Nomor telepon wajib diisi' })
+  @MaxLength(50)
+  phone!: string;
 
   // --- Target: Tabel Products ---
   @IsString()
-  @IsNotEmpty({ message: 'Model barang (products.modelName) wajib diisi' })
-  @MaxLength(100) // Sesuai varchar(100)
-  modelName?: string;
+  @IsNotEmpty({ message: 'Model barang wajib diisi' })
+  @MaxLength(100)
+  modelName!: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Serial Number (products.serialNumber) wajib diisi' })
-  @MaxLength(100) // Sesuai varchar(100)
-  serialNumber?: string;
+  @IsNotEmpty({ message: 'Serial Number wajib diisi' })
+  @MaxLength(100)
+  serialNumber!: string;
 
   // --- Target: Tabel Service Requests ---
   @IsNotEmpty()
-  @IsIn(['WARRANTY', 'NON_WARRANTY'], {
+  @IsIn(Object.values(ServiceType), {
     message: 'Tipe servis harus WARRANTY atau NON_WARRANTY',
   })
-  serviceType?: 'WARRANTY' | 'NON_WARRANTY'; // Sesuai mysqlEnum
+  serviceType!: ServiceType;
 
   @IsString()
   @IsOptional()
-  problemDescription?: string; // Sesuai text("problem_description")
+  problemDescription?: string;
 
   @IsNumber({}, { message: 'Biaya servis harus berupa angka' })
   @Min(0, { message: 'Biaya servis tidak boleh negatif' })
-  serviceFee?: number; // Sesuai decimal("service_fee", 10, 2)
+  @IsOptional() // Tambahkan ini jika biaya servis boleh kosong di awal
+  serviceFee?: number;
 }
