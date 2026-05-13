@@ -52,21 +52,10 @@ export const staff = mysqlTable('staff', {
 export const customers = mysqlTable('customers', {
   id: int('id').autoincrement().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 50 }),
   address: text('address'),
   customerType: varchar('customer_type', { length: 50 }),
 });
-
-export const customerPhones = mysqlTable(
-  'customer_phones',
-  {
-    id: int('id').autoincrement().primaryKey(),
-    customerId: int('customer_id').references(() => customers.id),
-    phone: varchar('phone', { length: 50 }).notNull(),
-  },
-  (table) => ({
-    phoneIdx: index('phone_idx').on(table.phone),
-  })
-);
 
 export const products = mysqlTable('products', {
   id: int('id').autoincrement().primaryKey(),
@@ -151,10 +140,6 @@ export const spareParts = mysqlTable('spare_parts', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
-/**
- * Tabel untuk mencatat part yang dipakai dalam service request.
- * Ini adalah USAGE RECORD, bukan PO tracker.
- */
 export const orderParts = mysqlTable('order_parts', {
   id: int('id').autoincrement().primaryKey(),
   serviceRequestId: int('service_request_id').references(
@@ -274,18 +259,6 @@ export const purchaseOrdersRelations = relations(purchaseOrders, ({ one }) => ({
   sparePart: one(spareParts, {
     fields: [purchaseOrders.sparePartId],
     references: [spareParts.id],
-  }),
-}));
-
-export const customersRelations = relations(customers, ({ many }) => ({
-  phones: many(customerPhones),
-  requests: many(serviceRequests),
-}));
-
-export const customerPhonesRelations = relations(customerPhones, ({ one }) => ({
-  customer: one(customers, {
-    fields: [customerPhones.customerId],
-    references: [customers.id],
   }),
 }));
 

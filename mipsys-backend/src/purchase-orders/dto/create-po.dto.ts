@@ -9,10 +9,6 @@ import {
 } from 'class-validator';
 
 export class CreatePurchaseOrderDto {
-  /**
-   * ID spare part dari master. Boleh null jika part belum ada di master
-   * (misalnya part baru yang belum pernah masuk stok sebelumnya).
-   */
   @IsInt({ message: 'sparePartId harus berupa angka' })
   @IsOptional()
   sparePartId?: number;

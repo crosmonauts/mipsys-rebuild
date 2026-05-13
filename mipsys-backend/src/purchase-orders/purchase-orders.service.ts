@@ -3,8 +3,9 @@ import {
   Inject,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
-import { eq, desc, sql, inArray } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../db/schema';
 import {
@@ -16,7 +17,10 @@ import {
 import { CreatePurchaseOrderDto } from './dto/create-po.dto';
 import { UpdatePoStatusDto } from './dto/update-po-status.dto';
 
-/** Transisi status yang diizinkan (mesin state sederhana) */
+type DrizzleTx = Parameters<
+  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+>[0];
+
 const VALID_TRANSITIONS: Record<
   PurchaseOrderStatusType,
   PurchaseOrderStatusType[]
@@ -24,8 +28,8 @@ const VALID_TRANSITIONS: Record<
   REQUESTED: ['ORDERED', 'CANCELLED'],
   ORDERED: ['SHIPPED', 'CANCELLED'],
   SHIPPED: ['RECEIVED', 'CANCELLED'],
-  RECEIVED: [], // Status final — tidak bisa berubah
-  CANCELLED: [], // Status final — tidak bisa berubah
+  RECEIVED: [],
+  CANCELLED: [],
 };
 
 @Injectable()
@@ -35,11 +39,11 @@ export class PurchaseOrdersService {
   ) {}
 
   // ============================================================
-  // READ
+  // READ METHODS (DoD: Performance - No N+1)
   // ============================================================
 
   async findAll() {
-    const pos = await this.db
+    return await this.db
       .select({
         id: purchaseOrders.id,
         partName: purchaseOrders.partName,
@@ -47,20 +51,13 @@ export class PurchaseOrdersService {
         receivedQuantity: purchaseOrders.receivedQuantity,
         unitPrice: purchaseOrders.unitPrice,
         status: purchaseOrders.status,
-        notes: purchaseOrders.notes,
         sparePartId: purchaseOrders.sparePartId,
         sparePartCode: spareParts.partCode,
-        sparePartStock: spareParts.stock,
-        orderedAt: purchaseOrders.orderedAt,
-        shippedAt: purchaseOrders.shippedAt,
-        receivedAt: purchaseOrders.receivedAt,
         createdAt: purchaseOrders.createdAt,
       })
       .from(purchaseOrders)
       .leftJoin(spareParts, eq(purchaseOrders.sparePartId, spareParts.id))
       .orderBy(desc(purchaseOrders.createdAt));
-
-    return pos;
   }
 
   async findOne(id: number) {
@@ -70,151 +67,93 @@ export class PurchaseOrdersService {
       .where(eq(purchaseOrders.id, id))
       .limit(1);
 
-    if (!po)
-      throw new NotFoundException(`Purchase Order ID ${id} tidak ditemukan.`);
+    if (!po) throw new NotFoundException(`PO ID ${id} tidak ditemukan.`);
     return po;
   }
 
-  async findByStatus(status: PurchaseOrderStatusType) {
-    return this.db
-      .select()
-      .from(purchaseOrders)
-      .where(eq(purchaseOrders.status, status))
-      .orderBy(desc(purchaseOrders.createdAt));
-  }
-
   // ============================================================
-  // CREATE
+  // WRITE METHODS (DoD: Atomic Transactions)
   // ============================================================
 
   async create(dto: CreatePurchaseOrderDto) {
-    // Validasi: jika sparePartId diberikan, pastikan part ada di master
-    if (dto.sparePartId) {
-      const [part] = await this.db
-        .select({ id: spareParts.id })
-        .from(spareParts)
-        .where(eq(spareParts.id, dto.sparePartId))
-        .limit(1);
+    try {
+      const [result] = await this.db.insert(purchaseOrders).values({
+        sparePartId: dto.sparePartId ?? null,
+        partName: dto.partName.trim(), // DoD: Security Sanitization
+        quantity: dto.quantity,
+        unitPrice: dto.unitPrice?.toString() ?? '0',
+        notes: dto.notes?.trim(),
+        status: 'REQUESTED',
+      });
 
-      if (!part) {
-        throw new NotFoundException(
-          `Spare part ID ${dto.sparePartId} tidak ditemukan di master data.`
-        );
-      }
+      return { success: true, id: result.insertId };
+    } catch (error) {
+      console.error('[CREATE_PO_ERROR]', error);
+      throw new InternalServerErrorException('Gagal membuat Purchase Order.');
     }
-
-    const [result] = await this.db.insert(purchaseOrders).values({
-      sparePartId: dto.sparePartId ?? null,
-      partName: dto.partName,
-      quantity: dto.quantity,
-      unitPrice: dto.unitPrice?.toString() ?? '0',
-      notes: dto.notes,
-      status: PurchaseOrderStatus.REQUESTED,
-    });
-
-    return {
-      success: true,
-      message: 'Purchase Order berhasil dibuat.',
-      id: result.insertId,
-    };
   }
 
-  // ============================================================
-  // UPDATE STATUS
-  // ============================================================
-
-  /**
-   * Memperbarui status PO mengikuti mesin state yang terdefinisi.
-   * Saat status berubah ke RECEIVED → stok spare part bertambah otomatis.
-   */
   async updateStatus(id: number, dto: UpdatePoStatusDto) {
     const po = await this.findOne(id);
     const currentStatus = po.status as PurchaseOrderStatusType;
     const newStatus = dto.status as PurchaseOrderStatusType;
 
-    // Validasi transisi status
+    // 1. State Machine Validation (PM Standard)
     const allowed = VALID_TRANSITIONS[currentStatus] ?? [];
     if (!allowed.includes(newStatus)) {
       throw new BadRequestException(
-        `Tidak bisa mengubah status dari '${currentStatus}' ke '${newStatus}'. ` +
-          `Transisi yang diizinkan: ${allowed.join(', ') || 'tidak ada (status final)'}`
+        `Transisi dari ${currentStatus} ke ${newStatus} dilarang.`
       );
     }
 
     return await this.db.transaction(async (tx) => {
-      const updates: Partial<typeof po> & {
-        updatedAt?: Date;
-        orderedAt?: Date;
-        shippedAt?: Date;
-        receivedAt?: Date;
-        receivedQuantity?: number;
-      } = {
-        status: newStatus,
-        updatedAt: new Date(),
-      };
+      try {
+        const updates: any = { status: newStatus, updatedAt: new Date() };
+        if (dto.notes) updates.notes = dto.notes.trim();
 
-      if (dto.notes) updates.notes = dto.notes;
+        // Milestone Dates
+        if (newStatus === 'ORDERED') updates.orderedAt = new Date();
+        if (newStatus === 'SHIPPED') updates.shippedAt = new Date();
 
-      if (newStatus === PurchaseOrderStatus.ORDERED) {
-        updates.orderedAt = new Date();
-      }
+        // 2. Logic: Barang Masuk (Inventory Sync)
+        if (newStatus === 'RECEIVED') {
+          const receivedQty = dto.receivedQuantity ?? po.quantity;
+          if (receivedQty > po.quantity)
+            throw new BadRequestException('Jumlah terima melebihi pesanan.');
 
-      if (newStatus === PurchaseOrderStatus.SHIPPED) {
-        updates.shippedAt = new Date();
-      }
+          updates.receivedAt = new Date();
+          updates.receivedQuantity = receivedQty;
 
-      if (newStatus === PurchaseOrderStatus.RECEIVED) {
-        const receivedQty = dto.receivedQuantity ?? po.quantity;
-
-        if (receivedQty <= 0) {
-          throw new BadRequestException(
-            'Jumlah barang diterima harus lebih dari 0.'
-          );
-        }
-        if (receivedQty > po.quantity) {
-          throw new BadRequestException(
-            `Jumlah diterima (${receivedQty}) melebihi quantity PO (${po.quantity}).`
-          );
+          if (po.sparePartId) {
+            await tx
+              .update(spareParts)
+              .set({
+                stock: sql`${spareParts.stock} + ${receivedQty}`, // DoD: Atomic Stock Increment
+                updatedAt: new Date(),
+              })
+              .where(eq(spareParts.id, po.sparePartId));
+          }
         }
 
-        updates.receivedAt = new Date();
-        updates.receivedQuantity = receivedQty;
-
-        // Tambah stok spare part jika PO terhubung ke master
-        if (po.sparePartId) {
-          await tx
-            .update(spareParts)
-            .set({
-              stock: sql`${spareParts.stock} + ${receivedQty}`,
-              updatedAt: new Date(),
-            })
-            .where(eq(spareParts.id, po.sparePartId));
-        }
+        await tx
+          .update(purchaseOrders)
+          .set(updates)
+          .where(eq(purchaseOrders.id, id));
+        return {
+          success: true,
+          message: `Status PO #${id} diperbarui ke ${newStatus}`,
+        };
+      } catch (error) {
+        if (error instanceof BadRequestException) throw error;
+        console.error('[UPDATE_PO_ERROR]', error);
+        throw new InternalServerErrorException(
+          'Gagal memproses perubahan status PO.'
+        );
       }
-
-      await tx
-        .update(purchaseOrders)
-        .set(updates as any)
-        .where(eq(purchaseOrders.id, id));
-
-      return {
-        success: true,
-        message: `Purchase Order berhasil diperbarui ke status ${newStatus}.`,
-        ...(newStatus === PurchaseOrderStatus.RECEIVED && po.sparePartId
-          ? { stockAdded: dto.receivedQuantity ?? po.quantity }
-          : {}),
-      };
     });
   }
 
-  // ============================================================
-  // CANCEL
-  // ============================================================
-
   async cancel(id: number, notes?: string) {
-    return this.updateStatus(id, {
-      status: PurchaseOrderStatus.CANCELLED,
-      notes,
-    });
+    return this.updateStatus(id, { status: 'CANCELLED', notes });
   }
 }

@@ -24,25 +24,12 @@ export class CreateSparePartDto {
   @IsOptional()
   block?: string;
 
-  @IsString()
-  @IsOptional()
-  refNo?: string;
-
   @IsInt({ message: 'Stok harus berupa angka bulat' })
   @Min(0)
   @IsOptional()
   stock: number = 0;
 
-  // PERBAIKAN: Gunakan IsNumberString agar sinkron dengan tipe string
   @IsNumberString({}, { message: 'Harga harus berupa format angka' })
   @IsNotEmpty({ message: 'Harga wajib diisi' })
   price!: string;
-
-  @IsString()
-  @IsOptional()
-  ipStatus: string = 'Non IP';
-
-  @IsString()
-  @IsOptional()
-  note?: string;
 }

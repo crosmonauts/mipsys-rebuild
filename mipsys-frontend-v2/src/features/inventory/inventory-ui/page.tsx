@@ -266,7 +266,7 @@ export default function InventoryPage() {
         isOpen={isRestockOpen}
         onClose={() => setIsRestockOpen(false)}
         onSuccess={fetchParts}
-        onAddStockSubmit={handleAddStockSubmit}
+        onStockAction={handleAddStockSubmit}
       />
 
       {/* --- FOOTER SINKRON --- */}

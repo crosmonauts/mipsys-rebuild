@@ -17,46 +17,34 @@ import { UpdateSparePartDto } from './dto/update-spare-part.dto';
 export class SparePartsController {
   constructor(private readonly sparePartsService: SparePartsService) {}
 
-  @Get('search')
-  async search(@Query('q') query: string) {
-    if (!query) return [];
-    return await this.sparePartsService.search(query);
-  }
-
   @Get()
-  findAll() {
-    return this.sparePartsService.findAll();
+  async findAll() {
+    return await this.sparePartsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.sparePartsService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.sparePartsService.findOne(id);
   }
 
   @Post()
-  create(@Body() createDto: CreateSparePartDto) {
-    return this.sparePartsService.create(createDto);
+  async create(@Body() dto: CreateSparePartDto) {
+    return await this.sparePartsService.create(dto);
   }
 
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateDto: UpdateSparePartDto
+    @Body() dto: UpdateSparePartDto
   ) {
-    return await this.sparePartsService.update(id, updateDto);
+    return await this.sparePartsService.update(id, dto);
   }
 
   @Patch(':id/add-stock')
   async addStock(
     @Param('id', ParseIntPipe) id: number,
-    @Body('quantity', ParseIntPipe) quantity: number
+    @Body('quantity') qty: number
   ) {
-    return await this.sparePartsService.addStock(id, quantity);
-  }
-
-  // Hapus barang
-  @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return await this.sparePartsService.remove(id);
+    return await this.sparePartsService.addStock(id, qty);
   }
 }
