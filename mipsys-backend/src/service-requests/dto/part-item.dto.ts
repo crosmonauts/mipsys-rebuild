@@ -19,9 +19,9 @@ export class PartItemDto {
   @IsNotEmpty()
   quantity!: number;
 
-  @IsNumber()
+  @IsNumber() // Pastikan ini number
   @IsNotEmpty()
-  unitPrice!: string;
+  unitPrice!: number; // Ubah dari string ke number agar sinkron dengan @IsNumber
 
   @IsString()
   @IsOptional()

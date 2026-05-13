@@ -1,5 +1,5 @@
-import { Module } from "@nestjs/common";
-import { ServiceRequestsModule } from "./service-requests/service-requests.module";
+import { Module } from '@nestjs/common';
+import { ServiceRequestsModule } from './service-requests/service-requests.module';
 import { SparePartsModule } from './spare-parts/spare-parts.module';
 
 @Module({

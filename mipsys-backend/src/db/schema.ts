@@ -90,19 +90,6 @@ export const serviceRequests = mysqlTable(
   })
 );
 
-export const hardwareChecks = mysqlTable('hardware_checks', {
-  id: int('id').autoincrement().primaryKey(),
-  serviceRequestId: int('service_request_id').references(
-    () => serviceRequests.id
-  ),
-  phStatus: varchar('ph_status', { length: 100 }),
-  mbStatus: varchar('mb_status', { length: 100 }),
-  psStatus: varchar('ps_status', { length: 100 }),
-  othersStatus: varchar('others_status', { length: 100 }),
-  accessories: text('accessories'),
-  legacyOthersNotes: text('legacy_others_notes'),
-});
-
 export const spareParts = mysqlTable('spare_parts', {
   id: int('id').primaryKey().autoincrement(),
   partCode: varchar('part_code', { length: 100 }).unique(),
@@ -116,6 +103,8 @@ export const spareParts = mysqlTable('spare_parts', {
   price: decimal('price', { precision: 12, scale: 2 }).default('0.00'),
   note: text('note'),
   ipStatus: varchar('ip_status', { length: 50 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 export const orderParts = mysqlTable('order_parts', {
@@ -168,10 +157,6 @@ export const serviceRequestsRelations = relations(
       references: [products.id],
     }),
     orderParts: many(orderParts),
-    hardwareCheck: one(hardwareChecks, {
-      fields: [serviceRequests.id],
-      references: [hardwareChecks.serviceRequestId],
-    }),
     technicianCheck: one(staff, {
       fields: [serviceRequests.technicianCheckId],
       references: [staff.id],

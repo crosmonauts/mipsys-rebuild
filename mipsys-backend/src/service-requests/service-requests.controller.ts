@@ -68,10 +68,4 @@ export class ServiceRequestsController {
   ) {
     return await this.srService.updateTechDiagnosis(id, updateTechDto);
   }
-
-  // 8. PROSES KASIR (PATCH)
-  @Patch(':id/kasir')
-  async jalankanKasir(@Param('id') id: string, @Body() dto: InputBiayaDto) {
-    return await this.srService.prosesKasir(id, dto);
-  }
 }

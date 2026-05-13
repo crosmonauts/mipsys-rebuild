@@ -64,14 +64,6 @@ export const updateDiagnosisSchema = z.object({
   statusService: z.string(),
   serviceFee: z.coerce.number().default(0),
   parts: z.array(partItemSchema).default([]),
-  hardwareCheck: z
-    .object({
-      phStatus: z.string().default('GOOD'),
-      mbStatus: z.string().default('GOOD'),
-      psStatus: z.string().default('GOOD'),
-      othersStatus: z.string().optional(),
-    })
-    .nullable(),
 });
 
 export type SRFormValues = z.infer<typeof serviceRequestSchema>;

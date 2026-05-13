@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'csv-parser';
-import { db } from '../db/db';
+import { db } from 'src/db/db';
 import {
   staff,
   customers,
