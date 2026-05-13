@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sidebar } from '@/src/features/service-request/service-ui/Sidebar';
+import { Sidebar } from '@/src/components/layout/Sidebar';
 import { Search, Bell, Menu } from 'lucide-react';
 import './globals.css';
 

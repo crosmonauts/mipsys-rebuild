@@ -12,6 +12,7 @@ import {
   Printer,
   LogOut,
   X,
+  ShoppingBag, // <-- Import icon baru untuk Part Order
 } from 'lucide-react';
 
 export function Sidebar({
@@ -36,6 +37,12 @@ export function Sidebar({
       icon: <Package size={20} />,
       link: '/inventory',
       count: '5',
+    },
+    {
+      // --- MENU BARU ---
+      title: 'Part Order',
+      icon: <ShoppingBag size={20} />,
+      link: '/part-order',
     },
     {
       title: 'Finance & Billing',
@@ -74,7 +81,7 @@ export function Sidebar({
               <Printer size={18} strokeWidth={3} className="text-white" />
             </div>
             <div>
-              <h1 className="font-black text-lg tracking-tighter uppercase leading-none">
+              <h1 className="font-black text-lg tracking-tighter uppercase leading-none text-white">
                 MIPSYS
               </h1>
               <p className="text-[9px] font-black text-blue-400 tracking-widest uppercase mt-0.5">
@@ -93,7 +100,12 @@ export function Sidebar({
             Modul Sistem
           </p>
           {menuItems.map((item) => {
-            const isActive = pathname === item.link;
+            // Gunakan startsWith agar menu tetap aktif saat berada di halaman detail
+            const isActive =
+              item.link === '/'
+                ? pathname === '/'
+                : pathname.startsWith(item.link);
+
             return (
               <Link
                 key={item.title}
@@ -134,10 +146,10 @@ export function Sidebar({
               N
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate">
+              <p className="text-xs font-bold text-white truncate uppercase">
                 Nanda Pratama
               </p>
-              <p className="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">
+              <p className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">
                 Administrator
               </p>
             </div>
