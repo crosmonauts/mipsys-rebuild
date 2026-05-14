@@ -8,14 +8,33 @@ import {
   HttpStatus,
   UsePipes,
   ValidationPipe,
+  Get,
 } from '@nestjs/common';
 import { ServiceRequestService } from './service-requests.service';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 
-@Controller('service-requests')
+@Controller('service-request')
 export class ServiceRequestsController {
   constructor(private readonly serviceRequestService: ServiceRequestService) {}
-  @Post()
+
+  @Get('dashboard')
+  async findAll() {
+    return await this.serviceRequestService.findAll();
+  }
+
+  @Get('activities')
+  async getActivities() {
+    // DoD Performance: Pastikan di service menggunakan limit (misal 10 data terakhir)
+    return await this.serviceRequestService.getActivities();
+  }
+
+  @Get('stats')
+  async getStats() {
+    // DoD Performance: Pastikan kueri ini tidak N+1
+    return await this.serviceRequestService.getDashboardStats();
+  }
+
+  @Post('entry')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async create(@Body() createDto: CreateServiceRequestDto) {

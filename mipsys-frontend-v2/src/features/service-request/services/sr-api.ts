@@ -14,8 +14,12 @@ export const srApi = {
       .then((r) => r.data),
 
   // 2. Ambil Detail Per Unit
-  getOne: (id: string | number) =>
-    api.get(`/service-request/${id}`).then((r) => r.data),
+  getDetail: (ticketNumber: string) =>
+    api.get(`/service-request/${ticketNumber}`).then((r) => r.data),
+
+  // Tambahkan juga fungsi update agar tombol "Simpan" tadi jalan
+  updateEntry: (ticketNumber: string, data: any) =>
+    api.patch(`/service-request/${ticketNumber}`, data).then((r) => r.data),
 
   getDashboardStats: () =>
     api.get('/service-request/stats').then((r) => r.data),

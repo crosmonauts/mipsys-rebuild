@@ -38,8 +38,15 @@ export default function DashboardPage() {
       ]);
       setActivities(logsData);
       setStats(statsData);
-    } catch (error) {
-      console.error('Sync Error:', error);
+    } catch (error: any) {
+      // Ini bagian paling penting!
+      console.error(
+        'Waduh, ada error di sini:',
+        error.response?.data || error.message,
+      );
+
+      // Cek juga status code-nya (404, 500, atau 403)
+      console.log('Status Error:', error.response?.status);
     } finally {
       setLoadingLogs(false);
     }

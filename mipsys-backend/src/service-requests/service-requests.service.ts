@@ -4,10 +4,11 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../db/schema';
 import {
+  serviceLogs,
   serviceRequests,
   customers,
   products,
@@ -15,7 +16,6 @@ import {
 } from '../db/schema';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 
-/** Tipe Drizzle transaction agar tidak menggunakan 'any' */
 type DrizzleTx = Parameters<
   Parameters<MySql2Database<typeof schema>['transaction']>[0]
 >[0];
@@ -27,6 +27,53 @@ export class ServiceRequestService {
   ) {}
   private async logSystemError(action: string, error: any, context?: any) {
     console.error(`[${action}] Error:`, error);
+  }
+
+  async findAll() {
+    try {
+      const results = await this.db
+        .select({
+          id: serviceRequests.id,
+          ticketNumber: serviceRequests.ticketNumber,
+          status: serviceRequests.statusService,
+          incomingDate: serviceRequests.incomingDate,
+          customerName: customers.name,
+          customerPhone: customers.phone,
+          modelName: products.modelName,
+          serialNumber: products.serialNumber,
+        })
+        .from(serviceRequests)
+        .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
+        .leftJoin(products, eq(serviceRequests.productId, products.id))
+        .orderBy(desc(serviceRequests.createdAt));
+
+      return results;
+    } catch (error) {
+      console.error('[GET_ALL_SR_ERROR]', error);
+      throw new InternalServerErrorException('Gagal menarik daftar servis.');
+    }
+  }
+
+  async getActivities() {
+    try {
+      return await this.db
+        .select({
+          id: serviceLogs.id,
+          action: serviceLogs.action,
+          description: serviceLogs.description,
+          createdAt: serviceLogs.createdAt,
+        })
+        .from(serviceLogs)
+        .limit(10)
+        .orderBy(desc(serviceLogs.createdAt));
+    } catch (error) {
+      console.error('[GET_ACTIVITIES_ERROR]', error);
+      throw new InternalServerErrorException('Gagal mengambil data aktivitas.');
+    }
+  }
+
+  async getDashboardStats() {
+    return { pending: 0, proses: 0, selesai: 0 };
   }
 
   // ============================================================

@@ -29,12 +29,6 @@ export interface ServiceRequest {
     | 'CANCEL';
   statusSystem: 'OPEN' | 'CLOSED';
   problemDescription: string;
-  remarksHistory: string;
-  partFee: number;
-  serviceFee: number;
-  technicianCheckId: number | null;
-  orderParts?: any[];
-  parts?: OrderPart[];
 
   incomingDate: string;
   createdAt: string;

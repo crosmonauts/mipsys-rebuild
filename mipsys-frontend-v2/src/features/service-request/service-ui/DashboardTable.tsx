@@ -130,10 +130,6 @@ export function DashboardTable() {
         'Model Mesin': item.modelName || '-',
         'Serial Number': item.serialNumber || '-',
         'Status Servis': item.statusService || '-',
-        Teknisi: item.technicianCheckId || '-', // Nanti tinggal sesuaikan field teknisi dari API
-        'Analisa Teknisi': item.remarksHistory || '-',
-        'Daftar Part': item.parts?.map((p) => p.partName).join(', ') || '-',
-        'Total Biaya': Number(item.serviceFee || 0) + Number(item.partFee || 0),
         'Tanggal Masuk': item.incomingDate
           ? new Date(item.incomingDate).toLocaleDateString('id-ID')
           : '-',

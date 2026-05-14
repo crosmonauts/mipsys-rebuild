@@ -43,6 +43,17 @@ export type PurchaseOrderStatusType =
 // TABLES
 // ============================================================
 
+export const serviceLogs = mysqlTable('service_logs', {
+  id: int('id').primaryKey(),
+  serviceRequestId: int('service_request_id').references(
+    () => serviceRequests.id
+  ),
+  action: varchar('action', { length: 100 }).notNull(),
+  description: text('description'),
+  performedBy: int('performed_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const staff = mysqlTable('staff', {
   id: int('id').autoincrement().primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
