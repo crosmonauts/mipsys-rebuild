@@ -22,9 +22,13 @@ export class ServiceRequestsController {
     return await this.serviceRequestService.findAll();
   }
 
+  @Get(':id')
+  async getDetail(@Param('id') id: string) {
+    return await this.serviceRequestService.findOne(id);
+  }
+
   @Get('activities')
   async getActivities() {
-    // DoD Performance: Pastikan di service menggunakan limit (misal 10 data terakhir)
     return await this.serviceRequestService.getActivities();
   }
 

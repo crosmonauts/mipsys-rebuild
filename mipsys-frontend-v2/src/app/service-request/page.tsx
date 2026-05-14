@@ -1,4 +1,4 @@
-import { DashboardTable } from '@/src/features/service-request/service-ui/DashboardTable';
+import { DashboardTable } from '@/src/components/layout/DashboardTable';
 
 export default function ServiceRequestPage() {
   return (

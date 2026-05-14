@@ -1,6 +1,4 @@
-// src/app/service-request/new/page.tsx
-
-import { CreateSRForm } from '@/src/features/service-request/service-ui/CreateSRForm';
+import { CreateSRForm } from '@/src/features/service-request/components/CreateSRForm';
 
 // WAJIB ada "export default" agar Next.js bisa merender halamannya
 export default function NewServiceRequestPage() {

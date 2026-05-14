@@ -54,6 +54,47 @@ export class ServiceRequestService {
     }
   }
 
+  async findOne(ticketNumber: string) {
+    try {
+      // PERFORMANCE: Eager Loading menggunakan Left Join (No N+1)
+      const result = await this.db
+        .select({
+          id: serviceRequests.id,
+          ticketNumber: serviceRequests.ticketNumber,
+          statusService: serviceRequests.statusService,
+          problemDescription: serviceRequests.problemDescription,
+          incomingDate: serviceRequests.incomingDate,
+          customerName: customers.name,
+          phone: customers.phone,
+          address: customers.address,
+          modelName: products.modelName,
+          serialNumber: products.serialNumber,
+          serviceType: serviceRequests.serviceType,
+        })
+        .from(serviceRequests)
+        .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
+        .leftJoin(products, eq(serviceRequests.productId, products.id))
+        .where(eq(serviceRequests.ticketNumber, ticketNumber))
+        .limit(1);
+
+      if (!result.length) {
+        throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+      }
+
+      return result[0];
+    } catch (error: unknown) {
+      // ERROR HANDLING: 18046 Fixed - Type Guarding Unknown Error
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown Error';
+
+      // DOD: Simulasi Logging ke log_system
+      console.error(`[LOG_SYSTEM][ERROR][SR_DETAIL]: ${errorMessage}`);
+
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Terjadi kesalahan pada server.');
+    }
+  }
+
   async getActivities() {
     try {
       return await this.db
