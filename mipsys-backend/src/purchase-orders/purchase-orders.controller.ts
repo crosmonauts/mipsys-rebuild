@@ -3,17 +3,16 @@ import {
   Get,
   Post,
   Patch,
-  Delete,
   Body,
   Param,
   ParseIntPipe,
   HttpStatus,
   HttpCode,
-  Query,
 } from '@nestjs/common';
 import { PurchaseOrdersService } from './purchase-orders.service';
-import { CreatePurchaseOrderDto } from './dto/create-po.dto';
-import { UpdatePoStatusDto } from './dto/update-po-status.dto';
+import { CreatePoHeaderDto } from './dto/create-po-header.dto';
+import { ReceivePoDto } from './dto/receive-po.dto';
+import { PoStatusType } from './po-state-machine.guard';
 
 @Controller('purchase-orders')
 export class PurchaseOrdersController {
@@ -21,33 +20,34 @@ export class PurchaseOrdersController {
 
   @Get()
   async findAll() {
-    return await this.poService.findAll();
+    return this.poService.findAll();
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.poService.findOne(id);
+    return this.poService.findOne(id);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreatePurchaseOrderDto) {
-    return await this.poService.create(dto);
+  async create(@Body() dto: CreatePoHeaderDto) {
+    return this.poService.create(dto);
   }
 
   @Patch(':id/status')
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePoStatusDto
+    @Body('status') status: PoStatusType,
+    @Body('performedBy') performedBy?: number
   ) {
-    return await this.poService.updateStatus(id, dto);
+    return this.poService.updateStatus(id, status, performedBy);
   }
 
-  @Delete(':id')
-  async cancel(
+  @Patch(':id/receive')
+  async receivePO(
     @Param('id', ParseIntPipe) id: number,
-    @Query('notes') notes?: string
+    @Body() dto: ReceivePoDto
   ) {
-    return await this.poService.cancel(id, notes);
+    return this.poService.receivePO(id, dto);
   }
 }

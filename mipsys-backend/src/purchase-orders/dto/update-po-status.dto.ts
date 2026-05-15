@@ -6,7 +6,7 @@ import {
   Min,
   IsString,
 } from 'class-validator';
-import { PurchaseOrderStatus } from 'src/db/schema';
+import { PurchaseOrderStatus } from 'src/database/schema';
 
 export class UpdatePoStatusDto {
   @IsEnum(PurchaseOrderStatus, {
