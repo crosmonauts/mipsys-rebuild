@@ -6,10 +6,10 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
-import { purchaseOrders, poItems, spareParts, stockMovements } from '../database/schema';
+import { purchaseOrders, poItems, spareParts } from '../database/schema';
 import { CreatePoHeaderDto } from './dto/create-po-header.dto';
 import { ReceivePoDto } from './dto/receive-po.dto';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
