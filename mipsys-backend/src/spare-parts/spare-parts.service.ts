@@ -4,37 +4,47 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
-import { eq, like, sql, or, desc, InferSelectModel } from 'drizzle-orm';
+import { eq, sql, desc, like, or } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
-import * as schema from '../db/schema';
-import { spareParts } from '../db/schema';
+import * as schema from '../database/schema';
+import { spareParts } from '../database/schema';
 import { CreateSparePartDto } from './dto/create-spare-part.dto';
 import { UpdateSparePartDto } from './dto/update-spare-part.dto';
-
-export type SparePart = InferSelectModel<typeof spareParts>;
+import { StockMovementsService } from '../stock-movements/stock-movements.service';
 
 @Injectable()
 export class SparePartsService {
+  private readonly logger = new Logger(SparePartsService.name);
+
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    private stockMovementsService: StockMovementsService
   ) {}
-
-  // DoD: Error Handling - Mencatat ke log sistem
-  private async logInventoryError(action: string, error: any, context?: any) {
-    console.error(`[SPARE_PART_SYSTEM_ERROR][${action}]`, error);
-    // await this.db.insert(logSystem)...
-  }
-
-  // ============================================================
-  // READ METHODS
-  // ============================================================
 
   async findAll() {
     return await this.db
       .select()
       .from(spareParts)
       .orderBy(desc(spareParts.createdAt));
+  }
+
+  async search(query: string) {
+    const pattern = `%${query}%`;
+
+    return this.db
+      .select()
+      .from(spareParts)
+      .where(
+        or(
+          like(spareParts.partName, pattern),
+          like(spareParts.partCode, pattern),
+          like(spareParts.modelName, pattern),
+        )
+      )
+      .orderBy(desc(spareParts.stock))
+      .limit(20);
   }
 
   async findOne(id: number) {
@@ -49,13 +59,8 @@ export class SparePartsService {
     return result;
   }
 
-  // ============================================================
-  // WRITE METHODS (DoD: Security - Sanitization & Uniqueness)
-  // ============================================================
-
   async create(dto: CreateSparePartDto) {
     try {
-      // 1. Check Duplicity (Anti-Defect: Mencegah kode ganda)
       const existing = await this.db
         .select({ id: spareParts.id })
         .from(spareParts)
@@ -68,7 +73,6 @@ export class SparePartsService {
         );
       }
 
-      // 2. Insert with Sanitization
       const [result] = await this.db.insert(spareParts).values({
         partCode: dto.partCode.trim(),
         partName: dto.partName.trim(),
@@ -81,13 +85,13 @@ export class SparePartsService {
       return { success: true, insertedId: result.insertId };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
-      await this.logInventoryError('CREATE_PART', error, dto);
+      this.logger.error('Failed to create spare part', error as Error);
       throw new InternalServerErrorException('Gagal menambahkan suku cadang.');
     }
   }
 
   async update(id: number, dto: UpdateSparePartDto) {
-    const existing = await this.findOne(id); // Guard: DoD Security
+    await this.findOne(id);
 
     try {
       await this.db
@@ -106,14 +110,10 @@ export class SparePartsService {
         message: 'Data suku cadang berhasil diperbarui.',
       };
     } catch (error) {
-      await this.logInventoryError('UPDATE_PART', error, { id, dto });
+      this.logger.error('Failed to update spare part', error as Error);
       throw new InternalServerErrorException('Gagal memperbarui suku cadang.');
     }
   }
-
-  // ============================================================
-  // INVENTORY CONTROL (DoD: Performance - Atomic Updates)
-  // ============================================================
 
   async addStock(id: number, quantity: number) {
     if (quantity <= 0)
@@ -121,37 +121,29 @@ export class SparePartsService {
 
     await this.findOne(id);
 
-    await this.db
-      .update(spareParts)
-      .set({
-        stock: sql`${spareParts.stock} + ${quantity}`, // Atomic: Anti Race Condition
-        updatedAt: new Date(),
-      })
-      .where(eq(spareParts.id, id));
+    await this.stockMovementsService.createMovement({
+      sparePartId: id,
+      quantity,
+      movementType: 'ADJUSTMENT',
+      notes: `Penambahan stok manual: +${quantity}`,
+    });
 
-    return { success: true, message: `Stok berhasil ditambah.` };
+    return { success: true, message: 'Stok berhasil ditambah.' };
   }
 
   async reduceStock(id: number, quantity: number) {
-    const item = await this.findOne(id);
-    const currentStock = item.stock ?? 0;
-
     if (quantity <= 0)
       throw new BadRequestException('Jumlah pengurangan harus positif.');
-    if (currentStock < quantity) {
-      throw new BadRequestException(
-        `Stok tidak cukup. Tersedia: ${currentStock}`
-      );
-    }
 
-    await this.db
-      .update(spareParts)
-      .set({
-        stock: sql`${spareParts.stock} - ${quantity}`,
-        updatedAt: new Date(),
-      })
-      .where(eq(spareParts.id, id));
+    await this.findOne(id);
 
-    return { success: true, message: `Stok berhasil dikurangi.` };
+    await this.stockMovementsService.createMovement({
+      sparePartId: id,
+      quantity: -quantity,
+      movementType: 'ADJUSTMENT',
+      notes: `Pengurangan stok manual: -${quantity}`,
+    });
+
+    return { success: true, message: 'Stok berhasil dikurangi.' };
   }
 }
