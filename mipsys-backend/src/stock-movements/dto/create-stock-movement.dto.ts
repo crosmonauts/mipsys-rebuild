@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsEnum, Min } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsEnum } from 'class-validator';
 
 export const MovementType = {
   PO_RECEIVE: 'PO_RECEIVE',

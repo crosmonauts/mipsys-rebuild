@@ -28,6 +28,10 @@ export class StockMovementsService {
       throw new BadRequestException('ADJUSTMENT wajib menyertakan catatan');
     }
 
+    if (dto.quantity === 0) {
+      throw new BadRequestException('Quantity tidak boleh nol');
+    }
+
     const targetDb = tx || this.db;
 
     try {
@@ -41,7 +45,7 @@ export class StockMovementsService {
         notes: dto.notes?.trim() ?? null,
       });
 
-      await this.updateStock(targetDb, dto.sparePartId, dto.quantity);
+      await this.updateStock(targetDb, dto.sparePartId, dto.quantity, dto.movementType);
 
       return { success: true, message: 'Stock movement recorded' };
     } catch (error) {
@@ -60,7 +64,8 @@ export class StockMovementsService {
   private async updateStock(
     db: DrizzleTx | MySql2Database<typeof schema>,
     sparePartId: number,
-    quantity: number
+    quantity: number,
+    movementType: MovementTypeType
   ) {
     const [current] = await db
       .select({ stock: spareParts.stock })
@@ -68,10 +73,18 @@ export class StockMovementsService {
       .where(eq(spareParts.id, sparePartId))
       .limit(1);
 
+    const newStock = current.stock + quantity;
+
+    if (newStock < 0 && (movementType === 'SERVICE_USE' || movementType === 'ADJUSTMENT')) {
+      throw new BadRequestException(
+        `Stok tidak mencukupi. Tersedia: ${current.stock}, dibutuhkan: ${Math.abs(quantity)}`
+      );
+    }
+
     await db
       .update(spareParts)
       .set({
-        stock: current.stock + quantity,
+        stock: newStock,
         updatedAt: new Date(),
       })
       .where(eq(spareParts.id, sparePartId));
