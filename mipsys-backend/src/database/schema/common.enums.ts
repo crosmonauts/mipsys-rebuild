@@ -11,7 +11,9 @@ export type StatusServiceType =
   (typeof StatusService)[keyof typeof StatusService];
 
 export const PurchaseOrderStatus = {
+  DRAFT: 'DRAFT',
   REQUESTED: 'REQUESTED',
+  APPROVED: 'APPROVED',
   ORDERED: 'ORDERED',
   SHIPPED: 'SHIPPED',
   PARTIALLY_RECEIVED: 'PARTIALLY_RECEIVED',

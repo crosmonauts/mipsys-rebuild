@@ -5,7 +5,6 @@ import {
   decimal,
   int,
   timestamp,
-  datetime,
   date,
   index,
   mysqlEnum,
