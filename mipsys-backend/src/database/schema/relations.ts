@@ -7,6 +7,7 @@ import {
 } from './service-request.schema';
 import { orderParts, spareParts } from './spare-part.schema';
 import { purchaseOrders } from './purchase-order.schema';
+import { poItems } from './po-items.schema';
 import { stockMovements } from './stock-movement.schema';
 
 export const serviceRequestsRelations = relations(
@@ -45,19 +46,35 @@ export const orderPartsRelations = relations(orderParts, ({ one }) => ({
   }),
 }));
 
-export const purchaseOrdersRelations = relations(
-  purchaseOrders,
-  ({ one }) => ({
-    sparePart: one(spareParts, {
-      fields: [purchaseOrders.sparePartId],
-      references: [spareParts.id],
-    }),
-  })
-);
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
+  items: many(poItems),
+  requestedByStaff: one(staff, {
+    fields: [purchaseOrders.requestedBy],
+    references: [staff.id],
+    relationName: 'requestedBy',
+  }),
+  approvedByStaff: one(staff, {
+    fields: [purchaseOrders.approvedBy],
+    references: [staff.id],
+    relationName: 'approvedBy',
+  }),
+}));
+
+export const poItemsRelations = relations(poItems, ({ one }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [poItems.purchaseOrderId],
+    references: [purchaseOrders.id],
+  }),
+  sparePart: one(spareParts, {
+    fields: [poItems.sparePartId],
+    references: [spareParts.id],
+  }),
+}));
 
 export const sparePartsRelations = relations(spareParts, ({ many }) => ({
   orderParts: many(orderParts),
   purchaseOrders: many(purchaseOrders),
+  poItems: many(poItems),
   stockMovements: many(stockMovements),
 }));
 
