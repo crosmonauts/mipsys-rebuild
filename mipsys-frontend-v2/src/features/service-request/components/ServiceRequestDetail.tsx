@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useServiceRequest } from '../hooks/useServiceRequest';
+import DiagnosisModal from '@/src/components/layout/DiagnosisModal';
 import {
   User,
   Smartphone,
@@ -37,6 +38,7 @@ const ServiceRequestDetail = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState<any>(null);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
 
   const handleEditToggle = () => {
     if (!isEditing) {
@@ -183,10 +185,17 @@ const ServiceRequestDetail = () => {
                         {data.statusService?.replace('_', ' ')}
                       </p>
                     </div>
+                    </div>
                   </div>
-                </div>
 
-                <hr className="border-stone-50" />
+                  <button
+                    onClick={() => setShowDiagnosis(true)}
+                    className="w-full py-4 bg-blue-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-blue-700 transition-all shadow-lg mt-4"
+                  >
+                    DIAGNOSA & UPDATE STATUS
+                  </button>
+
+                  <hr className="border-stone-50" />
 
                 {/* SEKSI 03: DEVICE INTEL (PINDAH KE SINI) */}
                 <div className="space-y-8">
@@ -231,6 +240,16 @@ const ServiceRequestDetail = () => {
           </div>
         </div>
       </div>
+
+      {showDiagnosis && (
+        <DiagnosisModal
+          ticketNumber={ticketNumber}
+          serviceRequestId={data?.id ?? null}
+          isOpen={showDiagnosis}
+          onClose={() => setShowDiagnosis(false)}
+          onSuccess={() => { window.location.reload(); }}
+        />
+      )}
     </main>
   );
 };

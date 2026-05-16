@@ -153,17 +153,17 @@ export function DiagnosisModal({
 
     setIsSubmitting(true);
     try {
-      await srApi.updateEntry(ticketNumber, {
+      await srApi.diagnose(ticketNumber, {
+        newStatus,
         problemDescription: diagnosis,
-        remarksHistory: `[Diagnosis] ${action}\nNotes: ${technicianNotes}`,
-        statusService: newStatus,
+        parts: selectedParts.map((p) => ({
+          sparePartId: p.sparePartId,
+          quantity: p.quantity,
+        })),
+        performedBy: 1,
       });
 
-      if (serviceRequestId && selectedParts.length > 0) {
-        await addSelectedParts();
-      }
-
-      toast.success('Diagnosis berhasil disimpan');
+      toast.success(`Status → ${newStatus}. ${selectedParts.length} part ditambahkan.`);
       onSuccess();
       onClose();
     } catch (error) {
@@ -171,20 +171,6 @@ export function DiagnosisModal({
       toast.error(message);
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function addSelectedParts() {
-    if (!serviceRequestId || selectedParts.length === 0) return;
-
-    for (const part of selectedParts) {
-      await orderPartsApi.addPart({
-        serviceRequestId,
-        sparePartId: part.sparePartId,
-        partName: part.partName,
-        quantity: part.quantity,
-        priceAtAction: part.price,
-      });
     }
   }
 
@@ -335,8 +321,9 @@ function StatusSelector({
         onChange={(e) => onChange(e.target.value)}
         className="w-full h-12 rounded-xl border-2 border-slate-200 bg-transparent px-3 font-bold text-sm outline-none focus:border-blue-600 transition-all appearance-none text-slate-900"
       >
+        <option value="CHECK">Mulai Check</option>
+        <option value="WAITING_APPROVE">Menunggu Approve</option>
         <option value="SERVICE">Dalam Pengerjaan</option>
-        <option value="WAITING_PART">Menunggu Part</option>
         <option value="DONE">Selesai</option>
         <option value="CANCEL">Dibatalkan</option>
       </select>

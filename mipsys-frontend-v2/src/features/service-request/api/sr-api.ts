@@ -34,4 +34,12 @@ export const srApi = {
 
   createLog: (ticketNumber: string, data: Record<string, unknown>) =>
     apiClient.post(`/service-request/${ticketNumber}/logs`, data).then((r) => r.data),
+
+  diagnose: (ticketNumber: string, data: {
+    newStatus: string;
+    problemDescription?: string;
+    parts?: { sparePartId: number; quantity: number }[];
+    performedBy?: number;
+  }) =>
+    apiClient.post(`/service-request/${ticketNumber}/diagnose`, data).then((r) => r.data),
 };
