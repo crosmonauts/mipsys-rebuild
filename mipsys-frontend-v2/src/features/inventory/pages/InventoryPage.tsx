@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useInventory } from '../hooks/useInventory';
 import { InventoryList } from '../components/InventoryList';
 import { LowStockAlert } from '../components/LowStockAlert';
+import { InventoryDetail } from '../components/InventoryDetail';
 import { InventoryPart } from '../api/inventory-api';
 
 export default function InventoryPage() {
@@ -44,6 +45,10 @@ export default function InventoryPage() {
 
       <LowStockAlert />
       <InventoryList parts={parts} isLoading={isLoading} onPartClick={setSelectedPart} />
+
+      {selectedPart && (
+        <InventoryDetail part={selectedPart} onClose={() => setSelectedPart(null)} />
+      )}
     </div>
   );
 }

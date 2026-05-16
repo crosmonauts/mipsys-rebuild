@@ -8,11 +8,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
+import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 
 @Controller('inventory')
 export class InventoryController {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(
+    private readonly inventoryService: InventoryService,
+    private readonly stockMovementsService: StockMovementsService
+  ) {}
 
   @Get('parts')
   async getParts(
@@ -34,7 +38,7 @@ export class InventoryController {
 
   @Get('parts/:id/movements')
   async getMovements(@Param('id', ParseIntPipe) id: number) {
-    return { message: 'Use /stock-movements/part/:id endpoint' };
+    return this.stockMovementsService.getMovementsByPart(id);
   }
 
   @Post('parts/:id/reserve')
