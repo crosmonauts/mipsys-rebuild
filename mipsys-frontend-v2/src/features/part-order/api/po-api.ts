@@ -1,41 +1,13 @@
 import { apiClient } from '@/src/lib/api-client';
-
-export interface PurchaseOrderItem {
-  id?: number;
-  partName: string;
-  partCode?: string;
-  qty: number;
-  price: number;
-}
-
-export interface PurchaseOrder {
-  id: number;
-  poNumber: string;
-  supplier: string;
-  category: string;
-  status: 'PENDING' | 'PROSES' | 'SELESAI' | 'BATAL';
-  items: PurchaseOrderItem[];
-  totalEstimation: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreatePurchaseOrderDto {
-  supplier: string;
-  category: string;
-  status: string;
-  items: { partName: string; qty: number; price: number }[];
-  notes?: string;
-}
+import type { PurchaseOrder, CreatePurchaseOrderDto, PoStatus } from '../types';
 
 export const poApi = {
-  getAll: async () => {
+  getAll: async (): Promise<PurchaseOrder[]> => {
     const response = await apiClient.get('/purchase-orders');
     return response.data;
   },
 
-  getById: async (id: number) => {
+  getById: async (id: number): Promise<PurchaseOrder> => {
     const response = await apiClient.get(`/purchase-orders/${id}`);
     return response.data;
   },
@@ -45,15 +17,8 @@ export const poApi = {
     return response.data;
   },
 
-  updateStatus: async (id: number, status: string) => {
-    const response = await apiClient.patch(`/purchase-orders/${id}/status`, { status });
-    return response.data;
-  },
-
-  cancel: async (id: number, notes?: string) => {
-    const response = await apiClient.patch(`/purchase-orders/${id}/cancel`, null, {
-      params: { notes },
-    });
+  updateStatus: async (id: number, status: PoStatus) => {
+    const response = await apiClient.patch(`/purchase-orders/${id}/status`, { status, performedBy: 1 });
     return response.data;
   },
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { poApi, PurchaseOrder } from '../api/po-api';
+import { poApi } from '../api/po-api';
+import type { PurchaseOrder, CreatePurchaseOrderDto, PoStatus } from '../types';
 import { toast } from 'react-hot-toast';
 
 export const usePurchaseOrders = () => {
@@ -11,7 +12,7 @@ export const usePurchaseOrders = () => {
       setIsLoading(true);
       const result = await poApi.getAll();
       setData(Array.isArray(result) ? result : result.data || []);
-    } catch (error) {
+    } catch {
       toast.error('Gagal memuat data purchase orders');
     } finally {
       setIsLoading(false);
@@ -35,7 +36,7 @@ export const usePurchaseOrder = (id: number | null) => {
       setIsLoading(true);
       const result = await poApi.getById(id);
       setData(result);
-    } catch (error) {
+    } catch {
       toast.error('Gagal memuat detail purchase order');
     } finally {
       setIsLoading(false);
@@ -52,10 +53,10 @@ export const usePurchaseOrder = (id: number | null) => {
 export const useCreatePurchaseOrder = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const create = async (data: Record<string, unknown>) => {
+  const create = async (data: CreatePurchaseOrderDto) => {
     setIsSubmitting(true);
     try {
-      const result = await poApi.create(data as any);
+      const result = await poApi.create(data);
       toast.success('Purchase order berhasil dibuat');
       return result;
     } catch (error) {
@@ -73,7 +74,7 @@ export const useCreatePurchaseOrder = () => {
 export const useUpdatePurchaseOrderStatus = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateStatus = async (id: number, status: string) => {
+  const updateStatus = async (id: number, status: PoStatus) => {
     setIsSubmitting(true);
     try {
       const result = await poApi.updateStatus(id, status);
