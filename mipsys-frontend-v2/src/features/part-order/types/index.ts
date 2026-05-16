@@ -37,8 +37,14 @@ export interface PurchaseOrderItem {
 
 export interface CreatePurchaseOrderDto {
   supplierName: string;
-  items: { sparePartId: number; quantity: number; unitPrice: string }[];
+  requestedBy?: number;
+  items: { sparePartId?: number; partName?: string; quantity: number; unitPrice: number }[];
   notes?: string;
+}
+
+export interface ReceivePoItem {
+  poItemId: number;
+  receivedQty: number;
 }
 
 export interface PoStats {

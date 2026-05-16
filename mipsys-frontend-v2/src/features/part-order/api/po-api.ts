@@ -1,5 +1,5 @@
 import { apiClient } from '@/src/lib/api-client';
-import type { PurchaseOrder, CreatePurchaseOrderDto, PoStatus } from '../types';
+import type { PurchaseOrder, CreatePurchaseOrderDto, PoStatus, ReceivePoItem } from '../types';
 
 export const poApi = {
   getAll: async (): Promise<PurchaseOrder[]> => {
@@ -19,6 +19,11 @@ export const poApi = {
 
   updateStatus: async (id: number, status: PoStatus) => {
     const response = await apiClient.patch(`/purchase-orders/${id}/status`, { status, performedBy: 1 });
+    return response.data;
+  },
+
+  receivePO: async (id: number, items: ReceivePoItem[]) => {
+    const response = await apiClient.patch(`/purchase-orders/${id}/receive`, { items, performedBy: 1 });
     return response.data;
   },
 };
