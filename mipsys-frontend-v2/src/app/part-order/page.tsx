@@ -10,11 +10,10 @@ import {
   Clock,
   CheckCircle2,
   Pencil,
-  AlertCircle,
-  XCircle,
   RefreshCcw,
   Loader2,
   PackageOpen,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -25,7 +24,8 @@ import {
   CardTitle,
 } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
-import { usePurchaseOrders, useUpdatePurchaseOrderStatus } from '@/src/features/part-order/hooks/usePurchaseOrder';
+import { PODetailModal } from '@/src/features/part-order/components/PODetailModal';
+import { usePurchaseOrders } from '@/src/features/part-order/hooks/usePurchaseOrder';
 import { PO_STATUS_LABEL, PO_STATUS_BADGE } from '@/src/features/part-order/types';
 import type { PurchaseOrder, PoStatus } from '@/src/features/part-order/types';
 
@@ -33,9 +33,9 @@ const PENDING_STATUSES: PoStatus[] = ['DRAFT', 'REQUESTED', 'APPROVED', 'ORDERED
 
 export default function PartOrderPage() {
   const { data: orders, isLoading, refetch } = usePurchaseOrders();
-  const { updateStatus } = useUpdatePurchaseOrderStatus();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<PoStatus | 'ALL'>('ALL');
+  const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
 
   const filteredOrders = useMemo(() => {
     let result = orders;
@@ -58,11 +58,6 @@ export default function PartOrderPage() {
     pending: orders.filter((o) => PENDING_STATUSES.includes(o.status)).length,
     completed: orders.filter((o) => o.status === 'RECEIVED').length,
   }), [orders]);
-
-  const handleStatusChange = async (id: number, newStatus: PoStatus) => {
-    await updateStatus(id, newStatus);
-    refetch();
-  };
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-700 text-left">
@@ -187,7 +182,7 @@ export default function PartOrderPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <tr key={order.id} className="hover:bg-blue-50/30 transition-colors group cursor-pointer" onClick={() => setSelectedPoId(order.id)}>
                       <td className="p-5 pl-8 font-black text-slate-950">
                         {order.poNumber}
                       </td>
@@ -209,7 +204,7 @@ export default function PartOrderPage() {
                       </td>
                       <td className="p-5 text-center pr-8">
                         <div className="flex items-center justify-center gap-2">
-                          <Link href={`/part-order/new?id=${order.id}`}>
+                          <Link href={`/part-order/new?id=${order.id}`} onClick={(e) => e.stopPropagation()}>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -218,24 +213,13 @@ export default function PartOrderPage() {
                               <Pencil size={18} />
                             </Button>
                           </Link>
-                          {(order.status === 'DRAFT' || order.status === 'REQUESTED') && (
-                            <button
-                              onClick={() => handleStatusChange(order.id, 'APPROVED')}
-                              className="h-10 w-10 rounded-xl hover:bg-emerald-600 hover:text-white transition-all border-2 border-transparent hover:border-emerald-700 bg-slate-50 text-slate-500"
-                              title="Setujui PO"
-                            >
-                              <CheckCircle2 size={18} />
-                            </button>
-                          )}
-                          {order.status !== 'CANCELLED' && order.status !== 'RECEIVED' && (
-                            <button
-                              onClick={() => handleStatusChange(order.id, 'CANCELLED')}
-                              className="h-10 w-10 rounded-xl hover:bg-red-600 hover:text-white transition-all border-2 border-transparent hover:border-red-700 bg-slate-50 text-slate-500"
-                              title="Batalkan PO"
-                            >
-                              <XCircle size={18} />
-                            </button>
-                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedPoId(order.id); }}
+                            className="h-10 w-10 rounded-xl hover:bg-slate-600 hover:text-white transition-all border-2 border-transparent hover:border-slate-700 bg-slate-50 text-slate-500"
+                            title="Lihat Detail"
+                          >
+                            <Eye size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -251,6 +235,13 @@ export default function PartOrderPage() {
           </div>
         </CardContent>
       </Card>
+      {selectedPoId && (
+        <PODetailModal
+          poId={selectedPoId}
+          onClose={() => setSelectedPoId(null)}
+          onRefresh={refetch}
+        />
+      )}
     </div>
   );
 }
