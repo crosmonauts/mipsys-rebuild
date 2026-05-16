@@ -12,7 +12,7 @@ import {
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { CreatePoHeaderDto } from './dto/create-po-header.dto';
 import { ReceivePoDto } from './dto/receive-po.dto';
-import { PoStatusType } from './po-state-machine.guard';
+import type { PoStatusType } from './po-state-machine.guard';
 
 @Controller('purchase-orders')
 export class PurchaseOrdersController {
