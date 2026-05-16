@@ -3,46 +3,36 @@
 import React, { useState } from 'react';
 import {
   Search,
-  Filter,
-  Download,
-  CreditCard,
   TrendingUp,
+  CreditCard,
   AlertCircle,
 } from 'lucide-react';
 import { InvoiceTableRow } from './components/InvoiceTableRow';
-import { Invoice } from './types';
-
-const mockInvoices: Invoice[] = [
-  {
-    id: 1,
-    invoiceNumber: 'INV-2024-001',
-    clientName: 'PT. Global Tech',
-    date: '04 Mei 2026',
-    amount: 4500000,
-    status: 'PAID',
-    method: 'Transfer',
-  },
-  {
-    id: 2,
-    invoiceNumber: 'INV-2024-002',
-    clientName: 'CV. Maju Jaya',
-    date: '05 Mei 2026',
-    amount: 1250000,
-    status: 'OVERDUE',
-    method: 'Cash',
-  },
-  {
-    id: 3,
-    invoiceNumber: 'INV-2024-003',
-    clientName: 'Bapak Ahmad',
-    date: '05 Mei 2026',
-    amount: 750000,
-    status: 'UNPAID',
-    method: 'Pending',
-  },
-];
+import { useInvoices, useFinanceStats } from './hooks/useFinance';
+import { financeApi } from './api/finance-api';
+import { toast } from 'react-hot-toast';
 
 export default function FinancePage() {
+  const [search, setSearch] = useState('');
+  const { data: invoices, isLoading, refetch } = useInvoices(search);
+  const { stats } = useFinanceStats();
+
+  const filtered = invoices.filter((inv) =>
+    inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+    inv.clientName?.toLowerCase().includes(search.toLowerCase()) ||
+    inv.ticketNumber?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  async function handleGenerateInvoice(ticketNumber: string) {
+    try {
+      await financeApi.generateFromSR(ticketNumber);
+      toast.success('Invoice berhasil dibuat');
+      refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal membuat invoice');
+    }
+  }
+
   return (
     <div className="px-6 md:px-10 py-8 max-w-360 mx-auto space-y-8 text-left animate-in fade-in duration-500">
       {/* HEADER */}
@@ -52,12 +42,9 @@ export default function FinancePage() {
             Finance & <span className="text-blue-800">Billing</span>
           </h2>
           <p className="text-xs md:text-sm text-slate-700 font-bold italic">
-            "Monitor pendapatan dan status penagihan secara real-time."
+            &quot;Monitor pendapatan dan status penagihan secara real-time.&quot;
           </p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-3 bg-slate-950 text-white rounded-xl font-black text-xs uppercase hover:bg-blue-800 transition-all shadow-lg">
-          <Download size={16} /> Export Laporan
-        </button>
       </section>
 
       {/* SUMMARY CARDS */}
@@ -65,10 +52,10 @@ export default function FinancePage() {
         <div className="p-6 bg-white border-2 border-slate-300 rounded-2xl shadow-sm">
           <TrendingUp className="text-emerald-700 mb-3" size={24} />
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            Total Pendapatan (Bulan Ini)
+            Total Pendapatan
           </p>
           <h3 className="text-2xl font-black text-slate-950">
-            IDR 124.500.000
+            Rp {stats.totalRevenue.toLocaleString('id-ID')}
           </h3>
         </div>
         <div className="p-6 bg-white border-2 border-slate-300 rounded-2xl shadow-sm">
@@ -76,18 +63,22 @@ export default function FinancePage() {
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
             Menunggu Pembayaran
           </p>
-          <h3 className="text-2xl font-black text-slate-950">IDR 12.800.000</h3>
+          <h3 className="text-2xl font-black text-slate-950">
+            Rp {stats.outstanding.toLocaleString('id-ID')}
+          </h3>
         </div>
         <div className="p-6 bg-white border-2 border-slate-300 rounded-2xl shadow-sm">
           <AlertCircle className="text-red-700 mb-3" size={24} />
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
             Tagihan Overdue
           </p>
-          <h3 className="text-2xl font-black text-slate-950">IDR 4.200.000</h3>
+          <h3 className="text-2xl font-black text-slate-950">
+            {stats.overdueCount}
+          </h3>
         </div>
       </section>
 
-      {/* FILTER & SEARCH */}
+      {/* SEARCH */}
       <section className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search
@@ -97,12 +88,11 @@ export default function FinancePage() {
           <input
             type="text"
             placeholder="Cari No. Invoice atau Nama Klien..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-950 focus:border-blue-700 focus:ring-4 focus:ring-blue-100 outline-none"
           />
         </div>
-        <button className="px-5 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-xs uppercase flex items-center gap-2 hover:bg-slate-100 transition-all">
-          <Filter size={16} /> Filter
-        </button>
       </section>
 
       {/* DATA TABLE */}
@@ -118,12 +108,12 @@ export default function FinancePage() {
                   Klien
                 </th>
                 <th className="p-4 text-[11px] font-black text-slate-900 uppercase">
-                  Tanggal
+                  Tiket
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase">
-                  Nominal
+                <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-right">
+                  Total
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase">
+                <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">
                   Status
                 </th>
                 <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">
@@ -132,9 +122,32 @@ export default function FinancePage() {
               </tr>
             </thead>
             <tbody>
-              {mockInvoices.map((inv) => (
-                <InvoiceTableRow key={inv.id} invoice={inv} />
-              ))}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-xs font-bold text-slate-500">
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-xs font-bold text-slate-500">
+                    Tidak ada invoice.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((inv) => (
+                  <InvoiceTableRow
+                    key={inv.id}
+                    invoice={inv}
+                    onPaid={() => {
+                      financeApi.markAsPaid(inv.id, 'CASH').then(() => {
+                        toast.success('Invoice ditandai lunas');
+                        refetch();
+                      });
+                    }}
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>

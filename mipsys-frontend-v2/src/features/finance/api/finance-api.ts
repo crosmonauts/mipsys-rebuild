@@ -19,11 +19,11 @@ export interface Invoice {
 
 export interface FinanceStats {
   totalRevenue: number;
-  pendingPayment: number;
-  overdueAmount: number;
+  outstanding: number;
+  overdueCount: number;
   paidCount: number;
   unpaidCount: number;
-  overdueCount: number;
+  totalInvoices: number;
 }
 
 export const financeApi = {
@@ -46,6 +46,11 @@ export const financeApi = {
 
   markAsPaid: async (id: number, method: string) => {
     const response = await apiClient.patch(`/finance/invoices/${id}/pay`, { method });
+    return response.data;
+  },
+
+  generateFromSR: async (ticketNumber: string) => {
+    const response = await apiClient.post(`/finance/invoices/from-sr/${ticketNumber}`);
     return response.data;
   },
 

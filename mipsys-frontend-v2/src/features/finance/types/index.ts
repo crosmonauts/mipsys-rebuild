@@ -1,9 +1,15 @@
 export interface Invoice {
   id: number;
   invoiceNumber: string;
+  ticketNumber: string;
   clientName: string;
-  date: string;
-  amount: number;
+  serviceFee: string;
+  partFee: string;
+  shippingFee: string;
+  ppn: string;
+  total: string;
   status: 'PAID' | 'UNPAID' | 'OVERDUE';
-  method: string;
+  paymentMethod?: string;
+  invoiceDate: string;
+  paidDate?: string;
 }
