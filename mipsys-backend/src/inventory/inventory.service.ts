@@ -143,7 +143,7 @@ export class InventoryService {
     const [poResult] = await tx.insert(purchaseOrders).values({
       poNumber,
       supplierName: 'EPSON',
-      status: 'DRAFT',
+      status: 'REQUESTED',
       requestedBy: 1,
       notes: `Auto-PO: ${part.partName} stok menipis (${part.stock} < ${part.minStock})`,
       totalAmount: '0.00',
