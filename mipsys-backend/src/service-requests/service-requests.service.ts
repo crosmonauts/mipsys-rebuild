@@ -294,7 +294,8 @@ export class ServiceRequestService {
             partDto.sparePartId,
             partDto.quantity,
             ticketNumber,
-            dto.performedBy ?? 1
+            dto.performedBy ?? 1,
+            tx
           );
         }
       }

@@ -2,6 +2,7 @@ import {
   Injectable,
   Inject,
   NotFoundException,
+  BadRequestException,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
@@ -77,33 +78,24 @@ export class InventoryService {
     sparePartId: number,
     quantity: number,
     srTicketNumber: string,
-    performedBy: number
+    performedBy: number,
+    tx?: DrizzleTx
   ) {
-    return this.db.transaction(async (tx) => {
-      const part = await tx.query.spareParts.findFirst({
+    const targetDb = tx || this.db;
+
+    const exec = async (db: DrizzleTx) => {
+      const part = await db.query.spareParts.findFirst({
         where: eq(spareParts.id, sparePartId),
       });
 
       if (!part) throw new NotFoundException(`Part ID ${sparePartId} tidak ditemukan.`);
 
-      if (part.stock === 0) {
-        return {
-          success: true,
-          softBlock: true,
-          message: `Low Stock — ${part.partName} akan masuk antrian PO`,
-          partName: part.partName,
-          currentStock: 0,
-        };
-      }
-
-      if (quantity > part.stock) {
-        return {
-          success: false,
-          softBlock: true,
-          message: `Stok tidak mencukupi. Tersedia: ${part.stock}, dibutuhkan: ${quantity}`,
-          partName: part.partName,
-          currentStock: part.stock,
-        };
+      if (part.stock === 0 || quantity > part.stock) {
+        throw new BadRequestException(
+          part.stock === 0
+            ? `Stok ${part.partName} kosong.`
+            : `Stok ${part.partName} tidak mencukupi. Tersedia: ${part.stock}, dibutuhkan: ${quantity}`
+        );
       }
 
       const newStock = part.stock - quantity;
@@ -117,12 +109,12 @@ export class InventoryService {
           referenceId: srTicketNumber,
           performedBy,
         },
-        tx
+        db
       );
 
       let autoPoTriggered = false;
       if (newStock < part.minStock) {
-        await this.triggerAutoPo(tx, part);
+        await this.triggerAutoPo(db, part, newStock);
         autoPoTriggered = true;
       }
 
@@ -133,10 +125,13 @@ export class InventoryService {
         newStock,
         message: `Stok ${part.partName} dikurangi ${quantity}`,
       };
-    });
+    };
+
+    if (tx) return exec(tx);
+    return this.db.transaction((db) => exec(db));
   }
 
-  private async triggerAutoPo(tx: DrizzleTx, part: any) {
+  private async triggerAutoPo(tx: DrizzleTx, part: any, newStock: number) {
     const reorderQty = part.minStock * 2;
     const poNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
 
@@ -145,7 +140,7 @@ export class InventoryService {
       supplierName: 'EPSON',
       status: 'REQUESTED',
       requestedBy: 1,
-      notes: `Auto-PO: ${part.partName} stok menipis (${part.stock} < ${part.minStock})`,
+      notes: `Auto-PO: ${part.partName} stok menipis (${newStock} < ${part.minStock})`,
       totalAmount: '0.00',
     });
 
