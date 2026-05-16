@@ -575,64 +575,128 @@ async function runSeeder() {
     console.log('  ✔ 10 service logs dibuat');
 
     // ========================================================================
-    // TAHAP 8: PURCHASE ORDERS (Berbagai status untuk tes workflow PO)
+    // TAHAP 8: PURCHASE ORDERS (Header + Items pattern)
     // ========================================================================
-    console.log('📦 Tahap 8: Purchase Orders...');
-    await db.insert(schema.purchaseOrders).values([
+    console.log('📦 Tahap 8: Purchase Orders (Header)...');
+
+    // PO-1: REQUESTED status (awaiting approval)
+    await db.insert(schema.purchaseOrders).values({
+      poNumber: 'PO-20260514-0001',
+      supplierName: 'EPSON',
+      status: 'REQUESTED',
+      requestedBy: 1,
+      notes: 'Urgent - Drain Pump untuk restock',
+      totalAmount: '1375000.00',
+      createdAt: new Date('2026-05-14'),
+    });
+    await db.insert(schema.poItems).values({
+      purchaseOrderId: 1,
+      sparePartId: 6,
+      quantity: 5,
+      unitPrice: '275000.00',
+      receivedQty: 0,
+      subtotal: '1375000.00',
+    });
+    console.log('  ✔ PO-1: REQUESTED (1 item)');
+
+    // PO-2: ORDERED status
+    await db.insert(schema.purchaseOrders).values({
+      poNumber: 'PO-20260512-0002',
+      supplierName: 'EPSON',
+      status: 'ORDERED',
+      requestedBy: 1,
+      approvedBy: 1,
+      notes: 'Magnet Door Seal restock',
+      orderDate: new Date('2026-05-12'),
+      totalAmount: '950000.00',
+      createdAt: new Date('2026-05-12'),
+    });
+    await db.insert(schema.poItems).values({
+      purchaseOrderId: 2,
+      sparePartId: 8,
+      quantity: 10,
+      unitPrice: '95000.00',
+      receivedQty: 0,
+      subtotal: '950000.00',
+    });
+    console.log('  ✔ PO-2: ORDERED (1 item)');
+
+    // PO-3: SHIPPED status (ready for receiving)
+    await db.insert(schema.purchaseOrders).values({
+      poNumber: 'PO-20260510-0003',
+      supplierName: 'EPSON',
+      status: 'SHIPPED',
+      requestedBy: 1,
+      approvedBy: 1,
+      notes: 'Heating Element + Solenoid Valve',
+      orderDate: new Date('2026-05-10'),
+      totalAmount: '1455000.00',
+      createdAt: new Date('2026-05-10'),
+    });
+    await db.insert(schema.poItems).values([
       {
-        sparePartId: 6,
-        partName: 'Drain Pump Washing Machine',
-        quantity: 5,
-        unitPrice: '275000.00',
-        status: 'REQUESTED',
-        notes: 'Urgent - dibutuhkan untuk SR-20260503-0002',
-        createdAt: new Date('2026-05-14'),
-      },
-      {
-        sparePartId: 8,
-        partName: 'Magnet Door Seal Kulkas',
-        quantity: 10,
-        unitPrice: '95000.00',
-        status: 'ORDERED',
-        notes: 'Stok habis, reorder dari supplier',
-        orderedAt: new Date('2026-05-12T10:00:00'),
-        createdAt: new Date('2026-05-12'),
-      },
-      {
+        purchaseOrderId: 3,
         sparePartId: 12,
-        partName: 'Heating Element Water Dispenser',
         quantity: 3,
         unitPrice: '210000.00',
-        status: 'SHIPPED',
-        notes: 'Dikirim via JNE, resi: JNE123456789',
-        orderedAt: new Date('2026-05-10T09:00:00'),
-        shippedAt: new Date('2026-05-12T14:00:00'),
-        createdAt: new Date('2026-05-10'),
+        receivedQty: 0,
+        subtotal: '630000.00',
       },
       {
-        sparePartId: 1,
-        partName: 'Compressor AC 1PK R32',
-        quantity: 2,
-        unitPrice: '1850000.00',
-        status: 'RECEIVED',
-        notes: 'Diterima dalam kondisi baik',
-        orderedAt: new Date('2026-05-05T08:00:00'),
-        shippedAt: new Date('2026-05-07T10:00:00'),
-        receivedAt: new Date('2026-05-09T11:00:00'),
-        receivedQuantity: 2,
-        createdAt: new Date('2026-05-05'),
-      },
-      {
+        purchaseOrderId: 3,
         sparePartId: 11,
-        partName: 'Solenoid Valve Water Dispenser',
         quantity: 5,
         unitPrice: '165000.00',
-        status: 'CANCELLED',
-        notes: 'Dibatalkan - supplier tidak bisa kirim',
-        createdAt: new Date('2026-05-08'),
+        receivedQty: 0,
+        subtotal: '825000.00',
       },
     ]);
-    console.log('  ✔ 5 purchase orders dibuat');
+    console.log('  ✔ PO-3: SHIPPED (2 items)');
+
+    // PO-4: RECEIVED status (fully received, stock already updated)
+    await db.insert(schema.purchaseOrders).values({
+      poNumber: 'PO-20260505-0004',
+      supplierName: 'EPSON',
+      status: 'RECEIVED',
+      requestedBy: 1,
+      approvedBy: 1,
+      notes: 'Compressor AC restock - diterima lengkap',
+      orderDate: new Date('2026-05-05'),
+      expectedDate: new Date('2026-05-09'),
+      receivedDate: new Date('2026-05-09'),
+      totalAmount: '3700000.00',
+      createdAt: new Date('2026-05-05'),
+    });
+    await db.insert(schema.poItems).values({
+      purchaseOrderId: 4,
+      sparePartId: 1,
+      quantity: 2,
+      unitPrice: '1850000.00',
+      receivedQty: 2,
+      subtotal: '3700000.00',
+    });
+    console.log('  ✔ PO-4: RECEIVED (1 item, fully received)');
+
+    // PO-5: CANCELLED status
+    await db.insert(schema.purchaseOrders).values({
+      poNumber: 'PO-20260508-0005',
+      supplierName: 'EPSON',
+      status: 'CANCELLED',
+      requestedBy: 1,
+      notes: 'Dibatalkan - supplier tidak bisa kirim',
+      totalAmount: '825000.00',
+      createdAt: new Date('2026-05-08'),
+    });
+    await db.insert(schema.poItems).values({
+      purchaseOrderId: 5,
+      sparePartId: 11,
+      quantity: 5,
+      unitPrice: '165000.00',
+      receivedQty: 0,
+      subtotal: '825000.00',
+    });
+    console.log('  ✔ PO-5: CANCELLED (1 item)');
+
     console.log('     - REQUESTED: 1');
     console.log('     - ORDERED: 1');
     console.log('     - SHIPPED: 1');
