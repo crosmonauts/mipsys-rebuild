@@ -73,6 +73,10 @@ export class StockMovementsService {
       .where(eq(spareParts.id, sparePartId))
       .limit(1);
 
+    if (!current) {
+      throw new BadRequestException(`Part ID ${sparePartId} tidak ditemukan.`);
+    }
+
     const newStock = current.stock + quantity;
 
     if (newStock < 0 && (movementType === 'SERVICE_USE' || movementType === 'ADJUSTMENT')) {

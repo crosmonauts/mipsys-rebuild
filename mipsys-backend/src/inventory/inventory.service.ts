@@ -96,6 +96,16 @@ export class InventoryService {
         };
       }
 
+      if (quantity > part.stock) {
+        return {
+          success: false,
+          softBlock: true,
+          message: `Stok tidak mencukupi. Tersedia: ${part.stock}, dibutuhkan: ${quantity}`,
+          partName: part.partName,
+          currentStock: part.stock,
+        };
+      }
+
       const newStock = part.stock - quantity;
 
       await this.stockMovementsService.createMovement(

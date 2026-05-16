@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/src/components/ui/dialog';
-import { addStockSchema, AddStockFormValues } from '../schemas/part-schema';
+import { stockActionSchema, StockActionValues } from '../schemas/part-schema';
 import { SparePart } from '../types';
 
 interface AddStockModalProps {
@@ -33,8 +33,8 @@ export function AddStockModal({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<AddStockFormValues>({
-    resolver: zodResolver(addStockSchema) as any, // <-- Ditambahkan 'as any' untuk melewati type mismatch
+  } = useForm<StockActionValues>({
+    resolver: zodResolver(stockActionSchema) as any,
     defaultValues: { quantity: 1 },
   });
 
@@ -42,7 +42,7 @@ export function AddStockModal({
     if (isOpen) reset({ quantity: 1 });
   }, [isOpen, reset]);
 
-  const onSubmit = async (values: AddStockFormValues) => {
+  const onSubmit = async (values: StockActionValues) => {
     if (!part) return;
     try {
       await onAddStockSubmit(part.id, values.quantity);

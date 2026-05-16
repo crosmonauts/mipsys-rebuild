@@ -118,8 +118,13 @@ export class PurchaseOrdersService {
         const poItem = items.find((i) => i.id === receiveItem.poItemId);
         if (!poItem) throw new BadRequestException(`Item ID ${receiveItem.poItemId} tidak ditemukan.`);
 
-        if (receiveItem.receivedQty > poItem.quantity) {
-          throw new BadRequestException(`Qty terima melebihi pesanan untuk item ${poItem.sparePartId}.`);
+        const currentReceived = poItem.receivedQty || 0;
+        const cumulativeReceived = currentReceived + receiveItem.receivedQty;
+
+        if (cumulativeReceived > poItem.quantity) {
+          throw new BadRequestException(
+            `Qty terima melebihi pesanan untuk item ${poItem.sparePartId}. Sudah diterima: ${currentReceived}, ingin menerima: ${receiveItem.receivedQty}, total pesanan: ${poItem.quantity}.`
+          );
         }
 
         await this.poItemsService.updateReceivedQty(tx, poItem.id, receiveItem.receivedQty);
@@ -144,8 +149,7 @@ export class PurchaseOrdersService {
           })
           .where(eq(spareParts.id, poItem.sparePartId));
 
-        const newTotalReceived = (poItem.receivedQty || 0) + receiveItem.receivedQty;
-        if (newTotalReceived < poItem.quantity) {
+        if (cumulativeReceived < poItem.quantity) {
           allFullyReceived = false;
         }
       }

@@ -39,12 +39,14 @@ const ServiceRequestDetail = () => {
   const [originalData, setOriginalData] = useState<any>(null);
 
   const handleEditToggle = () => {
-    if (!isEditing) setOriginalData({ ...data });
+    if (!isEditing) {
+      if (data) setOriginalData({ ...data });
+    }
     else setData(originalData);
     setIsEditing(!isEditing);
   };
 
-  if (isLoading && !data) return <LoadingState />;
+  if (isLoading || !data) return <LoadingState />;
 
   return (
     <main className="min-h-screen bg-[#fafaf9] text-stone-900 font-sans selection:bg-amber-100">

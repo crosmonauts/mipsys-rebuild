@@ -54,7 +54,7 @@ export function POCreate({ onClose, onSuccess, preFilledParts = [] }: POCreatePr
         requestedBy: 1,
       });
 
-      toast.success(asDraft ? 'PO Draft berhasil disimpan' : 'PO berhasil dibuat sebagai Draft');
+      toast.success(asDraft ? 'PO Draft berhasil disimpan' : 'PO berhasil diajukan untuk approval');
       onSuccess();
       onClose();
     } catch (error) {

@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:push": "npx drizzle-kit push",
     "db:seed": "npx ts-node src/database/seeds/seed.ts",
-    "db:clean": "mysql -u root db_mipsys -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS service_requests, customers, customer_phones, products, staff, hardware_checks, order_parts, spare_parts, service_logs, attachments, stock_movements, po_items, purchase_orders, invoices, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\"",
+    "db:clean": "D:\\xampp\\mysql\\bin\\mysql -u root db_mipsys -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS purchase_orders, po_items, stock_movements, invoices, service_requests, customers, customer_phones, products, staff, hardware_checks, order_parts, spare_parts, service_logs, attachments, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\"",
     "db:fresh": "npm run db:clean && npm run db:push && npm run db:seed"
   },
   "dependencies": {

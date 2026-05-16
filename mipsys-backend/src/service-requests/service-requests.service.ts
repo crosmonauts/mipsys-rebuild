@@ -6,14 +6,14 @@ import {
 } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
-import * as schema from '../db/schema';
+import * as schema from '../database/schema';
 import {
   serviceLogs,
   serviceRequests,
   customers,
   products,
   StatusService,
-} from '../db/schema';
+} from '../database/schema';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 
 type DrizzleTx = Parameters<

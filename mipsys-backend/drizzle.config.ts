@@ -2,7 +2,7 @@ import 'dotenv/config'; // Pastikan ini ada di baris pertama
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
-  schema: './src/db/schema.ts',
+  schema: './src/database/schema/index.ts',
   out: './drizzle',
   dialect: 'mysql',
   dbCredentials: {
