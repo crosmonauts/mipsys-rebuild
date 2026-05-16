@@ -11,13 +11,15 @@ import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
 import { invoices, serviceRequests } from '../database/schema';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { OrderPartsService } from '../order-parts/order-parts.service';
 
 @Injectable()
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    private orderPartsService: OrderPartsService,
   ) {}
 
   async findAll(search?: string, status?: string) {
@@ -132,8 +134,15 @@ export class FinanceService {
     });
     if (existing) throw new BadRequestException(`Invoice untuk tiket ${ticketNumber} sudah ada.`);
 
-    const total = parseFloat(sr.serviceFee || '0') + parseFloat(sr.partFee || '0') + parseFloat(sr.shippingFee || '0');
-    const ppn = total * 0.11;
+    // Calculate parts cost from order_parts table
+    const partsCost = await this.orderPartsService.getTotalPartsCost(sr.id);
+    const serviceFee = parseFloat(sr.serviceFee || '0');
+    const shippingFee = parseFloat(sr.shippingFee || '0');
+
+    const subtotal = serviceFee + shippingFee + partsCost;
+    const ppn = subtotal * 0.11;
+    const total = subtotal + ppn;
+
     const invoiceNumber = this.generateInvoiceNumber();
 
     const [result] = await this.db.insert(invoices).values({
@@ -141,16 +150,27 @@ export class FinanceService {
       ticketNumber,
       serviceRequestId: sr.id,
       clientName: 'Customer',
-      serviceFee: sr.serviceFee || '0.00',
-      partFee: sr.partFee || '0.00',
-      shippingFee: sr.shippingFee || '0.00',
+      serviceFee: serviceFee.toString(),
+      partFee: partsCost.toString(),
+      shippingFee: shippingFee.toString(),
       ppn: ppn.toString(),
-      total: (total + ppn).toString(),
+      total: total.toString(),
       status: 'UNPAID',
       invoiceDate: new Date(),
     });
 
-    return { success: true, id: result.insertId, invoiceNumber };
+    return {
+      success: true,
+      id: result.insertId,
+      invoiceNumber,
+      breakdown: {
+        serviceFee,
+        partsCost,
+        shippingFee,
+        ppn,
+        total,
+      },
+    };
   }
 
   private generateInvoiceNumber(): string {
