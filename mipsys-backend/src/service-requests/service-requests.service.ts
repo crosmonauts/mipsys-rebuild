@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
@@ -14,8 +15,14 @@ import {
   products,
   StatusService,
   staff,
+  orderParts,
+  spareParts,
 } from '../database/schema';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { InventoryService } from '../inventory/inventory.service';
+import { OrderPartsService } from '../order-parts/order-parts.service';
+import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
+import { validateSrTransition, SrStatusType } from './sr-state-machine.guard';
 
 type DrizzleTx = Parameters<
   Parameters<MySql2Database<typeof schema>['transaction']>[0]
@@ -24,7 +31,9 @@ type DrizzleTx = Parameters<
 @Injectable()
 export class ServiceRequestService {
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    private inventoryService: InventoryService,
+    private orderPartsService: OrderPartsService
   ) {}
   private async logSystemError(action: string, error: any, context?: any) {
     console.error(`[${action}] Error:`, error);
@@ -243,7 +252,90 @@ export class ServiceRequestService {
   }
 
   // ============================================================
-  // 3. PRIVATE RESOLVERS (Logic Separation)
+  // 3. ATOMIC DIAGNOSIS (State Transition + Parts + Stock)
+  // ============================================================
+  async diagnose(ticketNumber: string, dto: DiagnoseSrDto) {
+    return this.db.transaction(async (tx) => {
+      const sr = await tx.query.serviceRequests.findFirst({
+        where: eq(serviceRequests.ticketNumber, ticketNumber),
+      });
+      if (!sr) throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+
+      if (sr.statusService === 'DONE' || sr.statusService === 'CANCEL') {
+        throw new BadRequestException(
+          `Tiket ${ticketNumber} sudah ${sr.statusService} dan tidak dapat diubah.`
+        );
+      }
+
+      validateSrTransition(
+        sr.statusService as SrStatusType,
+        dto.newStatus as SrStatusType
+      );
+
+      if (dto.problemDescription?.trim()) {
+        await tx
+          .update(serviceRequests)
+          .set({ problemDescription: dto.problemDescription.trim() })
+          .where(eq(serviceRequests.ticketNumber, ticketNumber));
+      }
+
+      if (dto.parts && dto.parts.length > 0) {
+        for (const partDto of dto.parts) {
+          await this.orderPartsService.addPart(
+            {
+              serviceRequestId: sr.id,
+              sparePartId: partDto.sparePartId,
+              quantity: partDto.quantity,
+            },
+            tx
+          );
+
+          await this.inventoryService.reserveStock(
+            partDto.sparePartId,
+            partDto.quantity,
+            ticketNumber,
+            dto.performedBy ?? 1
+          );
+        }
+      }
+
+      await tx
+        .update(serviceRequests)
+        .set({
+          statusService: dto.newStatus,
+          ...(dto.newStatus === 'CHECK' && !sr.checkDate
+            ? { checkDate: new Date() }
+            : {}),
+          ...(dto.newStatus === 'SERVICE' && !sr.spDate
+            ? { spDate: new Date() }
+            : {}),
+          ...(dto.newStatus === 'DONE'
+            ? {
+                readyDate: new Date(),
+                closeDate: new Date(),
+              }
+            : {}),
+        })
+        .where(eq(serviceRequests.ticketNumber, ticketNumber));
+
+      await tx.insert(serviceLogs).values({
+        serviceRequestId: sr.id,
+        action: 'DIAGNOSIS_UPDATED',
+        description: `Status → ${dto.newStatus}${dto.parts?.length ? `, ${dto.parts.length} part ditambahkan` : ''}`,
+        performedBy: dto.performedBy ?? null,
+      });
+
+      return {
+        success: true,
+        ticketNumber,
+        newStatus: dto.newStatus,
+        partsAdded: dto.parts?.length ?? 0,
+      };
+    });
+  }
+
+  // ============================================================
+  // 4. PRIVATE RESOLVERS (Logic Separation)
   // ============================================================
   private async resolveCustomerId(
     tx: DrizzleTx,

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ServiceRequestService } from './service-requests.service';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
 
 @Controller('service-request')
 export class ServiceRequestsController {
@@ -58,5 +59,15 @@ export class ServiceRequestsController {
       ticketNumber,
       updateDto
     );
+  }
+
+  @Post(':ticketNumber/diagnose')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async diagnose(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: DiagnoseSrDto
+  ) {
+    return this.serviceRequestService.diagnose(ticketNumber, dto);
   }
 }
