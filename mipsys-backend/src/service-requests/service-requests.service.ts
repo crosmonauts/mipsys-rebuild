@@ -13,6 +13,7 @@ import {
   customers,
   products,
   StatusService,
+  staff,
 } from '../database/schema';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
 
@@ -97,24 +98,54 @@ export class ServiceRequestService {
 
   async getActivities() {
     try {
-      return await this.db
+      const logs = await this.db
         .select({
           id: serviceLogs.id,
           action: serviceLogs.action,
           description: serviceLogs.description,
           createdAt: serviceLogs.createdAt,
+          performedBy: serviceLogs.performedBy,
         })
         .from(serviceLogs)
         .limit(10)
         .orderBy(desc(serviceLogs.createdAt));
+
+      return logs.map((log) => ({
+        time: log.createdAt ? new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '',
+        user: `Staff #${log.performedBy || '-'}`,
+        task: log.description || log.action,
+        status: log.action?.includes('DONE') || log.action?.includes('COMPLETED') ? 'DONE' : log.action?.includes('SERVICE') ? 'SERVICE' : 'PENDING',
+      }));
     } catch (error) {
       console.error('[GET_ACTIVITIES_ERROR]', error);
-      throw new InternalServerErrorException('Gagal mengambil data aktivitas.');
+      return [];
     }
   }
 
   async getDashboardStats() {
-    return { pending: 0, proses: 0, selesai: 0 };
+    try {
+      const allSR = await this.db.query.serviceRequests.findMany();
+      const allCustomers = await this.db.query.customers.findMany();
+      const allStaff = await this.db.query.staff.findMany({
+        where: eq(staff.role, 'TECHNICIAN'),
+      });
+
+      const pending = allSR.filter((s) => s.statusService === 'WAITING_CHECK' || s.statusService === 'WAITING_APPROVE').length;
+      const proses = allSR.filter((s) => s.statusService === 'CHECK' || s.statusService === 'SERVICE').length;
+      const selesai = allSR.filter((s) => s.statusService === 'DONE').length;
+
+      return {
+        total: allSR.length,
+        pending,
+        proses,
+        selesai,
+        customers: allCustomers.length,
+        technicians: allStaff.length,
+      };
+    } catch (error) {
+      console.error('[GET_STATS_ERROR]', error);
+      return { total: 0, pending: 0, proses: 0, selesai: 0, customers: 0, technicians: 0 };
+    }
   }
 
   // ============================================================
