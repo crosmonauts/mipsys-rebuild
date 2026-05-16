@@ -23,11 +23,6 @@ export class ServiceRequestsController {
     return await this.serviceRequestService.findAll();
   }
 
-  @Get(':id')
-  async getDetail(@Param('id') id: string) {
-    return await this.serviceRequestService.findOne(id);
-  }
-
   @Get('activities')
   async getActivities() {
     return await this.serviceRequestService.getActivities();
@@ -35,8 +30,12 @@ export class ServiceRequestsController {
 
   @Get('stats')
   async getStats() {
-    // DoD Performance: Pastikan kueri ini tidak N+1
     return await this.serviceRequestService.getDashboardStats();
+  }
+
+  @Get(':id')
+  async getDetail(@Param('id') id: string) {
+    return await this.serviceRequestService.findOne(id);
   }
 
   @Post('entry')
