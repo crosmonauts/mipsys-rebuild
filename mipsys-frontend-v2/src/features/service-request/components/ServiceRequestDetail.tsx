@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useServiceRequest } from '../hooks/useServiceRequest';
-import DiagnosisModal from '@/src/components/layout/DiagnosisModal';
+import { DiagnosisModal } from '@/src/components/layout/DiagnosisModal';
 import {
   User,
   Smartphone,
