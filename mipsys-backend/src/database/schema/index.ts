@@ -6,3 +6,4 @@ export * from './purchase-order.schema';
 export * from './po-items.schema';
 export * from './relations';
 export * from './invoice.schema';
+export * from './category-model.schema';

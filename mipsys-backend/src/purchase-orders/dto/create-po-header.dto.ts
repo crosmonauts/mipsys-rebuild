@@ -9,8 +9,17 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreatePoItemDto {
+  @IsOptional()
   @IsInt()
-  sparePartId!: number;
+  sparePartId?: number;
+
+  @IsOptional()
+  @IsString()
+  partName?: string;
+
+  @IsOptional()
+  @IsString()
+  modelName?: string;
 
   @IsInt()
   @Min(1)
@@ -26,9 +35,10 @@ export class CreatePoHeaderDto {
   @IsString()
   supplierName?: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
-  requestedBy!: number;
+  requestedBy?: number;
 
   @IsString()
   @IsOptional()

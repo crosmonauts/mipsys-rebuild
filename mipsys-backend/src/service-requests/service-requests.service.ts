@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
   BadRequestException,
 } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and, like, or } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
 import {
@@ -14,11 +14,13 @@ import {
   customers,
   products,
   StatusService,
-  staff,
   orderParts,
   spareParts,
 } from '../database/schema';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { ApproveQuoteDto } from './dto/approve-quote.dto';
+import { SaveQuoteDto } from './dto/save-quote.dto';
+import { CancelQuoteDto } from './dto/cancel-quote.dto';
 import { InventoryService } from '../inventory/inventory.service';
 import { OrderPartsService } from '../order-parts/order-parts.service';
 import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
@@ -39,23 +41,54 @@ export class ServiceRequestService {
     console.error(`[${action}] Error:`, error);
   }
 
-  async findAll() {
+  async findAll(filters: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    status?: string;
+  }) {
     try {
+      const { search, page = 1, limit = 10, status } = filters;
+
+      const conditions: any[] = [];
+
+      if (search) {
+        conditions.push(
+          or(
+            like(serviceRequests.ticketNumber, `%${search}%`),
+            like(customers.name, `%${search}%`),
+            like(products.modelName, `%${search}%`),
+            like(products.serialNumber, `%${search}%`),
+          ),
+        );
+      }
+
+      if (status && status !== 'ALL') {
+        conditions.push(eq(serviceRequests.statusService, status));
+      }
+
+      const offset = (page - 1) * limit;
+
       const results = await this.db
         .select({
           id: serviceRequests.id,
           ticketNumber: serviceRequests.ticketNumber,
-          status: serviceRequests.statusService,
+          statusService: serviceRequests.statusService,
+          statusSystem: serviceRequests.statusSystem,
           incomingDate: serviceRequests.incomingDate,
           customerName: customers.name,
           customerPhone: customers.phone,
           modelName: products.modelName,
           serialNumber: products.serialNumber,
+          serviceType: serviceRequests.serviceType,
         })
         .from(serviceRequests)
         .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
         .leftJoin(products, eq(serviceRequests.productId, products.id))
-        .orderBy(desc(serviceRequests.createdAt));
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(serviceRequests.createdAt))
+        .limit(limit)
+        .offset(offset);
 
       return results;
     } catch (error) {
@@ -80,6 +113,9 @@ export class ServiceRequestService {
           modelName: products.modelName,
           serialNumber: products.serialNumber,
           serviceType: serviceRequests.serviceType,
+          serviceFee: serviceRequests.serviceFee,
+          partFee: serviceRequests.partFee,
+          shippingFee: serviceRequests.shippingFee,
         })
         .from(serviceRequests)
         .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
@@ -134,26 +170,39 @@ export class ServiceRequestService {
   async getDashboardStats() {
     try {
       const allSR = await this.db.query.serviceRequests.findMany();
-      const allCustomers = await this.db.query.customers.findMany();
-      const allStaff = await this.db.query.staff.findMany({
-        where: eq(staff.role, 'TECHNICIAN'),
-      });
 
-      const pending = allSR.filter((s) => s.statusService === 'WAITING_CHECK' || s.statusService === 'WAITING_APPROVE').length;
-      const proses = allSR.filter((s) => s.statusService === 'CHECK' || s.statusService === 'SERVICE').length;
-      const selesai = allSR.filter((s) => s.statusService === 'DONE').length;
+      const pending = allSR.filter((s) =>
+        s.statusService === 'WAITING_CHECK' ||
+        s.statusService === 'WAITING_APPROVE'
+      ).length;
+      const inService = allSR.filter((s) =>
+        s.statusService === 'SERVICE'
+      ).length;
+      const awaitingParts = allSR.filter((s) =>
+        s.statusService === 'AWAITING_PARTS'
+      ).length;
+      const ready = allSR.filter((s) =>
+        s.statusService === 'DONE'
+      ).length;
+      const closed = allSR.filter((s) =>
+        s.statusSystem === 'CLOSED'
+      ).length;
+      const cancelled = allSR.filter((s) =>
+        s.statusService === 'CANCEL' || s.statusService === 'CANCELLED'
+      ).length;
 
       return {
         total: allSR.length,
         pending,
-        proses,
-        selesai,
-        customers: allCustomers.length,
-        technicians: allStaff.length,
+        inService,
+        awaitingParts,
+        ready,
+        closed,
+        cancelled,
       };
     } catch (error) {
       console.error('[GET_STATS_ERROR]', error);
-      return { total: 0, pending: 0, proses: 0, selesai: 0, customers: 0, technicians: 0 };
+      return { total: 0, pending: 0, inService: 0, awaitingParts: 0, ready: 0, closed: 0, cancelled: 0 };
     }
   }
 
@@ -287,15 +336,8 @@ export class ServiceRequestService {
               sparePartId: partDto.sparePartId,
               quantity: partDto.quantity,
             },
-            tx
-          );
-
-          await this.inventoryService.reserveStock(
-            partDto.sparePartId,
-            partDto.quantity,
-            ticketNumber,
-            dto.performedBy ?? 1,
-            tx
+            tx,
+            'PROPOSED'
           );
         }
       }
@@ -307,8 +349,14 @@ export class ServiceRequestService {
           ...(dto.newStatus === 'CHECK' && !sr.checkDate
             ? { checkDate: new Date() }
             : {}),
-          ...(dto.newStatus === 'SERVICE' && !sr.spDate
+          ...(dto.newStatus === 'WAITING_APPROVE' && !sr.spDate
             ? { spDate: new Date() }
+            : {}),
+          ...(dto.newStatus === 'SERVICE'
+            ? {
+                spDate: !sr.spDate ? new Date() : sr.spDate,
+                approveDate: !sr.approveDate ? new Date() : sr.approveDate,
+              }
             : {}),
           ...(dto.newStatus === 'DONE'
             ? {
@@ -322,7 +370,7 @@ export class ServiceRequestService {
       await tx.insert(serviceLogs).values({
         serviceRequestId: sr.id,
         action: 'DIAGNOSIS_UPDATED',
-        description: `Status → ${dto.newStatus}${dto.parts?.length ? `, ${dto.parts.length} part ditambahkan` : ''}`,
+        description: `Status → ${dto.newStatus}${dto.parts?.length ? `, ${dto.parts.length} part diusulkan` : ''}`,
         performedBy: dto.performedBy ?? null,
       });
 
@@ -336,7 +384,335 @@ export class ServiceRequestService {
   }
 
   // ============================================================
-  // 4. PRIVATE RESOLVERS (Logic Separation)
+  // 4. SAVE QUOTE (Admin saves fee proposal — stays in WAITING_APPROVE)
+  // ============================================================
+  async saveQuote(ticketNumber: string, dto: SaveQuoteDto) {
+    return this.db.transaction(async (tx) => {
+      const sr = await tx.query.serviceRequests.findFirst({
+        where: eq(serviceRequests.ticketNumber, ticketNumber),
+      });
+      if (!sr) throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+
+      if (sr.statusService !== 'WAITING_APPROVE') {
+        throw new BadRequestException(
+          `Penawaran hanya bisa dibuat pada status WAITING_APPROVE. Status saat ini: ${sr.statusService}`
+        );
+      }
+
+      const parts = await tx.query.orderParts.findMany({
+        where: and(
+          eq(orderParts.serviceRequestId, sr.id),
+          eq(orderParts.status, 'PROPOSED'),
+        ),
+      });
+
+      if (parts.length === 0) {
+        throw new BadRequestException(
+          'Tidak ada part yang diusulkan. Tambahkan part terlebih dahulu.'
+        );
+      }
+
+      const totalPartFee = parts.reduce((sum, p) => {
+        return sum + parseFloat(p.priceAtAction || '0') * p.quantity;
+      }, 0);
+
+      await tx
+        .update(serviceRequests)
+        .set({
+          serviceFee: dto.serviceFee.toString(),
+          shippingFee: (dto.shippingFee ?? 0).toString(),
+          partFee: totalPartFee.toString(),
+          updatedAt: new Date(),
+        })
+        .where(eq(serviceRequests.ticketNumber, ticketNumber));
+
+      await tx.insert(serviceLogs).values({
+        serviceRequestId: sr.id,
+        action: 'QUOTE_SAVED',
+        description: `Penawaran tersimpan: Jasa Rp${Number(dto.serviceFee).toLocaleString('id-ID')}, Part Rp${totalPartFee.toLocaleString('id-ID')}, Ongkos Kirim Rp${(dto.shippingFee ?? 0).toLocaleString('id-ID')}`,
+        performedBy: dto.performedBy ?? null,
+      });
+
+      return {
+        success: true,
+        ticketNumber,
+        partFee: totalPartFee,
+        serviceFee: dto.serviceFee,
+        shippingFee: dto.shippingFee ?? 0,
+      };
+    });
+  }
+
+  // ============================================================
+  // 5. CANCEL QUOTE (Customer rejects — WAITING_APPROVE → CANCEL)
+  // ============================================================
+  async cancelQuote(ticketNumber: string, dto: CancelQuoteDto) {
+    return this.db.transaction(async (tx) => {
+      const sr = await tx.query.serviceRequests.findFirst({
+        where: eq(serviceRequests.ticketNumber, ticketNumber),
+      });
+      if (!sr) throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+
+      if (sr.statusService !== 'WAITING_APPROVE') {
+        throw new BadRequestException(
+          `Pembatalan hanya bisa dilakukan pada status WAITING_APPROVE. Status saat ini: ${sr.statusService}`
+        );
+      }
+
+      validateSrTransition(
+        sr.statusService as SrStatusType,
+        'CANCEL' as SrStatusType,
+      );
+
+      await tx
+        .update(serviceRequests)
+        .set({
+          statusService: 'CANCEL' as any,
+          updatedAt: new Date(),
+        })
+        .where(eq(serviceRequests.ticketNumber, ticketNumber));
+
+      await tx.insert(serviceLogs).values({
+        serviceRequestId: sr.id,
+        action: 'QUOTE_REJECTED',
+        description: 'Penawaran ditolak pelanggan. Tiket dibatalkan.',
+        performedBy: dto.performedBy ?? null,
+      });
+
+      return {
+        success: true,
+        ticketNumber,
+        newStatus: 'CANCEL',
+      };
+    });
+  }
+
+  // ============================================================
+  // 6. APPROVE QUOTE (Customer agrees → check stock → cut stock → transition)
+  // ============================================================
+  async approveQuote(ticketNumber: string, dto: ApproveQuoteDto) {
+    return this.db.transaction(async (tx) => {
+      const sr = await tx.query.serviceRequests.findFirst({
+        where: eq(serviceRequests.ticketNumber, ticketNumber),
+      });
+      if (!sr) throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+
+      if (sr.statusService !== 'WAITING_APPROVE') {
+        throw new BadRequestException(
+          `Penawaran hanya bisa disetujui pada status WAITING_APPROVE. Status saat ini: ${sr.statusService}`
+        );
+      }
+
+      const hasQuote = parseFloat(sr.serviceFee || '0') > 0 || parseFloat(sr.partFee || '0') > 0;
+      if (!hasQuote) {
+        throw new BadRequestException(
+          'Belum ada penawaran yang disimpan. Simpan penawaran terlebih dahulu.'
+        );
+      }
+
+      const parts = await tx.query.orderParts.findMany({
+        where: and(
+          eq(orderParts.serviceRequestId, sr.id),
+          eq(orderParts.status, 'PROPOSED'),
+        ),
+      });
+
+      if (parts.length === 0) {
+        throw new BadRequestException(
+          'Tidak ada part yang diusulkan. Tambahkan part terlebih dahulu.'
+        );
+      }
+
+      let allInStock = true;
+      for (const part of parts) {
+        const sparePart = await tx.query.spareParts.findFirst({
+          where: eq(spareParts.id, part.sparePartId!),
+          columns: { id: true, stock: true, partName: true },
+        });
+
+        if (!sparePart || sparePart.stock < part.quantity) {
+          allInStock = false;
+          await tx
+            .update(orderParts)
+            .set({ status: 'OUT_OF_STOCK' })
+            .where(eq(orderParts.id, part.id));
+        }
+      }
+
+      let newStatus: string;
+      if (allInStock) {
+        newStatus = 'SERVICE';
+        for (const part of parts) {
+          const sparePart = await tx.query.spareParts.findFirst({
+            where: eq(spareParts.id, part.sparePartId!),
+            columns: { id: true, stock: true },
+          });
+
+          if (sparePart) {
+            await this.inventoryService.reserveStock(
+              sparePart.id,
+              part.quantity,
+              ticketNumber,
+              dto.performedBy ?? 1,
+              tx,
+            );
+          }
+
+          await tx
+            .update(orderParts)
+            .set({ status: 'IN_STOCK' })
+            .where(eq(orderParts.id, part.id));
+        }
+      } else {
+        newStatus = 'AWAITING_PARTS';
+      }
+
+      validateSrTransition(
+        sr.statusService as SrStatusType,
+        newStatus as SrStatusType,
+      );
+
+      const totalPartFee = parts.reduce((sum, p) => {
+        return sum + parseFloat(p.priceAtAction || '0') * p.quantity;
+      }, 0);
+
+      await tx
+        .update(serviceRequests)
+        .set({
+          statusService: newStatus as any,
+          approveDate: new Date(),
+          ...(allInStock && !sr.spDate ? { spDate: new Date() } : {}),
+        })
+        .where(eq(serviceRequests.ticketNumber, ticketNumber));
+
+      await tx.insert(serviceLogs).values({
+        serviceRequestId: sr.id,
+        action: 'QUOTE_APPROVED',
+        description: allInStock
+          ? `Penawaran disetujui. ${parts.length} part dipotong dari stok. Status → SERVICE`
+          : `Penawaran disetujui. ${parts.length} part, sebagian tidak tersedia. Status → AWAITING_PARTS`,
+        performedBy: dto.performedBy ?? null,
+      });
+
+      return {
+        success: true,
+        ticketNumber,
+        newStatus,
+        allInStock,
+        partFee: totalPartFee,
+        serviceFee: sr.serviceFee,
+        shippingFee: sr.shippingFee,
+        partsProcessed: parts.length,
+      };
+    });
+  }
+
+  // ============================================================
+  // 7. RETRY AWAITING PARTS (Manual re-check stock → SERVICE if available)
+  // ============================================================
+  async retryAwaitingParts(ticketNumber: string, dto: CancelQuoteDto) {
+    return this.db.transaction(async (tx) => {
+      const sr = await tx.query.serviceRequests.findFirst({
+        where: eq(serviceRequests.ticketNumber, ticketNumber),
+      });
+      if (!sr) throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+
+      if (sr.statusService !== 'AWAITING_PARTS') {
+        throw new BadRequestException(
+          `Cek ulang stok hanya bisa dilakukan pada status AWAITING_PARTS. Status saat ini: ${sr.statusService}`
+        );
+      }
+
+      const outOfStockParts = await tx.query.orderParts.findMany({
+        where: and(
+          eq(orderParts.serviceRequestId, sr.id),
+          eq(orderParts.status, 'OUT_OF_STOCK'),
+        ),
+      });
+
+      if (outOfStockParts.length === 0) {
+        throw new BadRequestException(
+          'Tidak ada part yang menunggu stok.'
+        );
+      }
+
+      let allAvailable = true;
+      for (const op of outOfStockParts) {
+        const sp = await tx.query.spareParts.findFirst({
+          where: eq(spareParts.id, op.sparePartId!),
+          columns: { id: true, stock: true, partName: true },
+        });
+        if (!sp || sp.stock < op.quantity) {
+          allAvailable = false;
+          break;
+        }
+      }
+
+      if (!allAvailable) {
+        return {
+          success: true,
+          ticketNumber,
+          newStatus: 'AWAITING_PARTS',
+          available: false,
+          message: 'Stok masih belum mencukupi untuk semua part.',
+        };
+      }
+
+      for (const op of outOfStockParts) {
+        const sp = await tx.query.spareParts.findFirst({
+          where: eq(spareParts.id, op.sparePartId!),
+          columns: { id: true, stock: true },
+        });
+
+        if (sp) {
+          await this.inventoryService.reserveStock(
+            sp.id,
+            op.quantity,
+            ticketNumber,
+            dto.performedBy ?? 1,
+            tx,
+          );
+        }
+
+        await tx
+          .update(orderParts)
+          .set({ status: 'IN_STOCK' })
+          .where(eq(orderParts.id, op.id));
+      }
+
+      validateSrTransition(
+        sr.statusService as SrStatusType,
+        'SERVICE' as SrStatusType,
+      );
+
+      await tx
+        .update(serviceRequests)
+        .set({
+          statusService: 'SERVICE' as any,
+          spDate: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(serviceRequests.id, sr.id));
+
+      await tx.insert(serviceLogs).values({
+        serviceRequestId: sr.id,
+        action: 'SR_STOCK_RETRY',
+        description: `Cek ulang stok: ${outOfStockParts.length} part tersedia. Status → SERVICE`,
+        performedBy: dto.performedBy ?? null,
+      });
+
+      return {
+        success: true,
+        ticketNumber,
+        newStatus: 'SERVICE',
+        available: true,
+        partsProcessed: outOfStockParts.length,
+      };
+    });
+  }
+
+  // ============================================================
+  // 8. PRIVATE RESOLVERS (Logic Separation)
   // ============================================================
   private async resolveCustomerId(
     tx: DrizzleTx,

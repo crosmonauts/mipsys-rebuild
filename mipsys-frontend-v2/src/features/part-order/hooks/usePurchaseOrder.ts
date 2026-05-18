@@ -50,6 +50,27 @@ export const usePurchaseOrder = (id: number | null) => {
   return { data, isLoading, refetch: fetchOne };
 };
 
+export const useUpdatePurchaseOrder = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const update = async (id: number, data: CreatePurchaseOrderDto) => {
+    setIsSubmitting(true);
+    try {
+      const result = await poApi.update(id, data);
+      toast.success('Purchase order berhasil diperbarui');
+      return result;
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Gagal memperbarui purchase order';
+      toast.error(Array.isArray(message) ? message[0] : message);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return { update, isSubmitting };
+};
+
 export const useCreatePurchaseOrder = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,9 +80,9 @@ export const useCreatePurchaseOrder = () => {
       const result = await poApi.create(data);
       toast.success('Purchase order berhasil dibuat');
       return result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal membuat purchase order';
-      toast.error(message);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Gagal membuat purchase order';
+      toast.error(Array.isArray(message) ? message[0] : message);
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -80,9 +101,9 @@ export const useUpdatePurchaseOrderStatus = () => {
       const result = await poApi.updateStatus(id, status);
       toast.success('Status purchase order berhasil diperbarui');
       return result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal memperbarui status';
-      toast.error(message);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Gagal memperbarui status';
+      toast.error(Array.isArray(message) ? message[0] : message);
       throw error;
     } finally {
       setIsSubmitting(false);

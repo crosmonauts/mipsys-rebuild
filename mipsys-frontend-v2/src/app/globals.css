@@ -137,7 +137,7 @@
   }
 
   .command-strip {
-    background: linear-gradient(135deg, oklch(0.78 0.16 61), oklch(0.77 0.134 178), oklch(0.7 0.14 140));
+    background: linear-gradient(135deg, oklch(0.78 0.16 61), oklch(0.77 0.134 178), oklch(0.68 0.18 286));
   }
 
   .micro-label {

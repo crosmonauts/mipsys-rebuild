@@ -8,8 +8,6 @@ import {
   RefreshCcw,
   Plus,
   Minus,
-  Trash2,
-  AlertTriangle,
 } from 'lucide-react';
 
 // Primitif Radix UI untuk kontrol penuh atas elemen Content (menghapus tombol close default)
@@ -36,7 +34,7 @@ interface AddStockModalProps {
   onStockAction: (
     id: number,
     qty: number,
-    type: 'ADD' | 'SUBTRACT' | 'RESET',
+    type: 'ADD' | 'SUBTRACT',
   ) => Promise<void>;
 }
 
@@ -56,14 +54,14 @@ export function AddStockModal({
     formState: { errors, isSubmitting },
   } = useForm<StockActionValues>({
     resolver: zodResolver(stockActionSchema) as any,
-    defaultValues: { type: 'ADD', quantity: 1 },
+    defaultValues: { type: 'ADD' as const, quantity: 1 },
   });
 
   const currentType = watch('type');
 
   // Reset form setiap kali modal dibuka
   React.useEffect(() => {
-    if (isOpen) reset({ type: 'ADD', quantity: 1 });
+    if (isOpen) reset({ type: 'ADD' as const, quantity: 1 });
   }, [isOpen, reset]);
 
   const onSubmit = async (values: StockActionValues) => {
@@ -98,11 +96,6 @@ export function AddStockModal({
       text: 'text-amber-600',
       border: 'border-amber-200',
     },
-    RESET: {
-      bg: 'bg-red-600',
-      text: 'text-red-600',
-      border: 'border-red-200',
-    },
   }[currentType];
 
   return (
@@ -133,13 +126,11 @@ export function AddStockModal({
                   <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
                     {currentType === 'ADD' && <Plus size={24} />}
                     {currentType === 'SUBTRACT' && <Minus size={24} />}
-                    {currentType === 'RESET' && <Trash2 size={24} />}
                   </div>
                   <div>
                     <DialogTitle className="text-xl font-black uppercase tracking-tight">
                       {currentType === 'ADD' && 'Tambah Stok'}
                       {currentType === 'SUBTRACT' && 'Kurangi Stok'}
-                      {currentType === 'RESET' && 'Reset/Hapus Stok'}
                     </DialogTitle>
                     <p className="text-xs font-bold opacity-80 uppercase tracking-widest">
                       {part.partCode}
@@ -159,8 +150,8 @@ export function AddStockModal({
 
             <div className="p-8 space-y-6">
               {/* 2. SELECTOR AKSI */}
-              <div className="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-2xl">
-                {(['ADD', 'SUBTRACT', 'RESET'] as const).map((t) => (
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+                {(['ADD', 'SUBTRACT'] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
@@ -172,11 +163,7 @@ export function AddStockModal({
                         : 'text-slate-400 hover:text-slate-600 scale-95',
                     )}
                   >
-                    {t === 'ADD'
-                      ? 'Tambah'
-                      : t === 'SUBTRACT'
-                        ? 'Kurangi'
-                        : 'Reset'}
+                    {t === 'ADD' ? 'Tambah' : 'Kurangi'}
                   </button>
                 ))}
               </div>
@@ -204,41 +191,29 @@ export function AddStockModal({
                 </div>
               </div>
 
-              {/* 4. AREA INPUT / PERINGATAN */}
-              {currentType !== 'RESET' ? (
-                <div className="space-y-3">
-                  <label className="text-[11px] font-black uppercase text-slate-500 tracking-widest ml-1">
-                    Jumlah yang di{' '}
-                    {currentType === 'ADD' ? 'tambahkan' : 'kurangi'}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      {...register('quantity')}
-                      className="w-full h-14 pl-5 pr-14 border-2 border-slate-200 rounded-2xl text-lg font-black text-slate-900 focus:border-slate-900 focus:ring-0 transition-all outline-none"
-                      placeholder="0"
-                    />
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs uppercase">
-                      Unit
-                    </div>
+              {/* 4. AREA INPUT */}
+              <div className="space-y-3">
+                <label className="text-[11px] font-black uppercase text-slate-500 tracking-widest ml-1">
+                  Jumlah yang di{' '}
+                  {currentType === 'ADD' ? 'tambahkan' : 'kurangi'}
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    {...register('quantity')}
+                    className="w-full h-14 pl-5 pr-14 border-2 border-slate-200 rounded-2xl text-lg font-black text-slate-900 focus:border-slate-900 focus:ring-0 transition-all outline-none"
+                    placeholder="0"
+                  />
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xs uppercase">
+                    Unit
                   </div>
-                  {errors.quantity && (
-                    <p className="text-[10px] font-bold text-red-600 ml-1">
-                      {errors.quantity.message}
-                    </p>
-                  )}
                 </div>
-              ) : (
-                <div className="p-4 bg-red-50 border-2 border-red-100 rounded-2xl flex items-start gap-3">
-                  <AlertTriangle className="text-red-600 shrink-0" size={18} />
-                  <p className="text-[11px] font-bold text-red-900 leading-relaxed">
-                    Perhatian: Aksi ini akan mengatur stok menjadi{' '}
-                    <span className="underline font-black">NOL (0)</span>.
-                    Gunakan hanya jika barang dinyatakan rusak total,
-                    kadaluarsa, atau hilang.
+                {errors.quantity && (
+                  <p className="text-[10px] font-bold text-red-600 ml-1">
+                    {errors.quantity.message}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* 5. FOOTER PEMBAYARAN / AKSI */}

@@ -17,6 +17,11 @@ export const poApi = {
     return response.data;
   },
 
+  update: async (id: number, data: CreatePurchaseOrderDto) => {
+    const response = await apiClient.patch(`/purchase-orders/${id}`, data);
+    return response.data;
+  },
+
   updateStatus: async (id: number, status: PoStatus) => {
     const response = await apiClient.patch(`/purchase-orders/${id}/status`, { status, performedBy: 1 });
     return response.data;

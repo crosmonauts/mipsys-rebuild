@@ -17,8 +17,9 @@ export const poItems = mysqlTable(
       .notNull()
       .references(() => purchaseOrders.id),
     sparePartId: int('spare_part_id')
-      .notNull()
       .references(() => spareParts.id),
+    partName: varchar('part_name', { length: 200 }),
+    modelName: varchar('model_name', { length: 255 }),
     quantity: int('quantity').notNull(),
     unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(),
     receivedQty: int('received_qty').default(0),

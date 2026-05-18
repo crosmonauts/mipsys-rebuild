@@ -45,8 +45,6 @@ export class StockMovementsService {
         notes: dto.notes?.trim() ?? null,
       });
 
-      await this.updateStock(targetDb, dto.sparePartId, dto.quantity, dto.movementType);
-
       return { success: true, message: 'Stock movement recorded' };
     } catch (error) {
       this.logger.error('Failed to create stock movement', error as Error);
@@ -61,7 +59,7 @@ export class StockMovementsService {
     });
   }
 
-  private async updateStock(
+  async updateStock(
     db: DrizzleTx | MySql2Database<typeof schema>,
     sparePartId: number,
     quantity: number,

@@ -12,6 +12,7 @@ export const useServiceRequest = (ticketNumber: string) => {
       setIsLoading(true);
       const res = await srApi.getDetail(ticketNumber);
       setData({
+        id: res.id || res.service_request_id || null,
         customerName: res.customerName || res.customer_name || '',
         phone: res.phone || res.customer_phone || '',
         address: res.address || res.customer_address || '',
@@ -22,6 +23,9 @@ export const useServiceRequest = (ticketNumber: string) => {
         statusService: res.statusService || res.status_service || '',
         serviceType: res.serviceType || 'NON_WARRANTY',
         incomingDate: res.incomingDate || '',
+        serviceFee: res.serviceFee || '0',
+        partFee: res.partFee || '0',
+        shippingFee: res.shippingFee || '0',
       });
     } catch (error) {
       toast.error('Gagal sinkronisasi data unit');

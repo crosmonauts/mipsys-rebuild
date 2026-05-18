@@ -16,18 +16,24 @@ export class PoItemsService {
     @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
   ) {}
 
-  async addItems(tx: DrizzleTx, purchaseOrderId: number, items: { sparePartId: number; quantity: number; unitPrice: number }[]) {
+  async addItems(tx: DrizzleTx, purchaseOrderId: number, items: { sparePartId?: number; partName?: string; modelName?: string; quantity: number; unitPrice: number }[]) {
     for (const item of items) {
       const subtotal = item.quantity * item.unitPrice;
       await tx.insert(poItems).values({
         purchaseOrderId,
-        sparePartId: item.sparePartId,
+        sparePartId: item.sparePartId ?? null,
+        partName: item.partName ?? null,
+        modelName: item.modelName ?? null,
         quantity: item.quantity,
         unitPrice: item.unitPrice.toString(),
         receivedQty: 0,
         subtotal: subtotal.toString(),
       });
     }
+  }
+
+  async deleteItemsByPO(tx: DrizzleTx, purchaseOrderId: number) {
+    await tx.delete(poItems).where(eq(poItems.purchaseOrderId, purchaseOrderId));
   }
 
   async getItemsByPO(purchaseOrderId: number) {

@@ -28,6 +28,32 @@ export const inventoryApi = {
   getLowStockAlert: () =>
     apiClient.get('/inventory/low-stock-alert').then((r) => r.data as InventoryPart[]),
 
+  getModels: () =>
+    apiClient.get('/inventory/models').then((r) => r.data as string[]),
+
   reserveStock: (partId: number, data: { quantity: number; srTicketNumber: string; performedBy: number }) =>
     apiClient.post(`/inventory/parts/${partId}/reserve`, data).then((r) => r.data),
+};
+
+export interface CategoryModel {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+export const categoryModelsApi = {
+  getAll: () =>
+    apiClient.get('/category-models').then((r) => r.data as CategoryModel[]),
+
+  getById: (id: number) =>
+    apiClient.get(`/category-models/${id}`).then((r) => r.data as CategoryModel),
+
+  create: (name: string, description?: string) =>
+    apiClient.post('/category-models', { name, description }).then((r) => r.data),
+
+  update: (id: number, name: string, description?: string) =>
+    apiClient.patch(`/category-models/${id}`, { name, description }).then((r) => r.data),
+
+  delete: (id: number) =>
+    apiClient.delete(`/category-models/${id}`).then((r) => r.data),
 };

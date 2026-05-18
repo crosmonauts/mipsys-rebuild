@@ -45,6 +45,7 @@ export const orderParts = mysqlTable('order_parts', {
     'OUT_OF_STOCK',
     'MANUAL_NEW',
     'CANCELLED',
+    'PROPOSED',
   ]).default('IN_STOCK'),
   createdAt: timestamp('created_at').defaultNow(),
 });

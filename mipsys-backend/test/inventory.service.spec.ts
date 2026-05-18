@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { InventoryService } from '../src/inventory/inventory.service';
 import { StockMovementsService } from '../src/stock-movements/stock-movements.service';
 import { spareParts, purchaseOrders, poItems } from '../src/database/schema';
@@ -7,6 +7,7 @@ import { MySql2Database } from 'drizzle-orm/mysql2';
 
 const mockStockMovementsService = {
   createMovement: jest.fn().mockResolvedValue({ success: true, message: 'Stock movement recorded' }),
+  updateStock: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockSparePartsQuery = {
@@ -106,6 +107,9 @@ describe('InventoryService', () => {
         },
         mockDb
       );
+      expect(mockStockMovementsService.updateStock).toHaveBeenCalledWith(
+        mockDb, 1, -3, 'SERVICE_USE'
+      );
     });
 
     it('should trigger auto-PO when stock falls below minStock', async () => {
@@ -126,7 +130,7 @@ describe('InventoryService', () => {
       expect(mockInsert).toHaveBeenCalledWith(purchaseOrders);
     });
 
-    it('should return soft warning when stock is zero', async () => {
+    it('should throw BadRequestException when stock is zero', async () => {
       mockSparePartsQuery.findFirst.mockResolvedValue({
         id: 1,
         partName: 'Paper Roller',
@@ -135,12 +139,10 @@ describe('InventoryService', () => {
         minStock: 5,
       });
 
-      const result = await service.reserveStock(1, 1, 'SR-20260515-003', 1);
+      await expect(
+        service.reserveStock(1, 1, 'SR-20260515-003', 1)
+      ).rejects.toThrow(BadRequestException);
 
-      expect(result.success).toBe(true);
-      expect(result.softBlock).toBe(true);
-      expect(result.partName).toBe('Paper Roller');
-      expect(result.currentStock).toBe(0);
       expect(mockStockMovementsService.createMovement).not.toHaveBeenCalled();
     });
 
@@ -188,29 +190,33 @@ describe('InventoryService', () => {
       const result = await service.getParts();
 
       expect(result).toEqual(allParts);
+      expect(mockSparePartsQuery.findMany).toHaveBeenCalledWith({
+        where: undefined,
+        orderBy: expect.any(Array),
+      });
     });
 
     it('should filter by status=ok', async () => {
-      const allParts = [
+      const okParts = [
         { id: 1, partName: 'Fuser Unit', partCode: 'FU-001', stock: 10, minStock: 5 },
-        { id: 2, partName: 'Toner', partCode: 'TC-001', stock: 2, minStock: 5 },
-        { id: 3, partName: 'Drum', partCode: 'DU-001', stock: 0, minStock: 3 },
       ];
-      mockSparePartsQuery.findMany.mockResolvedValue(allParts);
+      mockSparePartsQuery.findMany.mockResolvedValue(okParts);
 
       const result = await service.getParts({ status: 'ok' });
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(1);
+      expect(mockSparePartsQuery.findMany).toHaveBeenCalledWith({
+        where: expect.anything(),
+        orderBy: expect.any(Array),
+      });
     });
 
     it('should filter by status=low', async () => {
-      const allParts = [
-        { id: 1, partName: 'Fuser Unit', partCode: 'FU-001', stock: 10, minStock: 5 },
+      const lowParts = [
         { id: 2, partName: 'Toner', partCode: 'TC-001', stock: 2, minStock: 5 },
-        { id: 3, partName: 'Drum', partCode: 'DU-001', stock: 0, minStock: 3 },
       ];
-      mockSparePartsQuery.findMany.mockResolvedValue(allParts);
+      mockSparePartsQuery.findMany.mockResolvedValue(lowParts);
 
       const result = await service.getParts({ status: 'low' });
 
@@ -219,12 +225,10 @@ describe('InventoryService', () => {
     });
 
     it('should filter by status=empty', async () => {
-      const allParts = [
-        { id: 1, partName: 'Fuser Unit', partCode: 'FU-001', stock: 10, minStock: 5 },
-        { id: 2, partName: 'Toner', partCode: 'TC-001', stock: 2, minStock: 5 },
+      const emptyParts = [
         { id: 3, partName: 'Drum', partCode: 'DU-001', stock: 0, minStock: 3 },
       ];
-      mockSparePartsQuery.findMany.mockResolvedValue(allParts);
+      mockSparePartsQuery.findMany.mockResolvedValue(emptyParts);
 
       const result = await service.getParts({ status: 'empty' });
 
@@ -233,11 +237,10 @@ describe('InventoryService', () => {
     });
 
     it('should filter by search term', async () => {
-      const allParts = [
-        { id: 1, partName: 'Fuser Unit', partCode: 'FU-001', stock: 10, minStock: 5 },
+      const searchedParts = [
         { id: 2, partName: 'Toner Cartridge', partCode: 'TC-001', stock: 2, minStock: 5 },
       ];
-      mockSparePartsQuery.findMany.mockResolvedValue(allParts);
+      mockSparePartsQuery.findMany.mockResolvedValue(searchedParts);
 
       const result = await service.getParts({ search: 'toner' });
 

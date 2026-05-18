@@ -58,6 +58,7 @@ export const serviceRequests = mysqlTable(
       'WAITING_CHECK',
       'CHECK',
       'WAITING_APPROVE',
+      'AWAITING_PARTS',
       'SERVICE',
       'DONE',
       'CANCEL',

@@ -3,15 +3,16 @@ import {
   Inject,
   NotFoundException,
   BadRequestException,
-  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { eq, like, or, desc, lt } from 'drizzle-orm';
+import { eq, like, or, desc, and, sql, gt, lt } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
-import { spareParts, stockMovements, purchaseOrders, poItems } from '../database/schema';
+import { spareParts, stockMovements, purchaseOrders, poItems, categoryModels } from '../database/schema';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
+import { CreateSparePartDto } from './dto/create-spare-part.dto';
+import { UpdateSparePartDto } from './dto/update-spare-part.dto';
 
 type DrizzleTx = Parameters<
   Parameters<MySql2Database<typeof schema>['transaction']>[0]
@@ -26,6 +27,15 @@ export class InventoryService {
     private stockMovementsService: StockMovementsService
   ) {}
 
+  async getModels(): Promise<string[]> {
+    const rows = await this.db
+      .select({ name: categoryModels.name })
+      .from(categoryModels)
+      .orderBy(categoryModels.name);
+
+    return rows.map((r) => r.name);
+  }
+
   async searchParts(query: string) {
     const pattern = `%${query}%`;
     return this.db.query.spareParts.findMany({
@@ -38,25 +48,74 @@ export class InventoryService {
     });
   }
 
-  async getParts(filters?: { status?: 'ok' | 'low' | 'empty'; search?: string }) {
-    let parts = await this.db.query.spareParts.findMany({
-      orderBy: [desc(spareParts.partCode)],
-    });
+  async getAll(params?: { search?: string; page?: number; limit?: number }) {
+    const search = params?.search;
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 10;
+    const conditions: ReturnType<typeof sql>[] = [];
 
-    if (filters?.search) {
-      const pattern = `%${filters.search}%`;
-      parts = parts.filter(
-        (p) =>
-          p.partName?.toLowerCase().includes(filters.search!.toLowerCase()) ||
-          p.partCode?.toLowerCase().includes(filters.search!.toLowerCase())
+    if (search) {
+      const pattern = `%${search}%`;
+      conditions.push(
+        or(
+          like(spareParts.partName, pattern),
+          like(spareParts.partCode, pattern),
+        ) as any,
       );
     }
 
-    if (filters?.status === 'ok') parts = parts.filter((p) => p.stock >= p.minStock);
-    if (filters?.status === 'low') parts = parts.filter((p) => p.stock > 0 && p.stock < p.minStock);
-    if (filters?.status === 'empty') parts = parts.filter((p) => p.stock === 0);
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-    return parts;
+    const [data, [{ count }]] = await Promise.all([
+      this.db.query.spareParts.findMany({
+        where,
+        orderBy: [desc(spareParts.createdAt)],
+        limit,
+        offset: (page - 1) * limit,
+      }),
+      this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(spareParts)
+        .where(where ?? undefined),
+    ]);
+
+    const total = Number(count);
+    return {
+      data,
+      meta: { total, page, limit, totalPages: total > 0 ? Math.ceil(total / limit) : 0 },
+    };
+  }
+
+  async getParts(filters?: { status?: 'ok' | 'low' | 'empty'; search?: string }) {
+    const conditions: ReturnType<typeof sql>[] = [];
+
+    if (filters?.search) {
+      const pattern = `%${filters.search}%`;
+      conditions.push(
+        or(
+          like(spareParts.partName, pattern),
+          like(spareParts.partCode, pattern),
+        ) as any,
+      );
+    }
+
+    if (filters?.status === 'ok') {
+      conditions.push(sql`${spareParts.stock} >= ${spareParts.minStock}`);
+    } else if (filters?.status === 'low') {
+      conditions.push(
+        and(
+          gt(spareParts.stock, 0),
+          sql`${spareParts.stock} < ${spareParts.minStock}`,
+        ) as any,
+      );
+    } else if (filters?.status === 'empty') {
+      conditions.push(eq(spareParts.stock, 0) as any);
+    }
+
+    return this.db.query.spareParts.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: [desc(spareParts.partCode)],
+    });
   }
 
   async getPartById(id: number) {
@@ -72,6 +131,103 @@ export class InventoryService {
       where: lt(spareParts.stock, spareParts.minStock),
       orderBy: [desc(spareParts.stock)],
     });
+  }
+
+  async findByPartNameAndModel(partName: string, modelName?: string) {
+    const conditions: ReturnType<typeof sql>[] = [
+      eq(spareParts.partName, partName.trim()) as any,
+    ];
+    if (modelName) {
+      conditions.push(eq(spareParts.modelName, modelName.trim()) as any);
+    }
+    return this.db.query.spareParts.findFirst({
+      where: and(...conditions),
+    });
+  }
+
+  async create(dto: CreateSparePartDto) {
+    const existingByCode = await this.db
+      .select({ id: spareParts.id })
+      .from(spareParts)
+      .where(eq(spareParts.partCode, dto.partCode.trim()))
+      .limit(1);
+
+    if (existingByCode.length > 0) {
+      throw new BadRequestException(
+        `Kode part '${dto.partCode}' sudah digunakan.`
+      );
+    }
+
+    const existingByName = await this.findByPartNameAndModel(dto.partName, dto.modelName);
+    if (existingByName) {
+      throw new BadRequestException(
+        `Part dengan nama '${dto.partName}' dan model '${dto.modelName}' sudah ada (ID: ${existingByName.id}). Gunakan endpoint update untuk mengubah data.`
+      );
+    }
+
+    const [result] = await this.db.insert(spareParts).values({
+      partCode: dto.partCode.trim(),
+      partName: dto.partName.trim(),
+      modelName: dto.modelName.trim(),
+      block: dto.block?.trim(),
+      stock: dto.stock ?? 0,
+      price: dto.price.toString(),
+    });
+
+    return { success: true, insertedId: result.insertId };
+  }
+
+  async update(id: number, dto: UpdateSparePartDto) {
+    await this.getPartById(id);
+
+    await this.db
+      .update(spareParts)
+      .set({
+        ...dto,
+        partCode: dto.partCode?.trim(),
+        partName: dto.partName?.trim(),
+        price: dto.price?.toString(),
+        updatedAt: new Date(),
+      })
+      .where(eq(spareParts.id, id));
+
+    return { success: true, message: 'Data suku cadang berhasil diperbarui.' };
+  }
+
+  async addStock(id: number, quantity: number) {
+    if (quantity <= 0)
+      throw new BadRequestException('Jumlah penambahan harus positif.');
+
+    await this.getPartById(id);
+
+    await this.stockMovementsService.createMovement({
+      sparePartId: id,
+      quantity,
+      movementType: 'ADJUSTMENT',
+      notes: `Penambahan stok manual: +${quantity}`,
+    });
+
+    await this.stockMovementsService.updateStock(this.db, id, quantity, 'ADJUSTMENT');
+
+    return { success: true, message: 'Stok berhasil ditambah.' };
+  }
+
+  async reduceStock(id: number, quantity: number) {
+    if (quantity <= 0)
+      throw new BadRequestException('Jumlah pengurangan harus positif.');
+
+    await this.getPartById(id);
+
+    await this.stockMovementsService.createMovement({
+      sparePartId: id,
+      quantity: -quantity,
+      movementType: 'ADJUSTMENT',
+      notes: `Pengurangan stok manual: -${quantity}`,
+    });
+
+    await this.stockMovementsService.updateStock(this.db, id, -quantity, 'ADJUSTMENT');
+
+    return { success: true, message: 'Stok berhasil dikurangi.' };
   }
 
   async reserveStock(
@@ -111,6 +267,8 @@ export class InventoryService {
         },
         db
       );
+
+      await this.stockMovementsService.updateStock(db, sparePartId, -quantity, 'SERVICE_USE');
 
       let autoPoTriggered = false;
       if (newStock < part.minStock) {

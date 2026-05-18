@@ -34,6 +34,14 @@ export class PurchaseOrdersController {
     return this.poService.create(dto);
   }
 
+  @Patch(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreatePoHeaderDto
+  ) {
+    return this.poService.update(id, dto);
+  }
+
   @Patch(':id/status')
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,

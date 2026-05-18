@@ -2,7 +2,7 @@
 
 interface StatusBadgeProps {
   status: string;
-  variant: 'ok' | 'low' | 'empty' | 'draft' | 'requested' | 'approved' | 'ordered' | 'shipped' | 'partially_received' | 'received' | 'cancelled';
+  variant: 'ok' | 'low' | 'empty' | 'draft' | 'requested' | 'approved' | 'ordered' | 'shipped' | 'partially_received' | 'received' | 'cancelled' | 'awaiting_parts';
 }
 
 const variantStyles: Record<StatusBadgeProps['variant'], string> = {
@@ -17,6 +17,7 @@ const variantStyles: Record<StatusBadgeProps['variant'], string> = {
   partially_received: 'bg-orange-100 text-orange-800',
   received: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+  awaiting_parts: 'bg-orange-100 text-orange-800',
 };
 
 export function StatusBadge({ status, variant }: StatusBadgeProps) {

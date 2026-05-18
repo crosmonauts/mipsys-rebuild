@@ -1,4 +1,4 @@
-export type ServiceStatus = 'PENDING' | 'PROSES' | 'SELESAI' | 'BATAL';
+export type ServiceStatus = 'PENDING' | 'PROSES' | 'SELESAI' | 'BATAL' | 'AWAITING_PARTS';
 export type CustomerType = 'PERSONAL' | 'CORPORATE' | 'CONTRACT';
 export type ServiceType = 'WARRANTY' | 'NON_WARRANTY';
 

@@ -30,6 +30,7 @@ export interface PurchaseOrderItem {
   purchaseOrderId?: number;
   sparePartId?: number;
   partName?: string;
+  modelName?: string;
   quantity: number;
   unitPrice: string;
   receivedQty?: number;
@@ -38,7 +39,7 @@ export interface PurchaseOrderItem {
 export interface CreatePurchaseOrderDto {
   supplierName: string;
   requestedBy?: number;
-  items: { sparePartId?: number; partName?: string; quantity: number; unitPrice: number }[];
+  items: { sparePartId?: number; partName?: string; modelName?: string; quantity: number; unitPrice: number }[];
   notes?: string;
 }
 

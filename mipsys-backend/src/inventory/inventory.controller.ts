@@ -54,6 +54,11 @@ export class InventoryController {
     );
   }
 
+  @Get('models')
+  async getModels() {
+    return this.inventoryService.getModels();
+  }
+
   @Get('low-stock-alert')
   async getLowStockAlert() {
     return this.inventoryService.getLowStockAlert();

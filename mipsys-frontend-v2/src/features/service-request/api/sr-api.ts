@@ -42,4 +42,26 @@ export const srApi = {
     performedBy?: number;
   }) =>
     apiClient.post(`/service-request/${ticketNumber}/diagnose`, data).then((r) => r.data),
+
+  approveQuote: (ticketNumber: string, data: {
+    performedBy?: number;
+  }) =>
+    apiClient.post(`/service-request/${ticketNumber}/approve-quote`, data).then((r) => r.data),
+
+  saveQuote: (ticketNumber: string, data: {
+    serviceFee: number;
+    shippingFee?: number;
+    performedBy?: number;
+  }) =>
+    apiClient.post(`/service-request/${ticketNumber}/save-quote`, data).then((r) => r.data),
+
+  cancelQuote: (ticketNumber: string, data: {
+    performedBy?: number;
+  }) =>
+    apiClient.post(`/service-request/${ticketNumber}/cancel-quote`, data).then((r) => r.data),
+
+  retryAwaitingParts: (ticketNumber: string, data: {
+    performedBy?: number;
+  }) =>
+    apiClient.post(`/service-request/${ticketNumber}/retry-awaiting-parts`, data).then((r) => r.data),
 };

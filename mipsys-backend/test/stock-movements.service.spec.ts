@@ -3,6 +3,9 @@ import { StockMovementsService } from '../src/stock-movements/stock-movements.se
 import { stockMovements, spareParts } from '../src/database/schema';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import { eq } from 'drizzle-orm';
+import { BadRequestException } from '@nestjs/common';
+
+let mockStockRows: any[] = [];
 
 const mockDb = {
   insert: jest.fn().mockReturnValue({
@@ -10,9 +13,10 @@ const mockDb = {
   }),
   select: jest.fn().mockReturnValue({
     from: jest.fn().mockReturnValue({
-      where: jest.fn().mockResolvedValue([{ id: 1, stock: 10 }]),
+      where: jest.fn().mockReturnValue({
+        limit: jest.fn().mockImplementation(() => Promise.resolve(mockStockRows)),
+      }),
       orderBy: jest.fn().mockResolvedValue([]),
-      limit: jest.fn().mockResolvedValue([]),
     }),
   }),
   update: jest.fn().mockReturnValue({
@@ -41,10 +45,11 @@ describe('StockMovementsService', () => {
 
     service = module.get<StockMovementsService>(StockMovementsService);
     jest.clearAllMocks();
+    mockStockRows = [];
   });
 
   describe('createMovement', () => {
-    it('should create a PO_RECEIVE movement and increase stock', async () => {
+    it('should create a PO_RECEIVE movement', async () => {
       const result = await service.createMovement({
         sparePartId: 1,
         quantity: 10,
@@ -58,7 +63,7 @@ describe('StockMovementsService', () => {
       expect(mockDb.insert).toHaveBeenCalledWith(stockMovements);
     });
 
-    it('should create a SERVICE_USE movement and decrease stock', async () => {
+    it('should create a SERVICE_USE movement', async () => {
       const result = await service.createMovement({
         sparePartId: 1,
         quantity: -3,
@@ -80,6 +85,40 @@ describe('StockMovementsService', () => {
           performedBy: 1,
         })
       ).rejects.toThrow('ADJUSTMENT wajib menyertakan catatan');
+    });
+  });
+
+  describe('updateStock', () => {
+    it('should increase stock for positive quantity', async () => {
+      mockStockRows = [{ id: 1, stock: 10 }];
+
+      await service.updateStock(mockDb as any, 1, 5, 'ADJUSTMENT');
+
+      expect(mockDb.update).toHaveBeenCalledWith(spareParts);
+    });
+
+    it('should decrease stock for negative quantity', async () => {
+      mockStockRows = [{ id: 1, stock: 10 }];
+
+      await service.updateStock(mockDb as any, 1, -3, 'SERVICE_USE');
+
+      expect(mockDb.update).toHaveBeenCalledWith(spareParts);
+    });
+
+    it('should throw when stock becomes negative for SERVICE_USE', async () => {
+      mockStockRows = [{ id: 1, stock: 2 }];
+
+      await expect(
+        service.updateStock(mockDb as any, 1, -5, 'SERVICE_USE')
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw when part not found', async () => {
+      mockStockRows = [];
+
+      await expect(
+        service.updateStock(mockDb as any, 999, 5, 'ADJUSTMENT')
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

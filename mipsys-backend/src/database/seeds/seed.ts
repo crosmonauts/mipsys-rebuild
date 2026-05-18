@@ -704,6 +704,23 @@ async function runSeeder() {
     console.log('     - CANCELLED: 1');
 
     // ========================================================================
+    // TAHAP 9: CATEGORY MODELS (Master data model)
+    // ========================================================================
+    console.log('📦 Tahap 9: Category Models...');
+    await db.insert(schema.categoryModels).values([
+      { name: 'Midea AC 1PK Inverter', description: 'AC Split 1PK Inverter Midea' },
+      { name: 'Midea Washing Machine 8kg', description: 'Mesin Cuci Front Load 8kg' },
+      { name: 'Midea Refrigerator 2 Pintu', description: 'Kulkas 2 Pintu Midea' },
+      { name: 'Midea Microwave 20L', description: 'Microwave 20 Liter Midea' },
+      { name: 'Midea Water Dispenser Hot&Cool', description: 'Dispenser Air Panas & Dingin' },
+      { name: 'Midea Air Purifier', description: 'Air Purifier Midea' },
+      { name: 'Midea Dehumidifier 20L', description: 'Dehumidifier 20 Liter Midea' },
+      { name: 'Midea Standing Fan 16"', description: 'Kipas Angin Berdiri 16 Inci' },
+      { name: 'L3110', description: 'Printer Epson L3110' },
+    ]);
+    console.log('  ✔ 9 category models dibuat');
+
+    // ========================================================================
     // SUMMARY
     // ========================================================================
     console.log('\n🚀 [Seeder]: SELAMAT! Semua data tes berhasil disuntikkan.\n');
@@ -715,6 +732,7 @@ async function runSeeder() {
     console.log('   │ Customers                   │     5 │');
     console.log('   │ Products                    │     8 │');
     console.log('   │ Spare Parts                 │    15 │');
+    console.log('   │ Category Models             │     9 │');
     console.log('   │ Service Requests            │    10 │');
     console.log('   │ Order Parts                 │     4 │');
     console.log('   │ Service Logs                │    10 │');

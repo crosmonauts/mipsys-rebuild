@@ -83,8 +83,9 @@ export default function InventoryPage() {
     setIsRestockOpen(true);
   };
 
-  const handleAddStockSubmit = async (id: number, qty: number) => {
-    await partsApi.addStock(id, qty);
+  const handleStockAction = async (id: number, qty: number, type: 'ADD' | 'SUBTRACT') => {
+    if (type === 'ADD') await partsApi.addStock(id, qty);
+    else if (type === 'SUBTRACT') await partsApi.reduceStock(id, qty);
   };
 
   return (
@@ -266,7 +267,7 @@ export default function InventoryPage() {
         isOpen={isRestockOpen}
         onClose={() => setIsRestockOpen(false)}
         onSuccess={fetchParts}
-        onStockAction={handleAddStockSubmit}
+        onStockAction={handleStockAction}
       />
 
       {/* --- FOOTER SINKRON --- */}
