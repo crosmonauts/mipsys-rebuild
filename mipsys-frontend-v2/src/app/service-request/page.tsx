@@ -1,10 +1,13 @@
-import { DashboardTable } from '@/src/components/layout/DashboardTable';
+'use client';
+
+import { SrDashboard } from '@/src/features/service-request/components/SrDashboard';
 
 export default function ServiceRequestPage() {
   return (
-    <main className="p-4 md:p-8 min-h-screen bg-[#f8fafc]">
-      {/* Jangan tulis header lagi di sini karena sudah ada di dalam DashboardTable */}
-      <DashboardTable />
+    <main className="planner-bg min-h-screen">
+      <div className="max-w-[1500px] mx-auto px-4 py-8 lg:py-12">
+        <SrDashboard />
+      </div>
     </main>
   );
 }
