@@ -18,11 +18,11 @@ interface CustomerSectionProps {
 
 export function CustomerSection({ form }: CustomerSectionProps) {
   return (
-    <section className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-blue-200">
+    <section className="bg-card border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-primary/30">
       <SectionHeader
         number="01"
         title="Informasi Pelanggan"
-        icon={<User size={18} className="text-slate-300" />}
+        icon={        <User size={18} className="text-muted-foreground" />}
       />
 
       <div className="p-8 space-y-6">
@@ -47,14 +47,14 @@ function SectionHeader({
 }) {
   return (
     <div
-      className="bg-slate-50 px-6 py-4 border-b flex items-center justify-between"
+      className="bg-muted/50 px-6 py-4 border-b border-border/20 flex items-center justify-between"
       aria-hidden="true"
     >
       <div className="flex items-center gap-3">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white">
           {number}
         </span>
-        <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
+        <h2 className="text-foreground uppercase tracking-wider text-xs font-bold">
           {title}
         </h2>
       </div>
@@ -70,12 +70,12 @@ function NameField({ form }: { form: UseFormReturn<any> }) {
       name="customerName"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <FormLabel className="micro-label text-muted-foreground">
             Nama Lengkap / Instansi
           </FormLabel>
           <FormControl>
             <Input
-              className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white rounded-xl"
+              className="h-12 bg-card border-border/30 focus:bg-card rounded-xl"
               placeholder="Bpk. Nanda / Kantor Pajak"
               {...field}
             />
@@ -94,18 +94,18 @@ function PhoneField({ form }: { form: UseFormReturn<any> }) {
       name="phone"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <FormLabel className="micro-label text-muted-foreground">
             WhatsApp / Telepon
           </FormLabel>
           <FormControl>
             <div className="relative">
               <Smartphone
                 size={16}
-                className="absolute left-4 top-4 text-slate-400"
+                className="absolute left-4 top-4 text-muted-foreground"
                 aria-hidden="true"
               />
               <Input
-                className="h-12 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
+                className="h-12 pl-10 bg-card border-border/30 rounded-xl"
                 placeholder="0812..."
                 {...field}
               />
@@ -125,18 +125,18 @@ function AddressField({ form }: { form: UseFormReturn<any> }) {
       name="address"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <FormLabel className="micro-label text-muted-foreground">
             Alamat Lengkap
           </FormLabel>
           <FormControl>
             <div className="relative">
               <MapPin
                 size={16}
-                className="absolute left-4 top-4 text-slate-400"
+                className="absolute left-4 top-4 text-muted-foreground"
                 aria-hidden="true"
               />
               <Textarea
-                className="min-h-24 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
+                className="min-h-24 pl-10 bg-card border-border/30 rounded-xl"
                 placeholder="Jl. Gajahmada No. XX, Semarang..."
                 {...field}
               />

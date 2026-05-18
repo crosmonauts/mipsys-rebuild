@@ -39,9 +39,9 @@ export function PartsUsedList({
 
 function SectionHeader() {
   return (
-    <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.5em] flex items-center gap-6">
+    <h3 className="micro-label text-primary flex items-center gap-6">
       <Package size={14} /> Part Digunakan{' '}
-      <span className="h-[1px] flex-1 bg-stone-100"></span>
+      <span className="h-[1px] flex-1 bg-border/20"></span>
     </h3>
   );
 }
@@ -57,25 +57,25 @@ function PartItem({
   const lineTotal = unitPrice * part.quantity;
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-stone-100 shadow-sm">
+    <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/20 shadow-sm">
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-stone-900 text-sm truncate">
+        <p className="text-foreground text-sm truncate font-bold">
           {part.partName}
         </p>
-        <p className="text-[10px] text-stone-400">
+        <p className="micro-label text-muted-foreground">
           {part.partCode ?? 'Manual'} × {part.quantity}
         </p>
       </div>
 
       <div className="flex items-center gap-3">
-        <p className="font-black text-stone-900 text-sm">
+        <p className="font-bold text-foreground text-sm">
           Rp {lineTotal.toLocaleString('id-ID')}
         </p>
         <StatusBadge status={part.status} />
         {onRemove && (
           <button
             onClick={() => onRemove(part.id)}
-            className="p-1.5 text-stone-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
           >
             <Trash2 size={14} />
           </button>
@@ -87,19 +87,21 @@ function PartItem({
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    IN_STOCK: 'bg-emerald-100 text-emerald-700',
-    OUT_OF_STOCK: 'bg-red-100 text-red-700',
-    MANUAL_NEW: 'bg-amber-100 text-amber-700',
+    IN_STOCK: 'bg-emerald-500/20 text-emerald-400',
+    OUT_OF_STOCK: 'bg-destructive/20 text-destructive',
+    MANUAL_NEW: 'bg-primary/20 text-primary',
+    PROPOSED: 'bg-blue-500/20 text-blue-400',
   };
 
   const labels: Record<string, string> = {
     IN_STOCK: 'Stok',
     OUT_OF_STOCK: 'PO',
     MANUAL_NEW: 'Baru',
+    PROPOSED: 'Usulan',
   };
 
   return (
-    <span className={`text-[9px] font-black px-2 py-0.5 rounded ${styles[status] ?? 'bg-slate-100 text-slate-700'}`}>
+    <span className={`text-[9px] font-black px-2 py-0.5 rounded ${styles[status] ?? 'bg-muted text-muted-foreground'}`}>
       {labels[status] ?? status}
     </span>
   );
@@ -107,11 +109,11 @@ function StatusBadge({ status }: { status: string }) {
 
 function TotalRow({ totalFee }: { totalFee: number }) {
   return (
-    <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border-2 border-blue-100">
-      <span className="text-[10px] font-black uppercase text-blue-600">
+    <div className="flex justify-between items-center p-4 bg-blue-500/10 rounded-xl border-2 border-blue-500/30">
+      <span className="text-[10px] font-black uppercase text-blue-400">
         Total Biaya Part
       </span>
-      <span className="text-lg font-black text-blue-800">
+      <span className="text-lg font-black text-blue-300">
         Rp {totalFee.toLocaleString('id-ID')}
       </span>
     </div>
@@ -120,8 +122,8 @@ function TotalRow({ totalFee }: { totalFee: number }) {
 
 function LoadingState() {
   return (
-    <div className="flex items-center gap-2 text-xs text-stone-400 py-4">
-      <div className="w-4 h-4 border-2 border-stone-200 border-t-blue-600 rounded-full animate-spin" />
+    <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+      <div className="w-4 h-4 border-2 border-border/30 border-t-primary rounded-full animate-spin" />
       Memuat part...
     </div>
   );

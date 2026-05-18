@@ -54,9 +54,9 @@ export function ClientProfile({
 
 function SectionHeader({ label, number }: { label: string; number: string }) {
   return (
-    <h2 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.5em] flex items-center gap-6">
+    <h2 className="micro-label text-primary flex items-center gap-6">
       {number}. {label}{' '}
-      <span className="h-[1px] flex-1 bg-stone-100"></span>
+      <span className="h-[1px] flex-1 bg-border/20"></span>
     </h2>
   );
 }
@@ -78,7 +78,7 @@ function EditableField({
 }) {
   return (
     <div className="group space-y-3">
-      <label className="text-[9px] font-black text-stone-300 uppercase tracking-[0.3em] flex items-center gap-2">
+      <label className="micro-label text-muted-foreground flex items-center gap-2">
         {icon} {label}
       </label>
       {isEditing ? (
@@ -103,7 +103,7 @@ function TextInput({
 }) {
   return (
     <input
-      className="w-full p-0 bg-transparent border-b border-stone-200 focus:border-amber-600 outline-none transition-all font-bold text-stone-900 py-2"
+      className="w-full p-0 bg-transparent border-b border-border/30 focus:border-primary outline-none transition-all font-bold text-foreground py-2"
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
     />
@@ -119,7 +119,7 @@ function Textarea({
 }) {
   return (
     <textarea
-      className="w-full p-0 bg-transparent border-b border-stone-200 focus:border-amber-600 outline-none transition-all font-bold text-stone-900 py-2 min-h-[80px] resize-none"
+      className="w-full p-0 bg-transparent border-b border-border/30 focus:border-primary outline-none transition-all font-bold text-foreground py-2 min-h-[80px] resize-none"
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
     />
@@ -128,9 +128,9 @@ function Textarea({
 
 function DisplayValue({ value }: { value: string }) {
   return (
-    <p className="text-2xl font-black text-stone-900 tracking-tight leading-none pt-1">
+    <p className="text-2xl font-black text-foreground tracking-tight leading-none pt-1">
       {value || (
-        <span className="text-stone-200 font-normal italic">N/A</span>
+        <span className="text-muted-foreground/40 font-normal italic">N/A</span>
       )}
     </p>
   );

@@ -46,9 +46,9 @@ export function RepairTimeline({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.5em] flex items-center gap-6">
+      <h3 className="micro-label text-primary flex items-center gap-6">
         Repair Progress{' '}
-        <span className="h-[1px] flex-1 bg-stone-100"></span>
+        <span className="h-[1px] flex-1 bg-border/20"></span>
       </h3>
 
       <div className="space-y-0">
@@ -93,7 +93,7 @@ function TimelineStep({
           {step.label}
         </p>
         {step.date && (
-          <p className="text-[10px] text-stone-400 font-bold mt-0.5">
+          <p className="micro-label text-muted-foreground mt-0.5">
             {step.date}
           </p>
         )}
@@ -152,6 +152,7 @@ function mapStatusToStep(status: string): number {
     WAITING_CHECK: 0,
     CHECK: 1,
     WAITING_APPROVE: 2,
+    AWAITING_PARTS: 2,
     SERVICE: 3,
     DONE: 4,
     CANCEL: 4,
@@ -175,32 +176,32 @@ function getStepStatus(
 function getStatusRing(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'bg-emerald-100 text-emerald-600';
+      return 'bg-emerald-500/20 text-emerald-400';
     case 'current':
-      return 'bg-amber-100 text-amber-600 ring-2 ring-amber-300';
+      return 'bg-primary/20 text-primary ring-2 ring-primary/40';
     default:
-      return 'bg-stone-100 text-stone-400';
+      return 'bg-muted text-muted-foreground';
   }
 }
 
 function getLineColor(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'bg-emerald-200';
+      return 'bg-emerald-500/30';
     case 'current':
-      return 'bg-amber-200';
+      return 'bg-primary/30';
     default:
-      return 'bg-stone-200';
+      return 'bg-border/30';
   }
 }
 
 function getTextColor(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'text-emerald-700';
+      return 'text-emerald-400';
     case 'current':
-      return 'text-amber-700';
+      return 'text-primary';
     default:
-      return 'text-stone-400';
+      return 'text-muted-foreground';
   }
 }

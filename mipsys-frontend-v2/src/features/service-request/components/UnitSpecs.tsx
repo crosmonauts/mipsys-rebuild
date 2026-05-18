@@ -55,10 +55,10 @@ function SpecCard({
   serialNumber: string;
 }) {
   return (
-    <div className="p-10 bg-white border border-stone-100 rounded-[3rem] shadow-sm space-y-10">
+    <div className="paper-card p-10 space-y-10">
       <StatusDisplay statusService={statusService} />
 
-      <hr className="border-stone-50" />
+      <hr className="border-border/10" />
 
       <SpecDetails
         modelName={modelName}
@@ -73,18 +73,18 @@ function SpecCard({
 function StatusDisplay({ statusService }: { statusService: string }) {
   return (
     <div className="space-y-6">
-      <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest">
+      <p className="micro-label text-muted-foreground">
         Live Progress
       </p>
       <div className="flex items-center gap-5">
-        <div className="h-14 w-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
           <ShieldCheck size={28} strokeWidth={2} />
         </div>
         <div>
-          <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">
+          <p className="micro-label text-muted-foreground mb-1">
             Status
           </p>
-          <p className="text-xl font-black text-amber-700 uppercase tracking-tighter italic">
+          <p className="text-xl font-black text-primary uppercase tracking-tighter italic">
             {statusService?.replace('_', ' ') || 'Unknown'}
           </p>
         </div>
@@ -106,7 +106,7 @@ function SpecDetails({
 }) {
   return (
     <div className="space-y-8">
-      <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest">
+      <p className="micro-label text-muted-foreground">
         03. Unit Specification
       </p>
       <div className="space-y-6">
@@ -123,11 +123,11 @@ function SpecDetails({
 
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-end border-b border-stone-50 pb-4">
-      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+    <div className="flex justify-between items-end border-b border-border/10 pb-4">
+      <span className="micro-label text-muted-foreground">
         {label}
       </span>
-      <span className="text-lg font-black text-stone-900">{value}</span>
+      <span className="text-lg font-bold text-foreground">{value}</span>
     </div>
   );
 }
@@ -143,7 +143,7 @@ function SaveButton({
     <button
       onClick={onClick}
       disabled={isSaving}
-      className="w-full py-5 bg-amber-600 text-white rounded-full font-black text-[10px] tracking-[0.3em] hover:bg-amber-700 transition-all shadow-xl shadow-amber-100 disabled:opacity-50"
+      className="w-full py-5 bg-primary text-primary-foreground rounded-full font-black text-[10px] tracking-[0.3em] hover:bg-primary/90 transition-all shadow-lg disabled:opacity-50"
     >
       {isSaving ? 'Saving...' : 'CONFIRM CHANGES'}
     </button>
@@ -152,7 +152,7 @@ function SaveButton({
 
 function FooterBadge() {
   return (
-    <div className="px-10 flex items-center gap-3 text-stone-300">
+    <div className="px-10 flex items-center gap-3 text-muted-foreground">
       <ActivityIcon />
       <p className="text-[9px] font-bold uppercase tracking-luxury">
         MIPSYS Enterprise AAA Standard
