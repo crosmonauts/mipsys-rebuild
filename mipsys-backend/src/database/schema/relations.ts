@@ -51,6 +51,7 @@ export const orderPartsRelations = relations(orderParts, ({ one }) => ({
 
 export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
   items: many(poItems),
+  expenses: many(expenses),
   requestedByStaff: one(staff, {
     fields: [purchaseOrders.requestedBy],
     references: [staff.id],
@@ -92,8 +93,12 @@ export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
   }),
 }));
 
-export const invoicesRelations = relations(invoices, ({ many }) => ({
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
   payments: many(paymentHistories),
+  serviceRequest: one(serviceRequests, {
+    fields: [invoices.serviceRequestId],
+    references: [serviceRequests.id],
+  }),
 }));
 
 export const paymentHistoriesRelations = relations(paymentHistories, ({ one }) => ({
