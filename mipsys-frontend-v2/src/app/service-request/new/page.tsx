@@ -1,10 +1,11 @@
 import { CreateSRForm } from '@/src/features/service-request/components/CreateSRForm';
 
-// WAJIB ada "export default" agar Next.js bisa merender halamannya
 export default function NewServiceRequestPage() {
   return (
-    <main className="container mx-auto py-10">
-      <CreateSRForm />
+    <main className="planner-bg min-h-screen">
+      <div className="max-w-[1500px] mx-auto px-4 py-8 lg:py-12">
+        <CreateSRForm />
+      </div>
     </main>
   );
 }

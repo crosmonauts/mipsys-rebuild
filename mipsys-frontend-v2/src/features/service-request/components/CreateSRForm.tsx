@@ -82,15 +82,15 @@ export function CreateSRForm() {
     <div className="max-w-4xl mx-auto my-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* HEADER PAGE - MIP SEMARANG Branding */}
       <header className="mb-10 text-left px-4">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-          <div className="p-2 bg-blue-600 rounded-xl" aria-hidden="true">
+        <h1 className="text-5xl font-display font-bold text-foreground tracking-tight flex items-center gap-3">
+          <div className="p-2 bg-primary rounded-xl" aria-hidden="true">
             <Printer className="text-white w-8 h-8" />
           </div>
           T-RECS Entry
         </h1>
-        <p className="text-slate-500 mt-2 font-medium">
+        <p className="text-muted-foreground mt-2 font-medium">
           Pendaftaran Unit Epson Masuk •{' '}
-          <span className="text-blue-600 font-black">MIP SEMARANG</span>
+          <span className="text-primary font-bold">MIP SEMARANG</span>
         </p>
       </header>
 
@@ -280,7 +280,7 @@ export function CreateSRForm() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full md:w-auto h-14 px-12 bg-blue-600 hover:bg-blue-700 text-white font-black text-lg rounded-2xl shadow-xl transition-all active:scale-95 flex items-center gap-2 focus-visible:ring-4 focus-visible:ring-blue-200 outline-none"
+            className="w-full md:w-auto h-14 px-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-lg rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
