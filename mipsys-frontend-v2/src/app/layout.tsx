@@ -1,6 +1,26 @@
 import { SidebarProvider } from '@/src/components/layout/SidebarProvider';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from 'next-themes';
+import { IBM_Plex_Sans, IBM_Plex_Mono, Fraunces } from 'next/font/google';
+
+const ibmPlexSans = IBM_Plex_Sans({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-body',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-mono',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+});
 
 export default function RootLayout({
   children,
@@ -8,22 +28,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      <body>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#333',
-              color: '#fff',
-              borderRadius: '12px',
-              fontSize: '14px',
-            },
-          }}
-        />
-        <SidebarProvider>{children}</SidebarProvider>
+    <html lang="id" suppressHydrationWarning>
+      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${fraunces.variable}`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'oklch(0.205 0.044 252 / 95%)',
+                color: 'oklch(0.94 0.034 88)',
+                borderRadius: '12px',
+                fontSize: '14px',
+                border: '1px solid oklch(0.98 0.02 88 / 14%)',
+              },
+            }}
+          />
+          <SidebarProvider>{children}</SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
