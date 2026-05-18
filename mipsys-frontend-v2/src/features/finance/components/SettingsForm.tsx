@@ -10,10 +10,13 @@ export function SettingsForm() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    financeApi.getSettings().then((settings) => {
-      if (settings.ppn_rate) setPpnRate(settings.ppn_rate);
-      if (settings.invoice_prefix) setInvoicePrefix(settings.invoice_prefix);
-    }).finally(() => setLoading(false));
+    financeApi.getSettings()
+      .then((settings) => {
+        if (settings.ppn_rate) setPpnRate(settings.ppn_rate);
+        if (settings.invoice_prefix) setInvoicePrefix(settings.invoice_prefix);
+      })
+      .catch(() => toast.error('Gagal memuat pengaturan'))
+      .finally(() => setLoading(false));
   }, []);
 
   async function handleSavePpn() {

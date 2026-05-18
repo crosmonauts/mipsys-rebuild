@@ -29,16 +29,6 @@ export default function FinancePage() {
     inv.ticketNumber?.toLowerCase().includes(search.toLowerCase())
   );
 
-  async function handleGenerateInvoice(ticketNumber: string) {
-    try {
-      await financeApi.generateFromSR(ticketNumber);
-      toast.success('Invoice berhasil dibuat');
-      refetch();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Gagal membuat invoice');
-    }
-  }
-
   async function handleView(invoice: Invoice) {
     try {
       const detail = await financeApi.getById(invoice.id);
@@ -131,22 +121,22 @@ export default function FinancePage() {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="bg-slate-100 border-b-2 border-slate-300">
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase">
+                <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">
                   No. Invoice
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase">
+                <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">
                   Klien
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase">
+                <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">
                   Tiket
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-right">
+                <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-right">
                   Total
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">
+                <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">
                   Status
                 </th>
-                <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">
+                <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">
                   Aksi
                 </th>
               </tr>

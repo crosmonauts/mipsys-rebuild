@@ -25,13 +25,13 @@ export function ExpenseTable({
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="bg-slate-100 border-b-2 border-slate-300">
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase">No.</th>
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase">Tipe</th>
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase">Deskripsi</th>
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-right">Jumlah</th>
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase">Tanggal</th>
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase">Kategori</th>
-            <th className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">Aksi</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">No.</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Tipe</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Deskripsi</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-right">Jumlah</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Tanggal</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Kategori</th>
+            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">Aksi</th>
           </tr>
         </thead>
         <tbody>
