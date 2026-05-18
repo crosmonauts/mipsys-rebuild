@@ -2,6 +2,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Invoice, PaymentHistory } from '../types';
+import { ExportButton } from '../reports/ExportButton';
 
 interface Props {
   invoice: Invoice & { payments?: PaymentHistory[] };
@@ -16,7 +17,10 @@ export function InvoiceDetailModal({ invoice, onClose }: Props) {
       <div className="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-black text-lg">{invoice.invoiceNumber}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg"><X size={18} /></button>
+          <div className="flex items-center gap-2">
+            <ExportButton invoiceId={invoice.id} />
+            <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg"><X size={18} /></button>
+          </div>
         </div>
         <div className="space-y-2 text-sm">
           <p><span className="font-bold">Tiket:</span> {invoice.ticketNumber}</p>

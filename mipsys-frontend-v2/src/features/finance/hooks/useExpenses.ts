@@ -17,7 +17,7 @@ export const useExpenses = (filters?: { type?: string; category?: string }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters?.type, filters?.category]);
+  }, [JSON.stringify(filters)]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
