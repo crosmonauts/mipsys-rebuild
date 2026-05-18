@@ -40,7 +40,7 @@ export class ReportService {
 
   async getPpnReport(year: number, month: number) {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
 
     const paidInvoices = await this.db.query.invoices.findMany({
       where: and(
@@ -75,7 +75,7 @@ export class ReportService {
       const year = d.getFullYear();
       const month = d.getMonth() + 1;
       const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-      const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
       const label = `${year}-${String(month).padStart(2, '0')}`;
 
       const monthRevenue = await this.db.query.invoices.findMany({

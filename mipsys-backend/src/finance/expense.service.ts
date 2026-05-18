@@ -1,8 +1,8 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { eq, desc, and, between } from 'drizzle-orm';
+import { eq, desc, and, between, sql } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
-import { expenses, purchaseOrders } from '../database/schema';
+import { expenses, purchaseOrders, financeSettings } from '../database/schema';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/create-expense.dto';
 
 @Injectable()
@@ -96,14 +96,23 @@ export class ExpenseService {
   private async generateExpenseNumber(): Promise<string> {
     const now = new Date();
     const period = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const prefix = 'EXP';
+    const counterKey = `exp_counter_${period}`;
 
-    const last = await this.db.query.expenses.findMany({
-      orderBy: [desc(expenses.id)],
-      limit: 1,
+    await this.db
+      .insert(financeSettings)
+      .values({ key: counterKey, value: '0', description: `Expense counter for ${period}` })
+      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+
+    await this.db
+      .update(financeSettings)
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .where(eq(financeSettings.key, counterKey) as any);
+
+    const updated = await this.db.query.financeSettings.findFirst({
+      where: eq(financeSettings.key, counterKey) as any,
     });
+    const counter = updated ? parseInt(updated.value, 10) : 1;
 
-    const nextId = last.length > 0 ? last[0].id + 1 : 1;
-    return `${prefix}-${period}-${String(nextId).padStart(4, '0')}`;
+    return `EXP-${period}-${String(counter).padStart(4, '0')}`;
   }
 }

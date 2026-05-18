@@ -236,24 +236,20 @@ export class FinanceService {
     const period = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
     const counterKey = `inv_counter_${period}`;
 
-    const existing = await this.db.query.financeSettings.findFirst({
+    await this.db
+      .insert(financeSettings)
+      .values({ key: counterKey, value: '0', description: `Invoice counter for ${period}` })
+      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+
+    await this.db
+      .update(financeSettings)
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .where(eq(financeSettings.key, counterKey) as any);
+
+    const updated = await this.db.query.financeSettings.findFirst({
       where: eq(financeSettings.key, counterKey) as any,
     });
-
-    let counter = 1;
-    if (existing) {
-      counter = parseInt(existing.value, 10) + 1;
-      await this.db
-        .update(financeSettings)
-        .set({ value: String(counter), updatedAt: new Date() })
-        .where(eq(financeSettings.key, counterKey) as any);
-    } else {
-      await this.db.insert(financeSettings).values({
-        key: counterKey,
-        value: '1',
-        description: `Invoice counter for ${period}`,
-      });
-    }
+    const counter = updated ? parseInt(updated.value, 10) : 1;
 
     return `${prefix}-${period}-${String(counter).padStart(4, '0')}`;
   }
