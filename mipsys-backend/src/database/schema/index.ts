@@ -7,3 +7,6 @@ export * from './po-items.schema';
 export * from './relations';
 export * from './invoice.schema';
 export * from './category-model.schema';
+export * from './payment-history.schema';
+export * from './expense.schema';
+export * from './finance-setting.schema';

@@ -9,6 +9,9 @@ import { orderParts, spareParts } from './spare-part.schema';
 import { purchaseOrders } from './purchase-order.schema';
 import { poItems } from './po-items.schema';
 import { stockMovements } from './stock-movement.schema';
+import { paymentHistories } from './payment-history.schema';
+import { expenses } from './expense.schema';
+import { invoices } from './invoice.schema';
 
 export const serviceRequestsRelations = relations(
   serviceRequests,
@@ -85,6 +88,28 @@ export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
   }),
   performedByStaff: one(staff, {
     fields: [stockMovements.performedBy],
+    references: [staff.id],
+  }),
+}));
+
+export const invoicesRelations = relations(invoices, ({ many }) => ({
+  payments: many(paymentHistories),
+}));
+
+export const paymentHistoriesRelations = relations(paymentHistories, ({ one }) => ({
+  invoice: one(invoices, {
+    fields: [paymentHistories.invoiceId],
+    references: [invoices.id],
+  }),
+}));
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [expenses.poId],
+    references: [purchaseOrders.id],
+  }),
+  createdByStaff: one(staff, {
+    fields: [expenses.createdBy],
     references: [staff.id],
   }),
 }));
