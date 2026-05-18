@@ -7,9 +7,9 @@ const api = axios.create({
 });
 
 export const srApi = {
-  getAll: (search = '', page = 1, limit = 10) =>
+  getAll: (search = '', page = 1, limit = 10, status = 'ALL') =>
     api
-      .get('/service-request/dashboard', { params: { search, page, limit } })
+      .get('/service-request/dashboard', { params: { search, page, limit, status } })
       .then((r) => r.data),
 
   getDetail: (ticketNumber: string) =>
