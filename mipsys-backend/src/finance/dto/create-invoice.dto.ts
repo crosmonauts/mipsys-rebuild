@@ -5,6 +5,13 @@ export enum InvoiceStatus {
   PAID = 'PAID',
   UNPAID = 'UNPAID',
   OVERDUE = 'OVERDUE',
+  VOID = 'VOID',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  TRANSFER = 'TRANSFER',
+  QRIS = 'QRIS',
 }
 
 export class CreateInvoiceDto {
@@ -27,13 +34,12 @@ export class CreateInvoiceDto {
   shippingFee!: number;
 
   @IsOptional()
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
+
+  @IsOptional()
   @IsString()
   notes?: string;
-}
-
-export class MarkInvoicePaidDto {
-  @IsString()
-  method!: string;
 }
 
 export class QueryInvoiceDto {
