@@ -66,7 +66,7 @@ function TicketInfo({
     <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-stone-400 hover:text-amber-700 transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
+        className="flex items-center gap-2 text-muted-foreground hover:text-amber-700 transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
       >
         <ArrowLeft size={14} /> Back to Dashboard
       </button>
@@ -75,7 +75,7 @@ function TicketInfo({
           <TypeBadge serviceType={serviceType} />
           <EntryDate incomingDate={incomingDate} />
         </div>
-        <h1 className="text-6xl md:text-4xl font-black text-stone-900 tracking-tighter leading-none">
+        <h1 className="text-6xl md:text-4xl font-black text-foreground tracking-tighter leading-none">
           {ticketNumber}
         </h1>
       </div>
@@ -85,7 +85,7 @@ function TicketInfo({
 
 function TypeBadge({ serviceType }: { serviceType: string }) {
   return (
-    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black rounded uppercase tracking-widest">
+    <span className="px-2 py-0.5 bg-primary/15 text-primary text-[9px] font-black rounded uppercase tracking-widest">
       {serviceType || 'NON_WARRANTY'}
     </span>
   );
@@ -95,7 +95,7 @@ function EntryDate({ incomingDate }: { incomingDate?: string }) {
   if (!incomingDate) return null;
 
   return (
-    <span className="text-[10px] font-bold text-stone-300 uppercase tracking-widest">
+    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
       ENTRY: {incomingDate.split('T')[0]}
     </span>
   );
@@ -151,15 +151,15 @@ function ActionButton({
   onClick: () => void;
 }) {
   const colorClasses = {
-    blue: 'bg-blue-600 hover:bg-blue-700 shadow-blue-100',
-    emerald: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100',
-    slate: 'bg-slate-700 hover:bg-slate-800 shadow-slate-100',
+    blue: 'bg-primary hover:bg-primary/90',
+    emerald: 'bg-emerald-600 hover:bg-emerald-700',
+    slate: 'bg-card hover:bg-accent/20 border border-border/30',
   };
 
   return (
     <button
       onClick={onClick}
-      className={`group flex items-center gap-3 px-6 py-4 rounded-full text-xs font-black tracking-widest text-white ${colorClasses[color]} shadow-xl`}
+      className={`group flex items-center gap-3 px-6 py-4 rounded-full text-xs font-black tracking-widest text-white ${colorClasses[color]} shadow-lg`}
     >
       {icon} {label}
     </button>
@@ -178,8 +178,8 @@ function EditToggle({
       onClick={onClick}
       className={`group flex items-center gap-3 px-6 py-4 rounded-full text-xs font-black tracking-widest transition-all ${
         isEditing
-          ? 'bg-stone-100 text-stone-500 hover:bg-stone-200'
-          : 'bg-stone-900 text-stone-50 hover:bg-amber-600 shadow-xl shadow-amber-100'
+          ? 'bg-muted text-muted-foreground hover:bg-muted/80'
+          : 'bg-card text-foreground hover:bg-primary/20 border border-border/30 shadow-lg'
       }`}
     >
       {isEditing ? <X size={16} /> : <Edit3 size={16} />}
