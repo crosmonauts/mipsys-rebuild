@@ -8,7 +8,6 @@ import {
   Loader2,
   CheckCircle2,
   Package,
-  AlertTriangle,
   Plus,
   Trash2,
   Search,
@@ -34,6 +33,7 @@ interface DiagnosisModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  currentStatus?: string;
 }
 
 interface SelectedPart {
@@ -41,7 +41,6 @@ interface SelectedPart {
   partName: string;
   partCode: string;
   price: number;
-  stock: number;
   quantity: number;
 }
 
@@ -51,18 +50,18 @@ export function DiagnosisModal({
   isOpen,
   onClose,
   onSuccess,
+  currentStatus,
 }: DiagnosisModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [diagnosis, setDiagnosis] = useState('');
-  const [action, setAction] = useState('');
-  const [newStatus, setNewStatus] = useState('SERVICE');
-  const [technicianNotes, setTechnicianNotes] = useState('');
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [existingParts, setExistingParts] = useState<OrderPart[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const newStatus = 'WAITING_APPROVE';
 
   useEffect(() => {
     if (isOpen) resetForm();
@@ -85,9 +84,6 @@ export function DiagnosisModal({
 
   function resetForm() {
     setDiagnosis('');
-    setAction('');
-    setNewStatus('SERVICE');
-    setTechnicianNotes('');
     setSelectedParts([]);
     setSearchQuery('');
     setSearchResults([]);
@@ -126,7 +122,6 @@ export function DiagnosisModal({
       partName: part.partName,
       partCode: part.partCode,
       price: Number(part.price ?? 0),
-      stock: part.stock ?? 0,
       quantity: 1,
     }]);
 
@@ -163,7 +158,7 @@ export function DiagnosisModal({
         performedBy: 1,
       });
 
-      toast.success(`Status → ${newStatus}. ${selectedParts.length} part ditambahkan.`);
+      toast.success(`Status → ${newStatus}. ${selectedParts.length} part diusulkan.`);
       onSuccess();
       onClose();
     } catch (error) {
@@ -183,7 +178,7 @@ export function DiagnosisModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white shadow-lg duration-200 sm:rounded-[2rem] p-0 overflow-hidden">
+        <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-card shadow-lg duration-200 sm:rounded-[2rem] p-0 overflow-hidden">
           <DialogDescription className="sr-only">
             Form diagnosis teknisi untuk service request
           </DialogDescription>
@@ -196,8 +191,7 @@ export function DiagnosisModal({
 
             <div className="p-8 space-y-6 max-h-[65vh] overflow-y-auto">
               <DiagnosisInput value={diagnosis} onChange={setDiagnosis} />
-              <ActionInput value={action} onChange={setAction} />
-              <StatusSelector value={newStatus} onChange={setNewStatus} />
+              <StatusInfo />
               <PartsSelector
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -210,7 +204,6 @@ export function DiagnosisModal({
                 dropdownRef={dropdownRef}
               />
               <ExistingPartsList parts={existingParts} />
-              <NotesInput value={technicianNotes} onChange={setTechnicianNotes} />
             </div>
 
             <ModalFooter
@@ -233,10 +226,10 @@ function ModalHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-blue-600 text-white">
+    <div className="p-8 bg-primary text-white">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+          <div className="p-3 bg-card/20 rounded-2xl backdrop-blur-md">
             <ClipboardCheck size={24} />
           </div>
           <div>
@@ -251,7 +244,7 @@ function ModalHeader({
         <button
           type="button"
           onClick={onClose}
-          className="p-2 hover:bg-white/10 rounded-xl transition-all outline-none"
+          className="p-2 hover:bg-card/10 rounded-xl transition-all outline-none"
         >
           <X size={20} />
         </button>
@@ -269,64 +262,33 @@ function DiagnosisInput({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
+      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
         Hasil Diagnosa *
       </label>
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Jelaskan hasil pemeriksaan unit..."
-        className="min-h-24 border-2 border-slate-200 rounded-xl focus:border-blue-600"
+        className="min-h-24 border-2 border-border/30 rounded-xl focus:border-blue-600"
       />
     </div>
   );
 }
 
-function ActionInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function StatusInfo() {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-        Tindakan yang Dilakukan *
+      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
+        Perubahan Status
       </label>
-      <Textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Jelaskan tindakan perbaikan..."
-        className="min-h-20 border-2 border-slate-200 rounded-xl focus:border-blue-600"
-      />
-    </div>
-  );
-}
-
-function StatusSelector({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-        Update Status
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-12 rounded-xl border-2 border-slate-200 bg-transparent px-3 font-bold text-sm outline-none focus:border-blue-600 transition-all appearance-none text-slate-900"
-      >
-        <option value="CHECK">Mulai Check</option>
-        <option value="WAITING_APPROVE">Menunggu Approve</option>
-        <option value="SERVICE">Dalam Pengerjaan</option>
-        <option value="DONE">Selesai</option>
-        <option value="CANCEL">Dibatalkan</option>
-      </select>
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border-2 border-blue-100">
+        <span className="text-sm font-bold text-slate-600">Menunggu Check</span>
+        <span className="text-blue-400 font-bold">&rarr;</span>
+        <span className="text-sm font-black text-blue-700">Menunggu Persetujuan</span>
+      </div>
+      <p className="text-[10px] text-muted-foreground ml-1">
+        Part yang ditambahkan akan dicatat sebagai usulan dan belum memotong stok.
+      </p>
     </div>
   );
 }
@@ -354,25 +316,25 @@ function PartsSelector({
 }) {
   return (
     <div className="space-y-3" ref={dropdownRef}>
-      <label className="text-[10px] font-black uppercase text-slate-400 ml-1 flex items-center gap-2">
-        <Package size={14} /> Part yang Diganti
+      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-2">
+        <Package size={14} /> Usulan Part
       </label>
 
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           size={16}
         />
         <Input
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Cari part dari inventory..."
-          className="pl-10 h-11 border-2 border-slate-200 rounded-xl"
+          className="pl-10 h-11 border-2 border-border/30 rounded-xl"
         />
       </div>
 
       {searchResults.length > 0 && (
-        <div className="max-h-40 overflow-y-auto border-2 border-slate-200 rounded-xl bg-white">
+        <div className="max-h-40 overflow-y-auto border-2 border-border/30 rounded-xl bg-card">
           {searchResults.map((part) => (
             <PartSearchResult
               key={part.id}
@@ -384,7 +346,7 @@ function PartsSelector({
       )}
 
       {isSearching && (
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="animate-spin" size={14} /> Mencari part...
         </div>
       )}
@@ -412,24 +374,19 @@ function PartSearchResult({
   part: any;
   onSelect: (part: any) => void;
 }) {
-  const isLowStock = part.stock <= 3;
-
   return (
     <button
       type="button"
       onClick={() => onSelect(part)}
-      className="w-full px-4 py-3 flex justify-between items-center hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-0"
+      className="w-full px-4 py-3 flex justify-between items-center hover:bg-primary/10 transition-colors border-b border-border/20 last:border-0"
     >
       <div className="text-left">
-        <p className="font-bold text-slate-900 text-sm">{part.partName}</p>
-        <p className="text-[10px] text-slate-500">{part.partCode}</p>
+        <p className="font-bold text-foreground text-sm">{part.partName}</p>
+        <p className="text-[10px] text-muted-foreground">{part.partCode}</p>
       </div>
       <div className="text-right">
         <p className="font-black text-blue-800 text-sm">
           Rp {Number(part.price ?? 0).toLocaleString('id-ID')}
-        </p>
-        <p className={`text-[10px] font-bold ${isLowStock ? 'text-red-600' : 'text-emerald-600'}`}>
-          Stok: {part.stock}
         </p>
       </div>
     </button>
@@ -445,22 +402,14 @@ function SelectedPartRow({
   onUpdateQuantity: (id: number, qty: number) => void;
   onRemove: (id: number) => void;
 }) {
-  const exceedsStock = part.quantity > part.stock;
-
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl border-2 ${exceedsStock ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50'}`}>
+    <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-amber-200 bg-amber-50">
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-slate-900 text-sm truncate">
+        <p className="font-bold text-foreground text-sm truncate">
           {part.partName}
-          {part.stock === 0 && (
-            <span className="text-xs text-red-600 font-bold ml-2">EMPTY — akan trigger PO</span>
-          )}
-          {part.stock <= 3 && part.stock > 0 && (
-            <span className="text-xs text-amber-600 font-bold ml-2">Stock menipis</span>
-          )}
         </p>
-        <p className="text-[10px] text-slate-500">
-          Rp {part.price.toLocaleString('id-ID')} × {part.quantity} = Rp {(part.price * part.quantity).toLocaleString('id-ID')}
+        <p className="text-[10px] text-muted-foreground">
+          Rp {part.price.toLocaleString('id-ID')} x {part.quantity} = Rp {(part.price * part.quantity).toLocaleString('id-ID')}
         </p>
       </div>
 
@@ -468,24 +417,18 @@ function SelectedPartRow({
         <input
           type="number"
           min={1}
-          max={part.stock}
           value={part.quantity}
           onChange={(e) => onUpdateQuantity(part.sparePartId, parseInt(e.target.value) || 1)}
-          className="w-16 h-8 text-center text-sm font-bold border-2 border-slate-200 rounded-lg"
+          className="w-16 h-8 text-center text-sm font-bold border-2 border-border/30 rounded-lg"
         />
-        <span className="text-[10px] text-slate-500">/ {part.stock}</span>
         <button
           type="button"
           onClick={() => onRemove(part.sparePartId)}
-          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+          className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-destructive/10 rounded-lg transition-all"
         >
           <Trash2 size={14} />
         </button>
       </div>
-
-      {exceedsStock && (
-        <AlertTriangle size={16} className="text-red-600 shrink-0" />
-      )}
     </div>
   );
 }
@@ -495,7 +438,7 @@ function ExistingPartsList({ parts }: { parts: OrderPart[] }) {
 
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
+      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
         Part Sudah Terpasang
       </label>
       {parts.map((part) => (
@@ -504,9 +447,9 @@ function ExistingPartsList({ parts }: { parts: OrderPart[] }) {
           className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border-2 border-emerald-200"
         >
           <div>
-            <p className="font-bold text-slate-900 text-sm">{part.partName}</p>
-            <p className="text-[10px] text-slate-500">
-              {part.partCode} × {part.quantity}
+            <p className="font-bold text-foreground text-sm">{part.partName}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {part.partCode} x {part.quantity}
             </p>
           </div>
           <p className="font-black text-emerald-700 text-sm">
@@ -514,28 +457,6 @@ function ExistingPartsList({ parts }: { parts: OrderPart[] }) {
           </p>
         </div>
       ))}
-    </div>
-  );
-}
-
-function NotesInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-        Catatan Teknisi
-      </label>
-      <Textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Catatan tambahan..."
-        className="min-h-16 border-2 border-slate-200 rounded-xl focus:border-blue-600"
-      />
     </div>
   );
 }
@@ -550,10 +471,10 @@ function ModalFooter({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-slate-50 border-t flex flex-col gap-4">
+    <div className="p-8 bg-muted/50 border-t flex flex-col gap-4">
       {totalPartCost > 0 && (
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-black uppercase text-slate-400">
+          <span className="text-[10px] font-black uppercase text-muted-foreground">
             Estimasi Biaya Part
           </span>
           <span className="text-lg font-black text-blue-800">
@@ -566,14 +487,14 @@ function ModalFooter({
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 h-14 bg-white hover:bg-slate-100 text-slate-400 font-black text-xs uppercase rounded-2xl border-2 border-slate-200 transition-all"
+          className="flex-1 h-14 bg-card hover:bg-muted text-muted-foreground font-black text-xs uppercase rounded-2xl border-2 border-border/30 transition-all"
         >
           Batal
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 h-14 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2"
+          className="flex-1 h-14 bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <Loader2 className="animate-spin" size={18} />
