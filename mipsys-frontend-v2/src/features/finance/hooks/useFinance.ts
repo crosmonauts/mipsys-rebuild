@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { financeApi, Invoice, FinanceStats } from '../api/finance-api';
+import { financeApi } from '../api/finance-api';
+import { Invoice, FinanceStats } from '../types';
 import { toast } from 'react-hot-toast';
 
 export const useInvoices = (search = '', status = '') => {
@@ -18,21 +19,15 @@ export const useInvoices = (search = '', status = '') => {
     }
   }, [search, status]);
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   return { data, isLoading, refetch: fetchAll };
 };
 
 export const useFinanceStats = () => {
   const [stats, setStats] = useState<FinanceStats>({
-    totalRevenue: 0,
-    outstanding: 0,
-    overdueCount: 0,
-    paidCount: 0,
-    unpaidCount: 0,
-    totalInvoices: 0,
+    totalRevenue: 0, outstanding: 0, paidCount: 0, unpaidCount: 0,
+    overdueCount: 0, voidCount: 0, totalInvoices: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,29 +43,7 @@ export const useFinanceStats = () => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   return { stats, isLoading, refetch: fetchStats };
-};
-
-export const useMarkInvoicePaid = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const markPaid = async (id: number, method: string) => {
-    setIsSubmitting(true);
-    try {
-      await financeApi.markAsPaid(id, method);
-      toast.success('Invoice berhasil ditandai sebagai lunas');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal memperbarui invoice';
-      toast.error(message);
-      throw error;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return { markPaid, isSubmitting };
 };

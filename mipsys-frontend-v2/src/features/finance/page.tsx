@@ -8,14 +8,20 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { InvoiceTableRow } from './components/InvoiceTableRow';
+import { InvoiceDetailModal } from './components/InvoiceDetailModal';
+import { PaymentForm } from './components/PaymentForm';
 import { useInvoices, useFinanceStats } from './hooks/useFinance';
 import { financeApi } from './api/finance-api';
+import { Invoice } from './types';
 import { toast } from 'react-hot-toast';
 
 export default function FinancePage() {
   const [search, setSearch] = useState('');
   const { data: invoices, isLoading, refetch } = useInvoices(search);
   const { stats } = useFinanceStats();
+  const [selectedInvoice, setSelectedInvoice] = useState<(Invoice & { payments?: any[] }) | null>(null);
+  const [showPayInvoiceId, setShowPayInvoiceId] = useState<number | null>(null);
+  const [payInvoiceTotal, setPayInvoiceTotal] = useState(0);
 
   const filtered = invoices.filter((inv) =>
     inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
@@ -30,6 +36,30 @@ export default function FinancePage() {
       refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal membuat invoice');
+    }
+  }
+
+  async function handleView(invoice: Invoice) {
+    try {
+      const detail = await financeApi.getById(invoice.id);
+      setSelectedInvoice(detail);
+    } catch {
+      toast.error('Gagal memuat detail invoice');
+    }
+  }
+
+  function handlePay(invoice: Invoice) {
+    setShowPayInvoiceId(invoice.id);
+    setPayInvoiceTotal(parseFloat(invoice.total || '0'));
+  }
+
+  async function handleVoid(invoice: Invoice) {
+    try {
+      await financeApi.voidInvoice(invoice.id);
+      toast.success('Invoice berhasil di-void');
+      refetch();
+    } catch {
+      toast.error('Gagal void invoice');
     }
   }
 
@@ -139,12 +169,9 @@ export default function FinancePage() {
                   <InvoiceTableRow
                     key={inv.id}
                     invoice={inv}
-                    onPaid={() => {
-                      financeApi.markAsPaid(inv.id, 'CASH').then(() => {
-                        toast.success('Invoice ditandai lunas');
-                        refetch();
-                      });
-                    }}
+                    onView={() => handleView(inv)}
+                    onPay={() => handlePay(inv)}
+                    onVoid={() => handleVoid(inv)}
                   />
                 ))
               )}
@@ -152,6 +179,29 @@ export default function FinancePage() {
           </table>
         </div>
       </section>
+
+      {/* Invoice Detail Modal */}
+      {selectedInvoice && (
+        <InvoiceDetailModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+
+      {/* Payment Form Modal */}
+      {showPayInvoiceId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPayInvoiceId(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-black text-lg mb-4">Catat Pembayaran</h3>
+            <PaymentForm
+              invoiceId={showPayInvoiceId}
+              invoiceTotal={payInvoiceTotal}
+              onSuccess={() => { setShowPayInvoiceId(null); refetch(); }}
+              onCancel={() => setShowPayInvoiceId(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
