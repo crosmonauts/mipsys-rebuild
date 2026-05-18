@@ -60,13 +60,14 @@ export default function PartOrderPage() {
   }), [orders]);
 
   return (
-    <div className="p-8 space-y-8 animate-in fade-in duration-700 text-left">
+    <main className="planner-bg min-h-screen">
+    <div className="max-w-[1500px] mx-auto px-4 py-8 lg:py-12 space-y-8 animate-in fade-in duration-700 text-left">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div className="space-y-1.5">
-          <h1 className="text-3xl font-black text-slate-950 tracking-tight uppercase">
-            Part Order <span className="text-blue-700">Management</span>
+          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight uppercase">
+            Part Order <span className="text-primary">Management</span>
           </h1>
-          <p className="text-sm text-slate-500 font-bold italic">
+          <p className="text-sm text-muted-foreground font-bold italic">
             &quot;Sistem pengadaan suku cadang dan pemesanan ke supplier.&quot;
           </p>
         </div>
@@ -75,12 +76,12 @@ export default function PartOrderPage() {
           <Button
             onClick={refetch}
             variant="outline"
-            className="h-12 w-12 p-0 rounded-2xl border-2 border-slate-200 hover:bg-slate-50"
+            className="h-12 w-12 p-0 rounded-2xl border-2 border-border/20 hover:bg-muted"
           >
             <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
           </Button>
           <Link href="/part-order/new">
-            <Button className="bg-slate-950 hover:bg-blue-700 text-white font-black px-6 py-6 rounded-2xl shadow-xl shadow-slate-900/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-6 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none">
               <Plus size={18} strokeWidth={3} /> Buat Order Baru
             </Button>
           </Link>
@@ -91,7 +92,7 @@ export default function PartOrderPage() {
         <StatCard
           title="Total Order"
           value={String(stats.total)}
-          icon={<ShoppingBag className="text-blue-600" />}
+          icon={<ShoppingBag className="text-primary" />}
           subtitle="Semua pesanan"
         />
         <StatCard
@@ -108,17 +109,17 @@ export default function PartOrderPage() {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-3 rounded-[2rem] border-2 border-slate-100 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-card p-3 rounded-[2rem] border border-border/20 shadow-sm">
         <div className="relative flex-1">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-950"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground"
             size={18}
           />
           <Input
             placeholder="Cari nomor PO atau nama supplier..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 h-12 border-none bg-slate-50/50 rounded-xl font-bold focus-visible:ring-1 focus-visible:ring-blue-600 text-slate-900"
+            className="pl-12 h-12 border-none bg-muted/50 rounded-xl font-bold focus-visible:ring-1 focus-visible:ring-primary text-foreground"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -126,8 +127,8 @@ export default function PartOrderPage() {
             onClick={() => setStatusFilter('ALL')}
             className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider border-2 transition-all ${
               statusFilter === 'ALL'
-                ? 'bg-slate-950 text-white border-slate-950'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card text-muted-foreground border-border/20 hover:border-border'
             }`}
           >
             Semua
@@ -138,8 +139,8 @@ export default function PartOrderPage() {
               onClick={() => setStatusFilter(key as PoStatus)}
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider border-2 transition-all ${
                 statusFilter === key
-                  ? 'bg-slate-950 text-white border-slate-950'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border/20 hover:border-border'
               }`}
             >
               {label}
@@ -148,8 +149,8 @@ export default function PartOrderPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-2xl shadow-slate-200/40 rounded-[2.5rem] overflow-hidden bg-white">
-        <CardHeader className="bg-slate-950 text-white p-6">
+      <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card">
+        <CardHeader className="bg-card text-foreground p-6 border-b border-border/20">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
             <ShoppingBag size={16} /> Daftar Pesanan Suku Cadang
           </CardTitle>
@@ -157,41 +158,47 @@ export default function PartOrderPage() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-12 text-center">
-              <Loader2 className="animate-spin mx-auto mb-4 text-slate-400" size={32} />
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Memuat data pesanan...</p>
+              <Loader2 className="animate-spin mx-auto mb-4 text-muted-foreground" size={32} />
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Memuat data pesanan...</p>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="p-12 text-center">
-              <PackageOpen className="mx-auto mb-4 text-slate-300" size={40} />
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+              <PackageOpen className="mx-auto mb-4 text-muted-foreground/50" size={40} />
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                 {searchTerm || statusFilter !== 'ALL' ? 'Tidak ada hasil filter' : 'Belum ada purchase order'}
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50 border-b-2 border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                <thead className="bg-muted/50 border-b border-border/10 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                   <tr>
                     <th className="p-5 pl-8">No. PO</th>
                     <th className="p-5">Supplier</th>
                     <th className="p-5">Item</th>
+                    <th className="p-5">Model</th>
                     <th className="p-5 text-center">Status</th>
                     <th className="p-5 text-right">Total Estimasi</th>
                     <th className="p-5 text-center pr-8">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-border/10">
                   {filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-blue-50/30 transition-colors group cursor-pointer" onClick={() => setSelectedPoId(order.id)}>
-                      <td className="p-5 pl-8 font-black text-slate-950">
+                    <tr key={order.id} className="hover:bg-muted/30 transition-colors group cursor-pointer" onClick={() => setSelectedPoId(order.id)}>
+                      <td className="p-5 pl-8 font-bold text-foreground">
                         {order.poNumber}
                       </td>
-                      <td className="p-5 font-bold text-slate-700">
+                      <td className="p-5 font-bold text-muted-foreground">
                         {order.supplierName}
                       </td>
-                      <td className="p-5 text-sm text-slate-500 font-medium max-w-[200px] truncate">
+                        <td className="p-5 text-sm text-muted-foreground font-medium max-w-[200px] truncate">
                         {order.items
                           ? order.items.map((i) => `${i.partName || `#${i.sparePartId}`} (x${i.quantity})`).join(', ')
+                          : '-'}
+                      </td>
+                      <td className="p-5 text-sm text-muted-foreground font-medium max-w-[150px] truncate">
+                        {order.items
+                          ? [...new Set(order.items.map((i) => i.modelName).filter(Boolean))].join(', ') || '-'
                           : '-'}
                       </td>
                       <td className="p-5 text-center">
@@ -199,23 +206,25 @@ export default function PartOrderPage() {
                           {PO_STATUS_LABEL[order.status]}
                         </Badge>
                       </td>
-                      <td className="p-5 text-right font-black text-blue-800 tracking-tight">
+                      <td className="p-5 text-right font-bold text-primary tracking-tight">
                         Rp {parseFloat(order.totalAmount || '0').toLocaleString('id-ID')}
                       </td>
                       <td className="p-5 text-center pr-8">
                         <div className="flex items-center justify-center gap-2">
-                          <Link href={`/part-order/new?id=${order.id}`} onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-10 w-10 rounded-xl hover:bg-blue-600 hover:text-white transition-all border-2 border-transparent hover:border-blue-700"
-                            >
-                              <Pencil size={18} />
-                            </Button>
-                          </Link>
+                            {order.status === 'DRAFT' && (
+                              <Link href={`/part-order/new?id=${order.id}`} onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                    className="h-10 w-10 rounded-xl hover:bg-primary hover:text-primary-foreground transition-all border-2 border-transparent hover:border-primary"
+                                >
+                                  <Pencil size={18} />
+                                </Button>
+                              </Link>
+                            )}
                           <button
                             onClick={(e) => { e.stopPropagation(); setSelectedPoId(order.id); }}
-                            className="h-10 w-10 rounded-xl hover:bg-slate-600 hover:text-white transition-all border-2 border-transparent hover:border-slate-700 bg-slate-50 text-slate-500"
+                            className="h-10 w-10 rounded-xl hover:bg-muted hover:text-foreground transition-all border-2 border-transparent hover:border-border bg-muted/50 text-muted-foreground"
                             title="Lihat Detail"
                           >
                             <Eye size={18} />
@@ -228,8 +237,8 @@ export default function PartOrderPage() {
               </table>
             </div>
           )}
-          <div className="p-8 text-center bg-slate-50/50">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+          <div className="p-8 text-center bg-muted/30">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">
               Menampilkan {filteredOrders.length} dari {orders.length} pesanan
             </p>
           </div>
@@ -243,26 +252,27 @@ export default function PartOrderPage() {
         />
       )}
     </div>
+    </main>
   );
 }
 
 function StatCard({ title, value, icon, subtitle }: { title: string; value: string; icon: React.ReactNode; subtitle: string }) {
   return (
-    <Card className="border-none rounded-[2rem] shadow-sm hover:shadow-md transition-all group overflow-hidden bg-white">
+    <Card className="border-none rounded-[2rem] shadow-sm hover:shadow-md transition-all group overflow-hidden bg-card">
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
-          <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-blue-50 transition-colors text-slate-950">
+          <div className="p-3 bg-muted/50 rounded-2xl group-hover:bg-primary/10 transition-colors text-foreground">
             {icon}
           </div>
-          <ArrowUpRight size={18} className="text-slate-300" />
+          <ArrowUpRight size={18} className="text-muted-foreground" />
         </div>
         <div className="mt-4 space-y-0.5">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
             {title}
           </p>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-black text-slate-950">{value}</h3>
-            <span className="text-[10px] font-bold text-slate-500">
+            <h3 className="text-3xl font-bold text-foreground">{value}</h3>
+            <span className="text-[10px] font-bold text-muted-foreground">
               {subtitle}
             </span>
           </div>
