@@ -68,7 +68,7 @@ export function Sidebar({
 
       <aside
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-[#020617] text-white flex flex-col 
+        fixed inset-y-0 left-0 z-50 w-64 bg-sidebar-bg text-sidebar-foreground flex flex-col 
         transform transition-transform duration-300 ease-in-out border-r border-white/5
         md:relative md:translate-x-0 
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -77,26 +77,26 @@ export function Sidebar({
         {/* Logo Section */}
         <div className="p-5 flex items-center justify-between border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-              <Printer size={18} strokeWidth={3} className="text-white" />
+            <div className="w-9 h-9 bg-sidebar-active rounded-lg flex items-center justify-center shadow-lg">
+              <Printer size={18} strokeWidth={3} className="text-sidebar-bg" />
             </div>
             <div>
-              <h1 className="font-black text-lg tracking-tighter uppercase leading-none text-white">
+              <h1 className="font-black text-lg tracking-tighter uppercase leading-none text-sidebar-foreground">
                 MIPSYS
               </h1>
-              <p className="text-[9px] font-black text-blue-400 tracking-widest uppercase mt-0.5">
+              <p className="text-[9px] font-black text-sidebar-muted tracking-widest uppercase mt-0.5">
                 Enterprise AAA
               </p>
             </div>
           </div>
-          <button className="md:hidden text-slate-400" onClick={onClose}>
+          <button className="md:hidden text-sidebar-muted" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
         {/* Navigation Section */}
         <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
-          <p className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">
+          <p className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-muted mb-4">
             Modul Sistem
           </p>
           {menuItems.map((item) => {
@@ -113,14 +113,14 @@ export function Sidebar({
                 onClick={onClose}
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all group ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    ? 'bg-sidebar-active/15 text-sidebar-active shadow-md'
+                    : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={
-                      isActive ? 'text-white' : 'group-hover:text-blue-400'
+                      isActive ? 'text-sidebar-active' : 'group-hover:text-sidebar-active'
                     }
                   >
                     {item.icon}
@@ -130,7 +130,7 @@ export function Sidebar({
                   </span>
                 </div>
                 {item.count && (
-                  <span className="bg-white/10 text-white px-1.5 py-0.5 rounded-md text-[10px] font-bold border border-white/10">
+                  <span className="bg-sidebar-accent text-sidebar-foreground px-1.5 py-0.5 rounded-md text-[10px] font-bold border border-white/5">
                     {item.count}
                   </span>
                 )}
@@ -142,18 +142,18 @@ export function Sidebar({
         {/* Profile Section */}
         <div className="p-4 bg-black/20">
           <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5">
-            <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white">
+            <div className="h-8 w-8 rounded-full bg-sidebar-active flex items-center justify-center font-bold text-xs text-sidebar-bg">
               N
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate uppercase">
+              <p className="text-xs font-bold text-sidebar-foreground truncate uppercase">
                 Nanda Pratama
               </p>
-              <p className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">
+              <p className="text-[9px] font-black text-sidebar-muted uppercase tracking-tighter">
                 Administrator
               </p>
             </div>
-            <button className="p-1.5 hover:text-red-400 transition-colors text-white">
+            <button className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted" aria-label="Logout">
               <LogOut size={16} />
             </button>
           </div>
