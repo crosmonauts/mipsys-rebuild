@@ -14,9 +14,10 @@ import {
   AlertCircle,
   Clock,
   Globe,
-  RefreshCcw,
 } from 'lucide-react';
 import { srApi } from '@/src/features/service-request/services/sr-api';
+import { toast } from 'react-hot-toast';
+import { LoadingSkeleton } from '@/src/components/ui/loading-skeleton';
 
 export default function DashboardPage() {
   const [activities, setActivities] = useState([]);
@@ -42,14 +43,8 @@ export default function DashboardPage() {
       setActivities(logsData);
       setStats(statsData);
     } catch (error: any) {
-      // Ini bagian paling penting!
-      console.error(
-        'Waduh, ada error di sini:',
-        error.response?.data || error.message,
-      );
-
-      // Cek juga status code-nya (404, 500, atau 403)
-      console.log('Status Error:', error.response?.status);
+      console.error('Dashboard fetch error:', error.response?.data || error.message);
+      toast.error('Gagal memuat data dashboard');
     } finally {
       setLoadingLogs(false);
     }
@@ -64,11 +59,11 @@ export default function DashboardPage() {
   const getIcon = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'DONE':
-        return <CheckCircle2 size={14} className="text-emerald-400" />;
+        return <CheckCircle2 size={14} className="text-accent" aria-label="Status: Selesai" />;
       case 'SERVICE':
-        return <Clock size={14} className="text-blue-400" />;
+        return <Clock size={14} className="text-primary" aria-label="Status: Dalam Servis" />;
       default:
-        return <AlertCircle size={14} className="text-amber-400" />;
+        return <AlertCircle size={14} className="text-amber-400" aria-label="Status: Pending" />;
     }
   };
 
@@ -193,8 +188,14 @@ export default function DashboardPage() {
 
           <div className="space-y-5">
             {loadingLogs ? (
-              <div className="py-10 flex flex-col items-center gap-3 text-foreground">
-                <RefreshCcw className="w-6 h-6 animate-spin text-muted-foreground" />
+              <div className="space-y-5 py-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-5">
+                    <LoadingSkeleton variant="text" className="w-12 h-4" />
+                    <LoadingSkeleton variant="avatar" className="w-10 h-10" />
+                    <LoadingSkeleton variant="text" className="flex-1" />
+                  </div>
+                ))}
               </div>
             ) : (
               activities.map((log: any, i: number) => (
