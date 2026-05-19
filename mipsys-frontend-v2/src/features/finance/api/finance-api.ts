@@ -4,7 +4,10 @@ import { Invoice, FinanceStats, Expense, ProfitLoss, PpnReport, DashboardData } 
 export const financeApi = {
   // --- Invoices ---
   getAll: async (search = '', status = '') => {
-    const response = await apiClient.get('/finance/invoices', { params: { search, status } });
+    const params: Record<string, string> = {};
+    if (search) params.search = search;
+    if (status) params.status = status;
+    const response = await apiClient.get('/finance/invoices', { params });
     return response.data;
   },
 
