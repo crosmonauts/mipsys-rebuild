@@ -355,9 +355,8 @@ export default function NewPartOrderPage({
                                   ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                                   : 'bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground'
                               }`}
-                              title={
-                                item.isEditing ? 'Simpan Baris' : 'Edit Baris'
-                              }
+                              title={item.isEditing ? 'Simpan Baris' : 'Edit Baris'}
+                              aria-label={item.isEditing ? 'Simpan baris' : 'Edit baris'}
                             >
                               {item.isEditing ? (
                                 <Check size={18} strokeWidth={3} />
@@ -366,11 +365,11 @@ export default function NewPartOrderPage({
                               )}
                             </button>
 
-                            {/* TOMBOL HAPUS */}
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="p-2.5 text-muted-foreground hover:text-white hover:bg-red-600 transition-all bg-muted/50 rounded-xl"
+                              className="p-2.5 text-muted-foreground hover:text-white hover:bg-destructive transition-all bg-muted/50 rounded-xl"
                               title="Hapus Baris"
+                              aria-label="Hapus baris"
                             >
                               <Trash2 size={18} />
                             </button>

@@ -184,7 +184,7 @@ export default function PartOrderPage() {
                 </thead>
                 <tbody className="divide-y divide-border/10">
                   {filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-muted/30 transition-colors group cursor-pointer" onClick={() => setSelectedPoId(order.id)}>
+                    <tr key={order.id} className="hover:bg-muted/30 transition-colors group cursor-pointer" onClick={() => setSelectedPoId(order.id)} tabIndex={0} role="button" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPoId(order.id); } }}>
                       <td className="p-5 pl-8 font-bold text-foreground">
                         {order.poNumber}
                       </td>
@@ -212,7 +212,7 @@ export default function PartOrderPage() {
                       <td className="p-5 text-center pr-8">
                         <div className="flex items-center justify-center gap-2">
                             {order.status === 'DRAFT' && (
-                              <Link href={`/part-order/new?id=${order.id}`} onClick={(e) => e.stopPropagation()}>
+                              <Link href={`/part-order/new?id=${order.id}`} onClick={(e) => e.stopPropagation()} aria-label="Edit part order">
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -226,6 +226,7 @@ export default function PartOrderPage() {
                             onClick={(e) => { e.stopPropagation(); setSelectedPoId(order.id); }}
                             className="h-10 w-10 rounded-xl hover:bg-muted hover:text-foreground transition-all border-2 border-transparent hover:border-border bg-muted/50 text-muted-foreground"
                             title="Lihat Detail"
+                            aria-label="Lihat detail part order"
                           >
                             <Eye size={18} />
                           </button>
