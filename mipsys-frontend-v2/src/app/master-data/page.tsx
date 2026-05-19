@@ -24,6 +24,8 @@ import {
 } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import ConfirmModal from '@/src/components/ui/confirm-modal';
+import { Label } from '@/src/components/ui/label';
+import { toast } from 'react-hot-toast';
 import { masterDataApi } from '@/src/features/master-data/api/master-data-api';
 import type { CustomerData, StaffData, ProductData, CategoryModelData } from '@/src/features/master-data/api/master-data-api';
 
@@ -71,7 +73,9 @@ export default function MasterDataPage() {
       setStaff(s);
       setProducts(p);
       setCategoryModels(m);
-    } catch {}
+    } catch {
+      toast.error('Gagal memuat data master');
+    }
     setLoading(false);
   };
 
@@ -125,7 +129,9 @@ export default function MasterDataPage() {
       }
       closeModal();
       fetchData();
-    } catch {}
+    } catch {
+      toast.error('Gagal menyimpan data');
+    }
     setSubmitting(false);
   };
 
@@ -142,7 +148,9 @@ export default function MasterDataPage() {
       else if (activeTab === 'category-models') await masterDataApi.categoryModels.delete(confirmDelete.id);
       setConfirmDelete(null);
       fetchData();
-    } catch {}
+    } catch {
+      toast.error('Gagal menghapus data');
+    }
   };
 
   const filteredCustomers = customers.filter(
@@ -157,44 +165,74 @@ export default function MasterDataPage() {
   const renderModalFields = () => {
     if (activeTab === 'customers') {
       return (
-        <>
-          <Input placeholder="Nama" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          <Input placeholder="Telepon" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          <Input placeholder="Alamat" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          <select value={formData.customerType || ''} onChange={(e) => setFormData({ ...formData, customerType: e.target.value })} className="w-full h-11 rounded-xl border-2 bg-transparent px-3 font-bold outline-none">
-            <option value="">Pilih Tipe</option>
-            <option value="PERSONAL">Personal</option>
-            <option value="CORPORATE">Corporate</option>
-          </select>
-        </>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="customer-name">Nama</Label>
+            <Input id="customer-name" placeholder="Nama" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="customer-phone">Telepon</Label>
+            <Input id="customer-phone" placeholder="Telepon" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="customer-address">Alamat</Label>
+            <Input id="customer-address" placeholder="Alamat" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="customer-type">Tipe</Label>
+            <select id="customer-type" value={formData.customerType || ''} onChange={(e) => setFormData({ ...formData, customerType: e.target.value })} className="w-full h-11 rounded-xl border-2 bg-transparent px-3 font-bold outline-none">
+              <option value="">Pilih Tipe</option>
+              <option value="PERSONAL">Personal</option>
+              <option value="CORPORATE">Corporate</option>
+            </select>
+          </div>
+        </div>
       );
     }
     if (activeTab === 'staff') {
       return (
-        <>
-          <Input placeholder="Nama" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          <select value={formData.role || ''} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full h-11 rounded-xl border-2 bg-transparent px-3 font-bold outline-none">
-            <option value="">Pilih Role</option>
-            <option value="ADMIN">Admin</option>
-            <option value="TECHNICIAN">Teknisi</option>
-          </select>
-        </>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="staff-name">Nama</Label>
+            <Input id="staff-name" placeholder="Nama" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="staff-role">Role</Label>
+            <select id="staff-role" value={formData.role || ''} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full h-11 rounded-xl border-2 bg-transparent px-3 font-bold outline-none">
+              <option value="">Pilih Role</option>
+              <option value="ADMIN">Admin</option>
+              <option value="TECHNICIAN">Teknisi</option>
+            </select>
+          </div>
+        </div>
       );
     }
     if (activeTab === 'products') {
       return (
-        <>
-          <Input placeholder="Nama Model" value={formData.modelName || ''} onChange={(e) => setFormData({ ...formData, modelName: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          <Input placeholder="Serial Number" value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-        </>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="product-model">Nama Model</Label>
+            <Input id="product-model" placeholder="Nama Model" value={formData.modelName || ''} onChange={(e) => setFormData({ ...formData, modelName: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="product-serial">Serial Number</Label>
+            <Input id="product-serial" placeholder="Serial Number" value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+        </div>
       );
     }
     if (activeTab === 'category-models') {
       return (
-        <>
-          <Input placeholder="Nama Model" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          <Input placeholder="Deskripsi (opsional)" value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-        </>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="model-name">Nama Model</Label>
+            <Input id="model-name" placeholder="Nama Model" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="model-desc">Deskripsi (opsional)</Label>
+            <Input id="model-desc" placeholder="Deskripsi (opsional)" value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
+          </div>
+        </div>
       );
     }
     return null;
@@ -226,8 +264,8 @@ export default function MasterDataPage() {
                 </td>
                 <td className="p-5 text-center pr-8">
                   <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(c)} className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"><Pencil size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-red-600 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    <button onClick={() => openEdit(c)} aria-label="Edit" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"><Pencil size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} aria-label="Hapus" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -257,8 +295,8 @@ export default function MasterDataPage() {
                 </td>
                 <td className="p-5 text-center pr-8">
                   <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(s)} className="p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-blue-600 hover:text-white transition-all"><Pencil size={16} /></button>
-                    <button onClick={() => handleDelete(s.id)} className="p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-red-600 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    <button onClick={() => openEdit(s)} aria-label="Edit" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"><Pencil size={16} /></button>
+                    <button onClick={() => handleDelete(s.id)} aria-label="Hapus" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -284,8 +322,8 @@ export default function MasterDataPage() {
                 <td className="p-5 text-muted-foreground font-medium">{p.serialNumber}</td>
                 <td className="p-5 text-center pr-8">
                   <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(p)} className="p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-blue-600 hover:text-white transition-all"><Pencil size={16} /></button>
-                    <button onClick={() => handleDelete(p.id)} className="p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-red-600 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    <button onClick={() => openEdit(p)} aria-label="Edit" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"><Pencil size={16} /></button>
+                    <button onClick={() => handleDelete(p.id)} aria-label="Hapus" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -311,8 +349,8 @@ export default function MasterDataPage() {
                 <td className="p-5 text-sm text-muted-foreground">{m.description || '-'}</td>
                 <td className="p-5 text-center pr-8">
                   <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(m)} className="p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-blue-600 hover:text-white transition-all"><Pencil size={16} /></button>
-                    <button onClick={() => handleDelete(m.id)} className="p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-red-600 hover:text-white transition-all"><Trash2 size={16} /></button>
+                    <button onClick={() => openEdit(m)} aria-label="Edit" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"><Pencil size={16} /></button>
+                    <button onClick={() => handleDelete(m.id)} aria-label="Hapus" className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
