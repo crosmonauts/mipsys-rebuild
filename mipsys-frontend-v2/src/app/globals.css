@@ -88,6 +88,16 @@
   --font-body: var(--font-body);
   --font-display: var(--font-display);
   --font-code: var(--font-mono);
+  --sidebar-bg: oklch(0.11 0.03 252);
+  --sidebar-foreground: oklch(0.85 0.02 88);
+  --sidebar-muted: oklch(0.62 0.03 252);
+  --sidebar-active: oklch(0.78 0.16 61);
+  --sidebar-accent: oklch(0.77 0.134 178 / 10%);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-accent: var(--sidebar-accent);
 }
 
 @layer base {
