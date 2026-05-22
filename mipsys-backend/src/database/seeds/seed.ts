@@ -106,76 +106,76 @@ async function runSeeder() {
       {
         ticketNumber: 'SR-20260501-0001', serviceType: 'WARRANTY', customerId: 1, productId: 1,
         adminId: 1, technicianCheckId: 2,
-        incomingDate: new Date('2026-05-01'), problemDescription: 'Printer tidak mau nge-print, lampu power nyala tapi tidak ada respon',
+        incomingDate: '2026-05-01', problemDescription: 'Printer tidak mau nge-print, lampu power nyala tapi tidak ada respon',
         statusService: 'WAITING_CHECK', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00',
       },
       {
         ticketNumber: 'SR-20260502-0002', serviceType: 'NON_WARRANTY', customerId: 6, productId: 2,
         adminId: 1, technicianCheckId: 2,
-        incomingDate: new Date('2026-05-02'), problemDescription: 'Hasil print bergaris-garis vertikal, sudah cleaning head tetap sama',
+        incomingDate: '2026-05-02', problemDescription: 'Hasil print bergaris-garis vertikal, sudah cleaning head tetap sama',
         statusService: 'WAITING_CHECK', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00',
       },
       {
         ticketNumber: 'SR-20260503-0003', serviceType: 'NON_WARRANTY', customerId: 2, productId: 3,
         adminId: 1, technicianCheckId: 2,
-        incomingDate: new Date('2026-05-03'), checkDate: new Date('2026-05-04'),
+        incomingDate: '2026-05-03', checkDate: '2026-05-04',
         problemDescription: 'Warna magenta tidak keluar sama sekali, print head diduga clogging',
         statusService: 'CHECK', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00',
       },
       {
         ticketNumber: 'SR-20260504-0004', serviceType: 'NON_WARRANTY', customerId: 3, productId: 6,
         adminId: 1, technicianCheckId: 3,
-        incomingDate: new Date('2026-05-04'), checkDate: new Date('2026-05-05'),
+        incomingDate: '2026-05-04', checkDate: '2026-05-05',
         problemDescription: 'Dot matrix bunyi berisik, carriage macet di posisi tengah',
         statusService: 'CHECK', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00',
       },
       {
         ticketNumber: 'SR-20260505-0005', serviceType: 'NON_WARRANTY', customerId: 4, productId: 8,
         adminId: 1, technicianCheckId: 3,
-        incomingDate: new Date('2026-05-05'), checkDate: new Date('2026-05-06'),
-        spDate: new Date('2026-05-07'), problemDescription: 'Panel POS printer tidak menyala, power supply diduga rusak',
+        incomingDate: '2026-05-05', checkDate: '2026-05-06',
+        spDate: '2026-05-07', problemDescription: 'Panel POS printer tidak menyala, power supply diduga rusak',
         statusService: 'AWAITING_PARTS', serviceFee: '0.00', partFee: '280000.00', shippingFee: '35000.00',
       },
       {
         ticketNumber: 'SR-20260506-0006', serviceType: 'NON_WARRANTY', customerId: 7, productId: 5,
         adminId: 1, technicianCheckId: 2,
-        incomingDate: new Date('2026-05-06'), checkDate: new Date('2026-05-07'),
-        spDate: new Date('2026-05-08'), approveDate: new Date('2026-05-09'),
+        incomingDate: '2026-05-06', checkDate: '2026-05-07',
+        spDate: '2026-05-08', approveDate: '2026-05-09',
         problemDescription: 'M2110 tidak bisa isi ulang tinta, error ink pad full',
         statusService: 'WAITING_APPROVE', serviceFee: '150000.00', partFee: '55000.00', shippingFee: '35000.00',
       },
       {
         ticketNumber: 'SR-20260508-0007', serviceType: 'NON_WARRANTY', customerId: 5, productId: 7,
         adminId: 1, technicianCheckId: 2,
-        incomingDate: new Date('2026-05-08'), checkDate: new Date('2026-05-09'),
-        spDate: new Date('2026-05-10'), approveDate: new Date('2026-05-11'),
+        incomingDate: '2026-05-08', checkDate: '2026-05-09',
+        spDate: '2026-05-10', approveDate: '2026-05-11',
         problemDescription: 'LX-310 paper jam terus, roller sudah aus',
         statusService: 'SERVICE', serviceFee: '200000.00', partFee: '95000.00', shippingFee: '35000.00',
       },
       {
         ticketNumber: 'SR-20260509-0008', serviceType: 'NON_WARRANTY', customerId: 1, productId: 4,
         adminId: 1, technicianCheckId: 3,
-        incomingDate: new Date('2026-05-09'), checkDate: new Date('2026-05-10'),
-        spDate: new Date('2026-05-11'), approveDate: new Date('2026-05-12'),
-        readyDate: new Date('2026-05-13'),
+        incomingDate: '2026-05-09', checkDate: '2026-05-10',
+        spDate: '2026-05-11', approveDate: '2026-05-12',
+        readyDate: '2026-05-13',
         problemDescription: 'L15150 error code 0xF3, carriage motor tidak berfungsi',
         statusService: 'SERVICE', serviceFee: '250000.00', partFee: '275000.00', shippingFee: '75000.00',
       },
       {
         ticketNumber: 'SR-20260510-0009', serviceType: 'WARRANTY', customerId: 1, productId: 9,
         adminId: 1, technicianCheckId: 2,
-        incomingDate: new Date('2026-05-10'), checkDate: new Date('2026-05-11'),
-        spDate: new Date('2026-05-12'), approveDate: new Date('2026-05-12'),
-        readyDate: new Date('2026-05-13'), closeDate: new Date('2026-05-14'),
+        incomingDate: '2026-05-10', checkDate: '2026-05-11',
+        spDate: '2026-05-12', approveDate: '2026-05-12',
+        readyDate: '2026-05-13', closeDate: '2026-05-14',
         problemDescription: 'SureColor P907 error "Service Required" waste ink pad full',
         statusService: 'DONE', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00',
       },
       {
         ticketNumber: 'SR-20260512-0010', serviceType: 'WARRANTY', customerId: 2, productId: 10,
         adminId: 1, technicianCheckId: 3,
-        incomingDate: new Date('2026-05-12'), checkDate: new Date('2026-05-13'),
+        incomingDate: '2026-05-12', checkDate: '2026-05-13',
         problemDescription: 'WF-C579R tidak terdeteksi di jaringan, WiFi module diduga error',
-        statusService: 'CANCEL', closeDate: new Date('2026-05-14'),
+        statusService: 'CANCEL', closeDate: '2026-05-14',
         serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00',
       },
     ]);
@@ -234,7 +234,7 @@ async function runSeeder() {
 
     await db.insert(schema.purchaseOrders).values({
       poNumber: 'PO-20260512-0002', supplierName: 'EPSON', status: 'ORDERED', requestedBy: 1, approvedBy: 1,
-      notes: 'CR motor restock', orderDate: new Date('2026-05-12'), totalAmount: '1375000.00',
+      notes: 'CR motor restock', orderDate: '2026-05-12', totalAmount: '1375000.00',
     });
     await db.insert(schema.poItems).values({
       purchaseOrderId: 2, sparePartId: 5, quantity: 5, unitPrice: '275000.00', receivedQty: 0, subtotal: '1375000.00',
@@ -243,7 +243,7 @@ async function runSeeder() {
 
     await db.insert(schema.purchaseOrders).values({
       poNumber: 'PO-20260510-0003', supplierName: 'EPSON', status: 'SHIPPED', requestedBy: 1, approvedBy: 1,
-      notes: 'Print head + encoder strip restock', orderDate: new Date('2026-05-10'), totalAmount: '870000.00',
+      notes: 'Print head + encoder strip restock', orderDate: '2026-05-10', totalAmount: '870000.00',
     });
     await db.insert(schema.poItems).values([
       { purchaseOrderId: 3, sparePartId: 1, quantity: 1, unitPrice: '750000.00', receivedQty: 0, subtotal: '750000.00' },
@@ -253,8 +253,8 @@ async function runSeeder() {
 
     await db.insert(schema.purchaseOrders).values({
       poNumber: 'PO-20260505-0004', supplierName: 'EPSON', status: 'RECEIVED', requestedBy: 1, approvedBy: 1,
-      notes: 'Main board + PSU - diterima lengkap', orderDate: new Date('2026-05-05'),
-      expectedDate: new Date('2026-05-09'), receivedDate: new Date('2026-05-09'), totalAmount: '2250000.00',
+      notes: 'Main board + PSU - diterima lengkap', orderDate: '2026-05-05',
+      expectedDate: '2026-05-09', receivedDate: '2026-05-09', totalAmount: '2250000.00',
     });
     await db.insert(schema.poItems).values([
       { purchaseOrderId: 4, sparePartId: 2, quantity: 3, unitPrice: '450000.00', receivedQty: 3, subtotal: '1350000.00' },
@@ -277,9 +277,9 @@ async function runSeeder() {
     // ========================================================================
     console.log('📦 Tahap 9: Invoices...');
     await db.insert(schema.invoices).values([
-      { invoiceNumber: 'INV-20260514-0001', ticketNumber: 'SR-20260509-0008', serviceRequestId: 8, clientName: 'PT. Epson Indonesia', serviceFee: '250000.00', partFee: '275000.00', shippingFee: '75000.00', ppn: '66000.00', total: '666000.00', status: 'PAID', paymentMethod: 'TRANSFER', invoiceDate: new Date('2026-05-14'), paidDate: new Date('2026-05-14'), ppnRate: '11.00' },
-      { invoiceNumber: 'INV-20260514-0002', ticketNumber: 'SR-20260510-0009', serviceRequestId: 9, clientName: 'PT. Epson Indonesia', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00', ppn: '0.00', total: '0.00', status: 'PAID', paymentMethod: 'CASH', invoiceDate: new Date('2026-05-14'), paidDate: new Date('2026-05-14'), ppnRate: '11.00' },
-      { invoiceNumber: 'INV-20260515-0003', ticketNumber: 'SR-20260508-0007', serviceRequestId: 7, clientName: 'SDN Merdeka 01', serviceFee: '200000.00', partFee: '95000.00', shippingFee: '35000.00', ppn: '36300.00', total: '366300.00', status: 'UNPAID', invoiceDate: new Date('2026-05-15'), ppnRate: '11.00' },
+      { invoiceNumber: 'INV-20260514-0001', ticketNumber: 'SR-20260509-0008', serviceRequestId: 8, clientName: 'PT. Epson Indonesia', serviceFee: '250000.00', partFee: '275000.00', shippingFee: '75000.00', ppn: '66000.00', total: '666000.00', status: 'PAID', paymentMethod: 'TRANSFER', invoiceDate: '2026-05-14', paidDate: '2026-05-14', ppnRate: '11.00' },
+      { invoiceNumber: 'INV-20260514-0002', ticketNumber: 'SR-20260510-0009', serviceRequestId: 9, clientName: 'PT. Epson Indonesia', serviceFee: '0.00', partFee: '0.00', shippingFee: '0.00', ppn: '0.00', total: '0.00', status: 'PAID', paymentMethod: 'CASH', invoiceDate: '2026-05-14', paidDate: '2026-05-14', ppnRate: '11.00' },
+      { invoiceNumber: 'INV-20260515-0003', ticketNumber: 'SR-20260508-0007', serviceRequestId: 7, clientName: 'SDN Merdeka 01', serviceFee: '200000.00', partFee: '95000.00', shippingFee: '35000.00', ppn: '36300.00', total: '366300.00', status: 'UNPAID', invoiceDate: '2026-05-15', ppnRate: '11.00' },
     ]);
     console.log('  ✔ 3 invoices dibuat');
 
@@ -310,9 +310,9 @@ async function runSeeder() {
     // ========================================================================
     console.log('📦 Tahap 12: Expenses...');
     await db.insert(schema.expenses).values([
-      { expenseNumber: 'EXP-20260501-0001', expenseType: 'OPERATIONAL', description: 'Sewa tempat bulan Mei 2026', amount: '1500000.00', expenseDate: new Date('2026-05-01'), category: 'RENT', createdBy: 1 },
-      { expenseNumber: 'EXP-20260501-0002', expenseType: 'OPERATIONAL', description: 'Listrik dan air bulan Mei 2026', amount: '500000.00', expenseDate: new Date('2026-05-01'), category: 'UTILITY', createdBy: 1 },
-      { expenseNumber: 'EXP-20260509-0003', expenseType: 'PO', description: 'PO-20260505-0004: Main Board dan PSU', poId: 4, amount: '2250000.00', expenseDate: new Date('2026-05-09'), category: 'OTHER', createdBy: 1 },
+      { expenseNumber: 'EXP-20260501-0001', expenseType: 'OPERATIONAL', description: 'Sewa tempat bulan Mei 2026', amount: '1500000.00', expenseDate: '2026-05-01', category: 'RENT', createdBy: 1 },
+      { expenseNumber: 'EXP-20260501-0002', expenseType: 'OPERATIONAL', description: 'Listrik dan air bulan Mei 2026', amount: '500000.00', expenseDate: '2026-05-01', category: 'UTILITY', createdBy: 1 },
+      { expenseNumber: 'EXP-20260509-0003', expenseType: 'PO', description: 'PO-20260505-0004: Main Board dan PSU', poId: 4, amount: '2250000.00', expenseDate: '2026-05-09', category: 'OTHER', createdBy: 1 },
     ]);
     console.log('  ✔ 3 expenses dibuat');
 
