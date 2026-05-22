@@ -15,7 +15,7 @@ cd mipsys-frontend-v2 && npm install && npm run dev
 
 ## Architecture
 
-- **Backend**: NestJS 11 + Drizzle ORM (MySQL) + class-validator. Modules in `src/{module}/` with controller, service, module, dto/ files. Global `ValidationPipe` with `whitelist: true`. Global `StandardHttpExceptionFilter`.
+- **Backend**: NestJS 11 + Drizzle ORM (PostgreSQL via `pg`) + class-validator. Modules in `src/{module}/` with controller, service, module, dto/ files. Global `ValidationPipe` with `whitelist: true`. Global `StandardHttpExceptionFilter`.
 - **Frontend**: Next.js 16 App Router + React 19 + Tailwind CSS v4 + shadcn/ui (radix-lyra style). Pages under `src/app/{route}/`, feature logic under `src/features/{module}/`, shared UI in `src/components/ui/`. Axios client at `src/lib/api-client.ts`.
 - **State machine** (`sr-state-machine.guard.ts`): Service requests follow `WAITING_CHECK → CHECK → WAITING_APPROVE → SERVICE/DONE` or `→ AWAITING_PARTS → SERVICE/DONE` or `→ CANCEL` from any non-terminal state.
 
@@ -28,7 +28,10 @@ cd mipsys-frontend-v2 && npm install && npm run dev
 | backend  | `npm run lint`     | ESLint with prettier plugin, `--fix`    |
 | backend  | `npm run test`     | Jest (`.spec.ts` files)                 |
 | backend  | `npm run test:e2e` | Jest via `test/jest-e2e.json`           |
-| backend  | `npm run db:fresh` | Clean DB → push → seed (schema changes) |
+| backend  | `npm run db:drop`  | Drop all tables & enum types (PostgreSQL) |
+| backend  | `npm run db:push`  | Drizzle-kit push (schema sync)           |
+| backend  | `npm run db:seed`  | Run seed script                          |
+| backend  | `npm run db:fresh` | drop → push → seed (full refresh)        |
 | frontend | `npm run dev`      | Next dev server                         |
 | frontend | `npm run build`    | Next build (type-check + bundle)        |
 | frontend | `npm run lint`     | ESLint with `eslint-config-next`        |
@@ -38,7 +41,8 @@ cd mipsys-frontend-v2 && npm install && npm run dev
 - **Always** use `npm run db:fresh` (clean → drizzle push → seed)
 - **Never** run `drizzle-kit push` directly (use `db:push` script only as part of `db:fresh`)
 - Schema files in `mipsys-backend/src/database/schema/`
-- `drizzle.config.ts` at backend root, MySQL dialect, `DATABASE_URL` env
+- `drizzle.config.ts` at backend root, PostgreSQL dialect, `DATABASE_URL` env
+- Database runs via Docker: `postgres:15-alpine` on port 5433, user `intern`/`intern123`
 
 ## Design system
 
