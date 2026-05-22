@@ -79,7 +79,7 @@ export function CreateSRForm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto my-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+     <div className="max-w-4xl mx-auto my-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* HEADER PAGE - MIP SEMARANG Branding */}
       <header className="mb-10 text-left px-4">
         <h1 className="text-5xl font-display font-bold text-foreground tracking-tight flex items-center gap-3">
@@ -105,15 +105,17 @@ export function CreateSRForm() {
               className="bg-slate-50 px-6 py-4 border-b flex items-center justify-between"
               aria-hidden="true"
             >
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white">
-                  01
-                </span>
-                <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
-                  Informasi Pelanggan
-                </h2>
-              </div>
-              <User size={18} className="text-slate-300" />
+               <div className="flex items-center gap-3">
+                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white">
+                   01
+                 </span>
+                 <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
+                   Informasi Pelanggan
+                 </h2>
+               </div>
+               <div className="relative h-10 w-10">
+                 <User size={18} className="absolute inset-0 flex items-center justify-center text-slate-300" />
+               </div>
             </div>
 
             <div className="p-8 space-y-6">
@@ -145,20 +147,20 @@ export function CreateSRForm() {
                       <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         WhatsApp / Telepon
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Smartphone
-                            size={16}
-                            className="absolute left-4 top-4 text-slate-400"
-                            aria-hidden="true"
-                          />
-                          <Input
-                            className="h-12 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
-                            placeholder="0812..."
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
+                       <FormControl>
+                         <div className="relative h-10 w-10">
+                           <Smartphone
+                             size={16}
+                             className="absolute inset-0 flex items-center justify-center text-slate-400"
+                             aria-hidden="true"
+                           />
+                         </div>
+                         <Input
+                           className="h-12 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
+                           placeholder="0812..."
+                           {...field}
+                         />
+                       </FormControl>
                       <FormMessage className="text-xs font-bold" />
                     </FormItem>
                   )}
@@ -173,20 +175,20 @@ export function CreateSRForm() {
                     <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                       Alamat Lengkap
                     </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <MapPin
-                          size={16}
-                          className="absolute left-4 top-4 text-slate-400"
-                          aria-hidden="true"
-                        />
-                        <Textarea
-                          className="min-h-24 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
-                          placeholder="Jl. Gajahmada No. XX, Semarang..."
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
+                       <FormControl>
+                         <div className="relative h-10 w-10">
+                           <MapPin
+                             size={16}
+                             className="absolute inset-0 flex items-center justify-center text-slate-400"
+                             aria-hidden="true"
+                           />
+                         </div>
+                         <Textarea
+                           className="min-h-24 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
+                           placeholder="Jl. Gajahmada No. XX, Semarang..."
+                           {...field}
+                         />
+                       </FormControl>
                     <FormMessage className="text-xs font-bold" />
                   </FormItem>
                 )}
@@ -196,20 +198,22 @@ export function CreateSRForm() {
 
           {/* SEKSI 02: PERANGKAT */}
           <section className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-orange-200">
-            <div
-              className="bg-slate-50 px-6 py-4 border-b flex items-center justify-between"
-              aria-hidden="true"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white">
-                  02
-                </span>
-                <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
-                  Detail Unit & Masalah
-                </h2>
-              </div>
-              <AlertCircle size={18} className="text-slate-300" />
-            </div>
+             <div
+               className="bg-slate-50 px-6 py-4 border-b flex items-center justify-between"
+               aria-hidden="true"
+             >
+               <div className="flex items-center gap-3">
+                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white">
+                   02
+                 </span>
+                 <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
+                   Detail Unit & Masalah
+                 </h2>
+               </div>
+               <div className="relative h-10 w-10">
+                 <AlertCircle size={18} className="absolute inset-0 flex items-center justify-center text-slate-300" />
+               </div>
+             </div>
 
             <div className="p-8 space-y-6">
               {/* Grid untuk Model dan Serial Number */}

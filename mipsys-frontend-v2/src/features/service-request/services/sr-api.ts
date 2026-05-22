@@ -1,46 +1,40 @@
-import axios from 'axios';
-
-// Konfigurasi Axios
-const api = axios.create({
-  baseURL: 'http://localhost:3001',
-  headers: { 'Content-Type': 'application/json' },
-});
+import { apiClient } from '@/src/lib/api-client';
 
 export const srApi = {
   getAll: (search = '', page = 1, limit = 10, status = 'ALL') =>
-    api
+    apiClient
       .get('/service-request/dashboard', { params: { search, page, limit, status } })
       .then((r) => r.data),
 
   getDetail: (ticketNumber: string) =>
-    api.get(`/service-request/${ticketNumber}`).then((r) => r.data),
+    apiClient.get(`/service-request/${ticketNumber}`).then((r) => r.data),
 
   updateEntry: (ticketNumber: string, data: any) =>
-    api.patch(`/service-request/${ticketNumber}`, data).then((r) => r.data),
+    apiClient.patch(`/service-request/${ticketNumber}`, data).then((r) => r.data),
 
   getDashboardStats: () =>
-    api.get('/service-request/stats').then((r) => r.data),
+    apiClient.get('/service-request/stats').then((r) => r.data),
 
   getActivities: () =>
-    api.get('/service-request/activities').then((r) => r.data),
+    apiClient.get('/service-request/activities').then((r) => r.data),
 
   create: async (rawData: any) => {
     const payload = {
       ...rawData,
       adminId: 1,
     };
-    const response = await api.post('/service-request/entry', payload);
+    const response = await apiClient.post('/service-request/entry', payload);
     return response.data;
   },
 
   searchSpareParts: (query: string) =>
-    api
+    apiClient
       .get(`/spare-parts/search`, { params: { q: query } })
       .then((r) => r.data),
 
   prosesKasir: async (ticketNumber: string, data: { serviceFee: number; partFee: number }) => {
-    const invoice = await api.post(`/finance/invoices/from-sr/${ticketNumber}`).then((r) => r.data);
-    await api.post(`/finance/invoices/${invoice.id}/pay`, {
+    const invoice = await apiClient.post(`/finance/invoices/from-sr/${ticketNumber}`).then((r) => r.data);
+    await apiClient.post(`/finance/invoices/${invoice.id}/pay`, {
       amount: data.serviceFee + data.partFee,
       paymentMethod: 'CASH',
       paidAt: new Date().toISOString(),
@@ -48,5 +42,3 @@ export const srApi = {
     return invoice;
   },
 };
-
-export default api;

@@ -6,6 +6,7 @@ import { SrStatsCards } from './SrStatsCards';
 import { SrFilterBar } from './SrFilterBar';
 import Link from 'next/link';
 import { Loader2, ExternalLink } from 'lucide-react';
+import { EmptyState } from '@/src/components/ui/empty-state';
 
 interface ServiceRequest {
   id: number;
@@ -124,14 +125,22 @@ export function SrDashboard() {
                     </div>
                   </td>
                 </tr>
-              ) : data.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-24">
-                    <p className="text-muted-foreground text-lg font-display font-medium">
-                      Belum ada tiket servis
-                    </p>
-                  </td>
-                </tr>
+               ) : data.length === 0 ? (
+                 <tr>
+                   <td colSpan={8} className="py-24">
+                     <EmptyState
+                       title="Belum ada tiket servis"
+                       description="Tambahkan permintaan service pertama Anda untuk memulai."
+                       actionLabel="Buat Permintaan Baru"
+                       onAction={() => {
+                         // Navigate to new service request form
+                         // This would typically use useRouter or Link component
+                         // For now, we'll just show the concept
+                         console.log('Navigate to new SR form');
+                       }}
+                     />
+                   </td>
+                 </tr>
               ) : (
                 data.map((sr) => {
                   const badge = statusBadge(sr.statusService);

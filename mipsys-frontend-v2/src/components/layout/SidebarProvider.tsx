@@ -1,11 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/src/components/layout/Sidebar';
 import { Menu } from 'lucide-react';
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login';
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex min-h-screen w-full">

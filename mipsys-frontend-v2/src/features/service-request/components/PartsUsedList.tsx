@@ -1,6 +1,7 @@
 import React from 'react';
 import { Package, Trash2 } from 'lucide-react';
 import { OrderPart } from '../api/order-parts-api';
+import { EmptyState } from '@/src/components/ui/empty-state';
 
 interface PartsUsedListProps {
   parts: OrderPart[];
@@ -16,7 +17,14 @@ export function PartsUsedList({
   onRemove,
 }: PartsUsedListProps) {
   if (isLoading) return <LoadingState />;
-  if (parts.length === 0) return null;
+  if (parts.length === 0) return (
+    <div className="text-center py-8">
+      <EmptyState
+        title="Belum ada part yang digunakan"
+        description="Tambahkan part yang digunakan saat melakukan servis."
+      />
+    </div>
+  );
 
   return (
     <section className="space-y-4">
