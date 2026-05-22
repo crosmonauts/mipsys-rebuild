@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { desc, eq, and, like, or, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
   serviceRequests,
@@ -38,7 +38,7 @@ export class ServiceRequestService {
   private readonly logger = new Logger(ServiceRequestService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private inventoryService: InventoryService,
     private orderPartsService: OrderPartsService,
     private financeService: FinanceService,

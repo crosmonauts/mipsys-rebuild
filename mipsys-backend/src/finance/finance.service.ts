@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { eq, and, desc, sql, like, or } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
   invoices,
@@ -24,7 +24,7 @@ export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private orderPartsService: OrderPartsService,
   ) {}
 

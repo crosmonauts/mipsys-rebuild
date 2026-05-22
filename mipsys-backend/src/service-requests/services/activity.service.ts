@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { desc } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
 import { serviceLogs } from '../../database/schema';
 import { DrizzleTx } from '../../database/types';
@@ -10,7 +10,7 @@ export class ServiceRequestActivityService {
   private readonly logger = new Logger(ServiceRequestActivityService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async getActivities() {

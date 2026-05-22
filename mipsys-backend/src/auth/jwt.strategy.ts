@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { users } from '../database/schema';
 
@@ -16,7 +16,7 @@ export interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

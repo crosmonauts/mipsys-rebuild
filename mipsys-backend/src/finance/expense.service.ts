@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { eq, desc, and, between, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { expenses, purchaseOrders, financeSettings } from '../database/schema';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/create-expense.dto';
@@ -8,7 +8,7 @@ import { CreateExpenseDto, UpdateExpenseDto } from './dto/create-expense.dto';
 @Injectable()
 export class ExpenseService {
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {}
 
   async findAll(filters: { type?: string; category?: string; startDate?: string; endDate?: string }) {

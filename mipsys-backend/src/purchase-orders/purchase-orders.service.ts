@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, and, desc, inArray, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
   purchaseOrders,
@@ -23,7 +23,7 @@ import { PoItemsService } from './po-items.service';
 import { validatePoTransition, PoStatusType } from './po-state-machine.guard';
 
 type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];
 
 @Injectable()
@@ -31,7 +31,7 @@ export class PurchaseOrdersService {
   private readonly logger = new Logger(PurchaseOrdersService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private stockMovementsService: StockMovementsService,
     private poItemsService: PoItemsService,
     private eventEmitter: EventEmitter2,

@@ -5,13 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { eq, and, ne, desc } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { orderParts, spareParts } from '../database/schema';
 import { CreateOrderPartDto } from './dto/create-order-part.dto';
 
 type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];
 
 @Injectable()
@@ -19,7 +19,7 @@ export class OrderPartsService {
   private readonly logger = new Logger(OrderPartsService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async addPart(dto: CreateOrderPartDto, tx?: DrizzleTx, status?: string) {

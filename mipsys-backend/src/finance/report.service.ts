@@ -1,13 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, gte, lte } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { invoices, expenses } from '../database/schema';
 
 @Injectable()
 export class ReportService {
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {}
 
   async getProfitLoss(startDate: string, endDate: string) {
