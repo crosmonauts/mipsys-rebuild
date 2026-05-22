@@ -26,13 +26,13 @@ export class ServiceRequestCustomerResolver {
 
     if (existing) return existing.id;
 
-    const [{ insertId }] = await tx.insert(customers).values({
+    const [{ id }] = await tx.insert(customers).values({
       name: customerName.trim(),
       address: address?.trim(),
       phone: phone?.trim(),
       customerType,
-    });
-    return insertId;
+    }).returning({ id: customers.id });
+    return id;
   }
 
   async updateCustomer(

@@ -17,7 +17,9 @@ const mockSparePartsQuery = {
 };
 
 const mockInsert = jest.fn().mockReturnValue({
-  values: jest.fn().mockResolvedValue([{ insertId: 100 }]),
+  values: jest.fn().mockReturnValue({
+    returning: jest.fn().mockResolvedValue([{ id: 100 }]),
+  }),
 });
 
 const mockEventEmitter = {

@@ -23,8 +23,8 @@ export class StaffService {
   }
 
   async create(data: { name: string; role: 'ADMIN' | 'TECHNICIAN' }) {
-    const [result] = await this.db.insert(staff).values(data);
-    return { success: true, id: result.insertId };
+    const [result] = await this.db.insert(staff).values(data).returning({ id: staff.id });
+    return { success: true, id: result.id };
   }
 
   async update(id: number, data: { name?: string; role?: 'ADMIN' | 'TECHNICIAN' }) {

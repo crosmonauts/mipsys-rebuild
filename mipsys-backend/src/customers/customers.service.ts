@@ -38,8 +38,8 @@ export class CustomersService {
       phone: data.phone?.trim() || null,
       address: data.address?.trim() || null,
       customerType: data.customerType?.trim() || null,
-    });
-    return { success: true, id: result.insertId };
+    }).returning({ id: customers.id });
+    return { success: true, id: result.id };
   }
 
   async update(id: number, data: { name?: string; phone?: string; address?: string; customerType?: string }) {

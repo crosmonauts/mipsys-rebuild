@@ -24,11 +24,11 @@ export class ServiceRequestProductResolver {
 
     if (existing) return existing.id;
 
-    const [{ insertId }] = await tx.insert(products).values({
+    const [{ id }] = await tx.insert(products).values({
       serialNumber: serialNumber.trim(),
       modelName: modelName.trim(),
-    });
-    return insertId;
+    }).returning({ id: products.id });
+    return id;
   }
 
   async updateProduct(

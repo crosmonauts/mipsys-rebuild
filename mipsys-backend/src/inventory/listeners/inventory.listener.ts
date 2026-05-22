@@ -44,10 +44,10 @@ export class InventoryListener {
           requestedBy: 1,
           notes: `Auto-PO: ${part!.partName} stok menipis (${newStock} < ${part!.minStock})`,
           totalAmount: '0.00',
-        });
+        }).returning({ id: purchaseOrders.id });
 
         await tx.insert(poItems).values({
-          purchaseOrderId: poResult.insertId,
+          purchaseOrderId: poResult.id,
           sparePartId: part!.id,
           quantity: reorderQty,
           unitPrice: '0.00',

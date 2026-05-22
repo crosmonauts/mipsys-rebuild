@@ -139,11 +139,11 @@ export class PurchaseOrdersService {
         requestedBy: dto.requestedBy,
         notes: dto.notes?.trim() ?? null,
         totalAmount: totalAmount.toString(),
-      });
+      }).returning({ id: purchaseOrders.id });
 
-      await this.poItemsService.addItems(tx, poResult.insertId, dto.items);
+      await this.poItemsService.addItems(tx, poResult.id, dto.items);
 
-      return { success: true, id: poResult.insertId, poNumber };
+      return { success: true, id: poResult.id, poNumber };
     });
   }
 
@@ -188,8 +188,8 @@ export class PurchaseOrdersService {
     const updates: Record<string, unknown> = { status: newStatus, updatedAt: new Date() };
 
     if (newStatus === 'APPROVED') updates.approvedBy = performedBy;
-    if (newStatus === 'ORDERED') updates.orderDate = new Date();
-    if (newStatus === 'RECEIVED') updates.receivedDate = new Date();
+    if (newStatus === 'ORDERED') updates.orderDate = new Date().toISOString().split('T')[0];
+    if (newStatus === 'RECEIVED') updates.receivedDate = new Date().toISOString().split('T')[0];
 
     await this.db
       .update(purchaseOrders)
@@ -221,7 +221,7 @@ export class PurchaseOrdersService {
         const poItem = items.find((i) => i.id === receiveItem.poItemId);
         if (!poItem) throw new BadRequestException(`Item ID ${receiveItem.poItemId} tidak ditemukan.`);
 
-        let sparePartId = poItem.sparePartId;
+        let sparePartId = poItem.sparePartId!;
 
         if (!sparePartId) {
           const partName = poItem.partName || `PO Item #${poItem.id}`;
@@ -248,8 +248,8 @@ export class PurchaseOrdersService {
               stock: 0,
               minStock: 5,
               price: poItem.unitPrice,
-            });
-            sparePartId = newPart.insertId;
+            }).returning({ id: spareParts.id });
+            sparePartId = newPart.id;
 
             await tx
               .update(spareParts)
@@ -309,7 +309,7 @@ export class PurchaseOrdersService {
         .update(purchaseOrders)
         .set({
           status: finalStatus,
-          receivedDate: finalStatus === 'RECEIVED' ? new Date() : po.receivedDate,
+          receivedDate: finalStatus === 'RECEIVED' ? new Date().toISOString().split('T')[0] : po.receivedDate,
           updatedAt: new Date(),
         })
         .where(eq(purchaseOrders.id, id));

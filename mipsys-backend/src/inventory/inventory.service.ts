@@ -174,9 +174,9 @@ export class InventoryService {
       block: dto.block?.trim(),
       stock: dto.stock ?? 0,
       price: dto.price.toString(),
-    });
+    }).returning({ id: spareParts.id });
 
-    return { success: true, insertedId: result.insertId };
+    return { success: true, insertedId: result.id };
   }
 
   async update(id: number, dto: UpdateSparePartDto) {

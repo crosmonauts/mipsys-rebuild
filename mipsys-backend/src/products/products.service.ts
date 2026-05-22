@@ -34,8 +34,8 @@ export class ProductsService {
     const [result] = await this.db.insert(products).values({
       modelName: data.modelName.trim(),
       serialNumber: data.serialNumber.trim(),
-    });
-    return { success: true, id: result.insertId };
+    }).returning({ id: products.id });
+    return { success: true, id: result.id };
   }
 
   async update(id: number, data: { modelName?: string; serialNumber?: string }) {

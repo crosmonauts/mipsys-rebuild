@@ -56,9 +56,9 @@ export class OrderPartsService {
       quantity: dto.quantity,
       priceAtAction,
       status: (status ?? 'IN_STOCK') as any,
-    });
+    }).returning({ id: orderParts.id });
 
-    return { success: true, id: result.insertId, priceAtAction };
+    return { success: true, id: result.id, priceAtAction };
   }
 
   async getByServiceRequest(serviceRequestId: number) {

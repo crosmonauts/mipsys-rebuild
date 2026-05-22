@@ -90,11 +90,11 @@ export class FinanceService {
       total: total.toFixed(2),
       status: 'UNPAID',
       paymentMethod: dto.paymentMethod || null,
-      invoiceDate: new Date(),
+      invoiceDate: new Date().toISOString().split('T')[0],
       notes: dto.notes?.trim() ?? null,
-    });
+    }).returning({ id: invoices.id });
 
-    return { success: true, id: result.insertId, invoiceNumber };
+    return { success: true, id: result.id, invoiceNumber };
   }
 
   async recordPayment(id: number, dto: RecordPaymentDto) {
@@ -123,7 +123,7 @@ export class FinanceService {
       .set({
         status: 'PAID',
         paymentMethod: dto.paymentMethod,
-        paidDate: new Date(),
+        paidDate: new Date().toISOString().split('T')[0],
         updatedAt: new Date(),
       })
       .where(eq(invoices.id, id) as any);
@@ -212,24 +212,24 @@ export class FinanceService {
 
      const invoiceNumber = await this.generateInvoiceNumber();
 
-     const [invoiceResult] = await this.db.insert(invoices).values({
-       invoiceNumber,
-       ticketNumber,
-       serviceRequestId: sr.id,
-       clientName: sr.customerName || 'Customer',
-       serviceFee: serviceFee.toString(),
-       partFee: partsCost.toString(),
-       shippingFee: shippingFee.toString(),
-       ppn: ppn.toFixed(2),
-       ppnRate: ppnRate.toString(),
-       total: total.toFixed(2),
-       status: 'UNPAID',
-       invoiceDate: new Date(),
-     });
+      const [invoiceResult] = await this.db.insert(invoices).values({
+        invoiceNumber,
+        ticketNumber,
+        serviceRequestId: sr.id,
+        clientName: sr.customerName || 'Customer',
+        serviceFee: serviceFee.toString(),
+        partFee: partsCost.toString(),
+        shippingFee: shippingFee.toString(),
+        ppn: ppn.toFixed(2),
+        ppnRate: ppnRate.toString(),
+        total: total.toFixed(2),
+        status: 'UNPAID',
+        invoiceDate: new Date().toISOString().split('T')[0],
+      }).returning({ id: invoices.id });
 
-     return {
-       success: true,
-       id: invoiceResult.insertId,
+      return {
+        success: true,
+        id: invoiceResult.id,
        invoiceNumber,
        breakdown: {
          serviceFee,

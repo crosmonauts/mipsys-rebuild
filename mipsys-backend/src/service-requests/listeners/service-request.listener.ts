@@ -113,7 +113,7 @@ export class ServiceRequestListener {
         .update(serviceRequests)
         .set({
           statusService: 'SERVICE',
-          spDate: new Date(),
+          spDate: new Date().toISOString().split('T')[0],
         })
         .where(eq(serviceRequests.id, srId));
 

@@ -14,16 +14,16 @@ export class ReportService {
     const revenueData = await this.db.query.invoices.findMany({
       where: and(
         eq(invoices.status, 'PAID' as any),
-        gte(invoices.paidDate, new Date(startDate)),
-        lte(invoices.paidDate, new Date(endDate)),
+        gte(invoices.paidDate, startDate),
+        lte(invoices.paidDate, endDate),
       ) as any,
     });
     const totalRevenue = revenueData.reduce((s, i) => s + parseFloat(i.total || '0'), 0);
 
     const expenseData = await this.db.query.expenses.findMany({
       where: and(
-        gte(expenses.expenseDate, new Date(startDate)),
-        lte(expenses.expenseDate, new Date(endDate)),
+        gte(expenses.expenseDate, startDate),
+        lte(expenses.expenseDate, endDate),
       ) as any,
     });
     const totalExpenses = expenseData.reduce((s, e) => s + parseFloat(e.amount || '0'), 0);
@@ -45,8 +45,8 @@ export class ReportService {
     const paidInvoices = await this.db.query.invoices.findMany({
       where: and(
         eq(invoices.status, 'PAID' as any),
-        gte(invoices.paidDate, new Date(startDate)),
-        lte(invoices.paidDate, new Date(endDate)),
+        gte(invoices.paidDate, startDate),
+        lte(invoices.paidDate, endDate),
       ) as any,
     });
 
@@ -81,16 +81,16 @@ export class ReportService {
       const monthRevenue = await this.db.query.invoices.findMany({
         where: and(
           eq(invoices.status, 'PAID' as any),
-          gte(invoices.paidDate, new Date(startDate)),
-          lte(invoices.paidDate, new Date(endDate)),
+          gte(invoices.paidDate, startDate),
+          lte(invoices.paidDate, endDate),
         ) as any,
       });
       const revenue = monthRevenue.reduce((s, i) => s + parseFloat(i.total || '0'), 0);
 
       const monthExpenses = await this.db.query.expenses.findMany({
         where: and(
-          gte(expenses.expenseDate, new Date(startDate)),
-          lte(expenses.expenseDate, new Date(endDate)),
+          gte(expenses.expenseDate, startDate),
+          lte(expenses.expenseDate, endDate),
         ) as any,
       });
       const expense = monthExpenses.reduce((s, e) => s + parseFloat(e.amount || '0'), 0);

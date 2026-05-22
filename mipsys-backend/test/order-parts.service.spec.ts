@@ -4,7 +4,9 @@ import { orderParts, spareParts } from '../src/database/schema';
 
 const mockDb = {
   insert: jest.fn().mockReturnValue({
-    values: jest.fn().mockResolvedValue([{ insertId: 1 }]),
+    values: jest.fn().mockReturnValue({
+      returning: jest.fn().mockResolvedValue([{ id: 1 }]),
+    }),
   }),
   select: jest.fn().mockReturnValue({
     from: jest.fn().mockReturnValue({
