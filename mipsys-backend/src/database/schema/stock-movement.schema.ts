@@ -1,34 +1,22 @@
-import {
-  mysqlTable,
-  varchar,
-  text,
-  int,
-  timestamp,
-  mysqlEnum,
-  index,
-} from 'drizzle-orm/mysql-core';
+import { pgTable, varchar, text, integer, timestamp, index } from 'drizzle-orm/pg-core';
 import { spareParts } from './spare-part.schema';
 import { staff } from './service-request.schema';
+import { movementTypeEnum } from './enums';
 
-export const stockMovements = mysqlTable(
+export const stockMovements = pgTable(
   'stock_movements',
   {
-    id: int('id').autoincrement().primaryKey(),
-    sparePartId: int('spare_part_id')
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    sparePartId: integer('spare_part_id')
       .notNull()
       .references(() => spareParts.id),
-    quantity: int('quantity').notNull(),
-    movementType: mysqlEnum('movement_type', [
-      'PO_RECEIVE',
-      'SERVICE_USE',
-      'ADJUSTMENT',
-      'SERVICE_RETURN',
-    ]).notNull(),
+    quantity: integer('quantity').notNull(),
+    movementType: movementTypeEnum('movement_type').notNull(),
     referenceType: varchar('reference_type', { length: 50 }),
     referenceId: varchar('reference_id', { length: 100 }),
-    performedBy: int('performed_by').references(() => staff.id),
+    performedBy: integer('performed_by').references(() => staff.id),
     notes: text('notes'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => ({
     sparePartIdx: index('sm_sp_idx').on(table.sparePartId),
