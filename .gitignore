@@ -1,8 +1,8 @@
 AGENTS.md
 DESIGN.md
 PROMPT.md
+.agents
+.agents/
 /docs
-/.AGENTS
 /.opencode
-/test
 skill-lock.json
