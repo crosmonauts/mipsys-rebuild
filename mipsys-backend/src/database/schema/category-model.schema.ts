@@ -1,14 +1,10 @@
-import {
-  mysqlTable,
-  varchar,
-  int,
-  timestamp,
-} from 'drizzle-orm/mysql-core';
+import { pgTable, varchar, integer, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
-export const categoryModels = mysqlTable('category_models', {
-  id: int('id').primaryKey().autoincrement(),
+export const categoryModels = pgTable('category_models', {
+  id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
   name: varchar('name', { length: 255 }).notNull().unique(),
   description: varchar('description', { length: 500 }),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().$onUpdate(() => sql`now()`),
 });

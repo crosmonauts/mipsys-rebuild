@@ -1,22 +1,21 @@
-import {
-  mysqlTable, varchar, decimal, int, timestamp, date, mysqlEnum, text, index,
-} from 'drizzle-orm/mysql-core';
+import { pgTable, varchar, numeric, integer, timestamp, date, text, index } from 'drizzle-orm/pg-core';
 import { staff } from './service-request.schema';
 import { purchaseOrders } from './purchase-order.schema';
+import { expenseTypeEnum, expenseCategoryEnum } from './enums';
 
-export const expenses = mysqlTable(
+export const expenses = pgTable(
   'expenses',
   {
-    id: int('id').autoincrement().primaryKey(),
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
     expenseNumber: varchar('expense_number', { length: 100 }).unique().notNull(),
-    expenseType: mysqlEnum('expense_type', ['PO', 'OPERATIONAL']).notNull(),
-    poId: int('po_id').references(() => purchaseOrders.id),
+    expenseType: expenseTypeEnum('expense_type').notNull(),
+    poId: integer('po_id').references(() => purchaseOrders.id),
     description: text('description').notNull(),
-    amount: decimal('amount', { precision: 14, scale: 2 }).notNull(),
+    amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
     expenseDate: date('expense_date').notNull(),
-    category: mysqlEnum('category', ['UTILITY', 'RENT', 'SALARY', 'TRANSPORT', 'OTHER']).default('OTHER'),
-    createdBy: int('created_by').references(() => staff.id),
-    createdAt: timestamp('created_at').defaultNow(),
+    category: expenseCategoryEnum('category').default('OTHER'),
+    createdBy: integer('created_by').references(() => staff.id),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
   },
   (table) => ({
     expenseTypeIdx: index('exp_type_idx').on(table.expenseType),
