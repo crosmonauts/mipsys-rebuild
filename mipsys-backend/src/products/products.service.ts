@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, like, or } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
 import { products } from '../database/schema';
@@ -13,13 +13,15 @@ export class ProductsService {
   ) {}
 
   async findAll(search?: string) {
-    let query = this.db.query.products.findMany({ orderBy: [products.modelName] });
-    let rows = await query;
-    if (search) {
-      const s = search.toLowerCase();
-      rows = rows.filter((r) => r.modelName.toLowerCase().includes(s) || r.serialNumber.toLowerCase().includes(s));
-    }
-    return rows;
+    return this.db.query.products.findMany({
+      where: search
+        ? or(
+            like(products.modelName, `%${search}%`),
+            like(products.serialNumber, `%${search}%`),
+          )
+        : undefined,
+      orderBy: [products.modelName],
+    });
   }
 
   async findOne(id: number) {

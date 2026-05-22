@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Patch, Body } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { UpdatePpnRateDto, UpdateInvoicePrefixDto } from './dto/update-settings.dto';
 
@@ -12,13 +12,11 @@ export class SettingsController {
   }
 
   @Patch('ppn-rate')
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async updatePpnRate(@Body() dto: UpdatePpnRateDto) {
     return this.settingsService.updatePpnRate(dto.ppnRate);
   }
 
   @Patch('invoice-prefix')
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async updateInvoicePrefix(@Body() dto: UpdateInvoicePrefixDto) {
     return this.settingsService.updateInvoicePrefix(dto.invoicePrefix);
   }

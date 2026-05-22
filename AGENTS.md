@@ -1,120 +1,58 @@
-# CRITICAL RULES - MUST FOLLOW
+# Mipsys Rebuild
 
-## RESPONSES
+Monorepo with two packages: `mipsys-backend/` (NestJS 11) and `mipsys-frontend-v2/` (Next.js 16 App Router).
 
-- Keep responses concise and to the point - unless the user asks otherwise
+## Quick start
 
-## PLANNING MODE
+```bash
+# backend (port 3001)
+cd mipsys-backend && cp .env.example .env  # edit DB creds
+npm install && npm run dev
 
-- Always ask clarifying questions
-- Never assume design, tech stack or features
-- Use deep-dive sub-agents to assist with research
-- Use deep-dive sub-agents to review the different aspects of your plan before presenting to the user
-
-## CHANGE / EDIT MODE
-
-- Never implement features yourself when possible - use sub-agents!
-- Identify changes from the plan that can be implemented in parallel, and use sub-agents to implement the features efficiently
-- When using sub-agents to implement features, act as a coordinator only
-- Use the best model for the task - premium models for complex tasks (like coding) and mid-tier models for simpler tasks, like documentation
-- After completing features (large or small), always run commands like lint, type check and next build to check code quality
-
-## DATABASE SCHEMA CHANGES
-
-## DATABASE SCHEMA CHANGES
-
-- NEVER execute database mutation commands automatically (e.g., `npm run db:push`, `drizzle-kit push`, `generate`, or `migrate`).
-- The user will handle all database synchronizations manually to ensure data integrity.
-- When you make changes to the database schema (e.g., modifying `schema.ts`), you MUST stop and instruct the user to run `npm run db:push` manually in their terminal.
-- Provide the exact terminal commands (like `npm run db:push` followed by `npm run db:seed` if repopulation is needed) in a clear code block for the user to copy and paste.
-- Wait for the user to confirm that the database push was successful before proceeding to write or modify any dependent Backend or Frontend code.
-
-## TESTING
-
-- Use any testing tools, libraries available to the project for testing your changes
-- Never assume your changes simply work, always test!
-- If the project does not have any testing tools, scripts, MCP tools, skills, etc. available for testing, ask the user whether testing should be skipped.
-
-## UI DESIGN
-
-- Always follow the UI design system when creating or reviewing components or pages.
-- Design System: @DESIGN.md
-
-# MiPSys Rebuild
-
-Monorepo with two packages:
-
-- `mipsys-backend/` — NestJS 11 + Drizzle ORM + MySQL (port 3001)
-- `mipsys-frontend-v2/` — Next.js 16 + React 19 + Tailwind CSS 4 (port 3000)
-
-## Commands
-
-**Backend** (run from `mipsys-backend/`):
-| Command | Purpose |
-|---|---|
-| `npm run start:dev` | Dev server with watch |
-| `npm run build` | Production build (`nest build`) |
-| `npm run test` | Jest unit tests (`*.spec.ts`) |
-| `npm run test:e2e` | E2E tests (`test/*.e2e-spec.ts`) |
-| `npm run lint` | ESLint with `--fix` |
-| `npm run format` | Prettier on `src/` and `test/` |
-| `npm run db:push` | Push Drizzle schema to MySQL |
-| `npm run db:seed` | Seed test data |
-| `npm run db:fresh` | Clean → push → seed |
-| `npm run db:clean` | Drops all tables (uses `mysql` CLI at `D:\xampp\mysql\bin\mysql`) |
-
-**Frontend** (run from `mipsys-frontend-v2/`):
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Dev server |
-| `npm run build` | Production build |
-| `npm run lint` | ESLint |
+# frontend (port 3000, API -> localhost:3001)
+cd mipsys-frontend-v2 && npm install && npm run dev
+```
 
 ## Architecture
 
-### Backend structure
+- **Backend**: NestJS 11 + Drizzle ORM (MySQL) + class-validator. Modules in `src/{module}/` with controller, service, module, dto/ files. Global `ValidationPipe` with `whitelist: true`. Global `StandardHttpExceptionFilter`.
+- **Frontend**: Next.js 16 App Router + React 19 + Tailwind CSS v4 + shadcn/ui (radix-lyra style). Pages under `src/app/{route}/`, feature logic under `src/features/{module}/`, shared UI in `src/components/ui/`. Axios client at `src/lib/api-client.ts`.
+- **State machine** (`sr-state-machine.guard.ts`): Service requests follow `WAITING_CHECK → CHECK → WAITING_APPROVE → SERVICE/DONE` or `→ AWAITING_PARTS → SERVICE/DONE` or `→ CANCEL` from any non-terminal state.
 
-- Global `ValidationPipe` with `whitelist`, `forbidNonWhitelisted`, `transform`.
-- Custom `StandardHttpExceptionFilter` catches all exceptions → standardized JSON.
-- DB: `DatabaseModule` is `@Global()`, provides `'DB_CONNECTION'` (Drizzle `mysql2` pool).
-- **CRITICAL - State Machines:** `sr-state-machine.guard.ts` (service request status transitions) and `po-state-machine.guard.ts` (purchase order). ALL status mutations MUST be validated against these procedural matrices to prevent illegal bypasses.
-- **CRITICAL - Atomic Transactions:** Inventory changes (e.g., saving diagnosis and part picking) MUST use `db.transaction()` with row locking (`.for('update')`) to prevent phantom stock and race conditions.
-- Service request modules follow DDD: `controller → service → drizzle queries`.
-- Drizzle schema in `src/database/schema/`, relations in `relations.ts`.
-- DB name: `db_mipsys`, configured via `.env`.
-- Each module is flat: `module.ts`, `service.ts`, `controller.ts`, `dto/`.
+## Key commands
 
-### Frontend structure
+| Package  | Command            | Purpose                                 |
+| -------- | ------------------ | --------------------------------------- |
+| backend  | `npm run dev`      | Watch mode (nest start --watch)         |
+| backend  | `npm run build`    | nest build                              |
+| backend  | `npm run lint`     | ESLint with prettier plugin, `--fix`    |
+| backend  | `npm run test`     | Jest (`.spec.ts` files)                 |
+| backend  | `npm run test:e2e` | Jest via `test/jest-e2e.json`           |
+| backend  | `npm run db:fresh` | Clean DB → push → seed (schema changes) |
+| frontend | `npm run dev`      | Next dev server                         |
+| frontend | `npm run build`    | Next build (type-check + bundle)        |
+| frontend | `npm run lint`     | ESLint with `eslint-config-next`        |
 
-```
-src/
-  app/           # Next.js App Router pages (layout.tsx, page.tsx, feature routes)
-  features/      # Domain logic per feature (api/, components/, hooks/, services/, schemas/, types/)
-  components/    # Shared UI (layout/, ui/)
-  lib/           # api-client.ts, utils.ts
-```
+## Database schema changes
 
-- Path alias `@/*` maps to repo root (e.g. `@/src/components/...`)
-- API base URL hardcoded to `http://localhost:3001`
-- `adminId` hardcoded to `1` in feature API calls
-- `react-hot-toast` for notifications, configured in root layout
+- **Always** use `npm run db:fresh` (clean → drizzle push → seed)
+- **Never** run `drizzle-kit push` directly (use `db:push` script only as part of `db:fresh`)
+- Schema files in `mipsys-backend/src/database/schema/`
+- `drizzle.config.ts` at backend root, MySQL dialect, `DATABASE_URL` env
 
-### Testing
+## Design system
 
-- Jest config inline in backend `package.json` (not a separate file)
-- Test files co-located: `*.spec.ts` next to source, `*.e2e-spec.ts` in `test/`
-- Frontend has no test script or test files yet
+Dark-first "war room" theme. Full spec in `DESIGN.md`. Key rules:
 
-## Conventions & Gotchas
+- Fonts: IBM Plex Sans (body), Fraunces (display), IBM Plex Mono (code)
+- Colors: oklch throughout. Amber primary, teal accent, violet depth
+- Utility classes in `globals.css`: `.planner-bg`, `.glass-panel`, `.paper-card`, `.blueprint-surface`, `.command-strip`, `.micro-label`
+- Theme tokens bridged via `@theme inline` to Tailwind. Dark mode is class-based, dark default.
+- shadcn components use radix-lyra style, Phosphor icon library
 
-- Backend `.env` is committed (non-standard). Run `db:fresh` after schema changes.
-- Frontend uses `'use client'` extensively (appears to be mostly client components)
-- `db:clean` script has a hardcoded Windows path to XAMPP MySQL — will fail on other environments
-- Frontend README.md has unresolved git merge conflict markers (`<<<<<<< HEAD` / `=======` / `>>>>>>> 1fcc74e`)
-- `mipsys-frontend-v2/AGENTS.md` warns Next.js 16 may have breaking changes — check `node_modules/next/dist/docs/` before writing code
-- Backend uses CommonJS-incompatible `nodenext` module resolution in tsconfig
-- Drizzle config is minimal: `schema: './src/database/schema/index.ts'`, `dialect: 'mysql'`
-- No migrations folder — schema is pushed directly via `drizzle-kit push`
-- Seed file (`src/database/seeds/seed.ts`) creates staff, customers, products, service requests, etc.
-- The inventory module handles spare parts (`spareParts` table) with stock tracking via `stockMovements`
-- `orderParts` service is imported by `ServiceRequestService` and `FinanceService`
+## Conventions
+
+- **Backend**: `noImplicitAny: false` (intentional). Prettier: semi, singleQuote, trailingComma es5, 80 printWidth
+- **Frontend**: `strict: true`. Path alias `@/*` → root. Prettier: singleQuote, trailingComma all
+- **Commits**: conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
+- **Testing**: Jest in backend only (no frontend test framework configured)

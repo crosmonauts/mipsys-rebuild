@@ -9,8 +9,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { CreateInvoiceDto, QueryInvoiceDto } from './dto/create-invoice.dto';
@@ -32,14 +30,12 @@ export class FinanceController {
 
   @Post('invoices')
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async create(@Body() dto: CreateInvoiceDto) {
     return this.financeService.create(dto);
   }
 
   @Post('invoices/:id/pay')
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async recordPayment(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RecordPaymentDto,

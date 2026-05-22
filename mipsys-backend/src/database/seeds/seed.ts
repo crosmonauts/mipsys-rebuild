@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
+import * as bcrypt from 'bcrypt';
 import * as schema from '../schema';
 import 'dotenv/config';
 
@@ -28,6 +29,18 @@ async function runSeeder() {
       { name: 'Teknisi Andi', role: 'TECHNICIAN' },
     ]);
     console.log('  ✔ 3 staff dibuat (1 Admin, 2 Teknisi)');
+
+    // ========================================================================
+    // TAHAP 1B: USERS (Login accounts untuk staff)
+    // ========================================================================
+    console.log('📦 Tahap 1B: Users...');
+    const defaultPassword = await bcrypt.hash('admin123', 10);
+    await db.insert(schema.users).values([
+      { username: 'admin', password: defaultPassword, role: 'ADMIN', staffId: 1 },
+      { username: 'budi', password: defaultPassword, role: 'TECHNICIAN', staffId: 2 },
+      { username: 'andi', password: defaultPassword, role: 'TECHNICIAN', staffId: 3 },
+    ]);
+    console.log('  ✔ 3 users dibuat (admin:admin123 / budi:admin123 / andi:admin123)');
 
     // ========================================================================
     // TAHAP 2: CUSTOMERS (Personal + Corporate)
@@ -728,6 +741,7 @@ async function runSeeder() {
     console.log('   ┌─────────────────────────────┬───────┐');
     console.log('   │ Entity                      │ Count │');
     console.log('   ├─────────────────────────────┼───────┤');
+    console.log('   │ Users                       │     3 │');
     console.log('   │ Staff                       │     3 │');
     console.log('   │ Customers                   │     5 │');
     console.log('   │ Products                    │     8 │');

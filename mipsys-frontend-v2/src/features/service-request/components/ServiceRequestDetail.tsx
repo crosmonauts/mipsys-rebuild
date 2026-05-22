@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useServiceRequest } from '../hooks/useServiceRequest';
 import { DiagnosisModal } from '@/src/components/layout/DiagnosisModal';
 import { ApproveQuoteModal } from '@/src/components/layout/ApproveQuoteModal';
 import { srApi } from '../api/sr-api';
+import { financeApi } from '../../finance/api/finance-api';
 import toast from 'react-hot-toast';
 import {
   User,
@@ -25,6 +27,7 @@ import {
   CheckCircle2,
   Ban,
   RefreshCw,
+  FileDown,
 } from 'lucide-react';
 
 // DoD: Type Safety untuk menghindari error 7006
@@ -52,6 +55,8 @@ const ServiceRequestDetail = () => {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isRetryingStock, setIsRetryingStock] = useState(false);
   const [isDoneProcessing, setIsDoneProcessing] = useState(false);
+  const [hasInvoice, setHasInvoice] = useState(data?.hasInvoice ?? false);
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
 
   const hasSavedQuote =
     data && (parseFloat(data.serviceFee || '0') > 0 || parseFloat(data.partFee || '0') > 0);
@@ -127,18 +132,59 @@ const ServiceRequestDetail = () => {
     if (!ticketNumber) return;
     setIsDoneProcessing(true);
     try {
-      await srApi.diagnose(ticketNumber, {
+      const res = await srApi.diagnose(ticketNumber, {
         newStatus: 'DONE',
         parts: [],
         performedBy: 1,
       });
       toast.success('Service selesai!');
+      if (res.invoice) {
+        setHasInvoice(true);
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>Invoice berhasil dibuat:</span>
+            <Link
+              href={`/finance?search=${res.invoice.invoiceNumber}`}
+              className="underline font-bold"
+            >
+              {res.invoice.invoiceNumber}
+            </Link>
+          </div>,
+          { duration: 5000 }
+        );
+      }
       window.location.reload();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal menyelesaikan service';
       toast.error(message);
     } finally {
       setIsDoneProcessing(false);
+    }
+  }
+
+  async function handleCreateInvoice() {
+    if (!ticketNumber) return;
+    setIsCreatingInvoice(true);
+    try {
+      const result = await financeApi.generateFromSR(ticketNumber);
+      toast.success(
+        <div className="flex items-center gap-2">
+          <span>Invoice berhasil dibuat:</span>
+          <Link
+            href={`/finance?search=${result.invoiceNumber}`}
+            className="underline font-bold"
+          >
+            {result.invoiceNumber}
+          </Link>
+        </div>,
+        { duration: 5000 }
+      );
+      setHasInvoice(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Gagal membuat invoice';
+      toast.error(message);
+    } finally {
+      setIsCreatingInvoice(false);
     }
   }
 
@@ -386,6 +432,31 @@ const ServiceRequestDetail = () => {
                           CEK ULANG STOK
                         </button>
                       </div>
+                    )}
+
+                    {data.statusService === 'DONE' && !hasInvoice && (
+                      <button
+                        onClick={handleCreateInvoice}
+                        disabled={isCreatingInvoice}
+                        className="w-full py-4 bg-emerald-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                      >
+                        {isCreatingInvoice ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <FileDown size={16} />
+                        )}
+                        BUAT INVOICE
+                      </button>
+                    )}
+
+                    {data.statusService === 'DONE' && hasInvoice && (
+                      <Link
+                        href="/finance"
+                        className="w-full py-4 bg-primary text-primary-foreground rounded-full text-xs font-black tracking-widest hover:bg-primary/90 transition-all shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <FileText size={16} />
+                        LIHAT INVOICE
+                      </Link>
                     )}
                   </div>
 

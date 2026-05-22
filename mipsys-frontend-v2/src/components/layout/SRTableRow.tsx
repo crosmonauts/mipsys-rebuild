@@ -81,10 +81,10 @@ function StatusCell({ config }: { config: ReturnType<typeof getStatusConfig> }) 
   );
 }
 
-function DateCell({ incomingDate }: { incomingDate: string }) {
+function DateCell({ incomingDate }: { incomingDate: string | undefined }) {
   return (
     <TableCell className="text-slate-500 text-xs font-bold">
-      {formatServiceDate(incomingDate)}
+      {incomingDate ? formatServiceDate(incomingDate) : '-'}
     </TableCell>
   );
 }

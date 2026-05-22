@@ -3,7 +3,7 @@
 **Gunakan prompt ini pada tahap PLANNING MODE untuk merancang arsitektur sebelum AI menulis satu baris kode pun.**
 
 > **Prompt:**
-> "Saya ingin menambahkan fitur/modul ke dalam proyek Mipsys V2.
+> "Saya ingin menambahkan integrasi dari service request ke finance ke dalam proyek Mipsys.
 >
 > Sebagai Senior Architect, buatkan _Feature Integration Blueprint_ dengan cakupan berikut:
 >

@@ -22,7 +22,7 @@ interface AddStockModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  onStockAction: (id: number, qty: number, type: 'ADD' | 'SUBTRACT') => Promise<void>;
+  onStockAction: (id: number, qty: number, type: 'ADD' | 'SUBTRACT' | 'RESET') => Promise<void>;
 }
 
 export function AddStockModal({
@@ -60,7 +60,7 @@ export function AddStockModal({
 
     try {
       await onStockAction(part.id, values.quantity, values.type);
-      toast.success(values.type === 'ADD' ? 'Stok berhasil ditambahkan' : 'Stok berhasil dikurangi');
+      toast.success(values.type === 'ADD' ? 'Stok berhasil ditambahkan' : values.type === 'RESET' ? 'Stok berhasil direset' : 'Stok berhasil dikurangi');
       onSuccess();
       onClose();
     } catch {
@@ -73,7 +73,8 @@ export function AddStockModal({
   const theme = {
     ADD: { bg: 'bg-primary', text: 'text-primary', border: 'border-primary/30' },
     SUBTRACT: { bg: 'bg-destructive', text: 'text-destructive', border: 'border-destructive/30' },
-  }[currentType];
+    RESET: { bg: 'bg-amber-500', text: 'text-amber-500', border: 'border-amber-500/30' },
+  }[currentType] ?? { bg: 'bg-primary', text: 'text-primary', border: 'border-primary/30' };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

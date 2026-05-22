@@ -45,7 +45,13 @@ export default function RootLayout({
               },
             }}
           />
-          <SidebarProvider>{children}</SidebarProvider>
+          <SidebarProvider>
+            <main className="flex-1 min-h-screen w-full planner-bg">
+              <div className="max-w-[1500px] mx-auto w-full px-4 py-6 md:px-8 md:py-8">
+                {children}
+              </div>
+            </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

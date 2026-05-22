@@ -365,8 +365,7 @@ export default function MasterDataPage() {
   if (!mounted) return null;
 
   return (
-    <main className="planner-bg min-h-screen">
-    <div className="max-w-[1500px] mx-auto px-4 py-8 lg:py-12 space-y-8 animate-in fade-in duration-700 text-left">
+    <div className="space-y-8 animate-in fade-in duration-700 text-left">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div className="space-y-1.5">
           <h1 className="text-3xl font-display font-bold text-foreground tracking-tight uppercase">
@@ -466,6 +465,5 @@ export default function MasterDataPage() {
         </div>
       )}
     </div>
-    </main>
   );
 }

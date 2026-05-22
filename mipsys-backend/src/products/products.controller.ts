@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -17,13 +19,13 @@ export class ProductsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() data: { modelName: string; serialNumber: string }) {
-    return this.service.create(data);
+  async create(@Body() dto: CreateProductDto) {
+    return this.service.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() data: { modelName?: string; serialNumber?: string }) {
-    return this.service.update(id, data);
+  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')

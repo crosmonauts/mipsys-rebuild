@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from './database/database.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ServiceRequestsModule } from './service-requests/service-requests.module';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { FinanceModule } from './finance/finance.module';
@@ -13,7 +17,9 @@ import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     DatabaseModule,
+    AuthModule,
     ServiceRequestsModule,
     PurchaseOrdersModule,
     FinanceModule,
@@ -24,6 +30,12 @@ import { ProductsModule } from './products/products.module';
     CustomersModule,
     StaffModule,
     ProductsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -54,8 +54,8 @@ export default function NewPartOrderPage({
     { id: '1', partName: '', modelName: '', qty: 1, price: 0, isEditing: true },
   ]);
 
-  const sp = searchParams ? React.use(searchParams) : {};
-  const editId = sp?.id ? Number(sp.id) : null;
+  const sp = searchParams ?? {};
+  const editId = sp.id ? Number(sp.id) : null;
   const isEditMode = editId !== null;
 
   useEffect(() => {
@@ -166,8 +166,7 @@ export default function NewPartOrderPage({
   if (!mounted) return null;
 
   return (
-    <main className="planner-bg min-h-screen">
-    <div className="max-w-[1500px] mx-auto px-4 py-8 lg:py-12 space-y-8 animate-in slide-in-from-bottom-4 duration-700 text-left">
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700 text-left">
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
@@ -397,6 +396,5 @@ export default function NewPartOrderPage({
         </div>
       </div>
     </div>
-    </main>
   );
 }

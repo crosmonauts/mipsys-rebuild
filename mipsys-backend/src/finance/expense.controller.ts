@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete, Body, Param, Query,
-  ParseIntPipe, UsePipes, ValidationPipe, HttpCode, HttpStatus,
+  ParseIntPipe, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ExpenseService } from './expense.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/create-expense.dto';
@@ -26,13 +26,11 @@ export class ExpenseController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async create(@Body() dto: CreateExpenseDto) {
     return this.expenseService.create(dto);
   }
 
   @Patch(':id')
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateExpenseDto) {
     return this.expenseService.update(id, dto);
   }

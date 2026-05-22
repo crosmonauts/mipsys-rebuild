@@ -5,10 +5,11 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, like, or, desc, and, sql, gt, lt } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
-import { spareParts, stockMovements, purchaseOrders, poItems, categoryModels } from '../database/schema';
+import { spareParts, stockMovements, categoryModels } from '../database/schema';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CreateSparePartDto } from './dto/create-spare-part.dto';
@@ -24,7 +25,8 @@ export class InventoryService {
 
   constructor(
     @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
-    private stockMovementsService: StockMovementsService
+    private stockMovementsService: StockMovementsService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async getModels(): Promise<string[]> {
@@ -270,44 +272,33 @@ export class InventoryService {
 
       await this.stockMovementsService.updateStock(db, sparePartId, -quantity, 'SERVICE_USE');
 
-      let autoPoTriggered = false;
-      if (newStock < part.minStock) {
-        await this.triggerAutoPo(db, part, newStock);
-        autoPoTriggered = true;
-      }
-
       return {
         success: true,
         softBlock: false,
-        autoPoTriggered,
+        needsAutoPo: part.minStock !== null && newStock < part.minStock,
+        autoPoTriggered: false,
         newStock,
+        sparePartId,
         message: `Stok ${part.partName} dikurangi ${quantity}`,
       };
     };
 
-    if (tx) return exec(tx);
-    return this.db.transaction((db) => exec(db));
-  }
+    const hasEmittedEvent = !tx;
 
-  private async triggerAutoPo(tx: DrizzleTx, part: any, newStock: number) {
-    const reorderQty = part.minStock * 2;
-    const poNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const result = tx
+      ? await exec(tx)
+      : await this.db.transaction((db) => exec(db));
 
-    const [poResult] = await tx.insert(purchaseOrders).values({
-      poNumber,
-      supplierName: 'EPSON',
-      status: 'REQUESTED',
-      requestedBy: 1,
-      notes: `Auto-PO: ${part.partName} stok menipis (${newStock} < ${part.minStock})`,
-      totalAmount: '0.00',
-    });
+    if (result.needsAutoPo) {
+      this.eventEmitter.emit('stock.level-changed', {
+        sparePartId: result.sparePartId,
+        newStock: result.newStock,
+      });
+    }
 
-    await tx.insert(poItems).values({
-      purchaseOrderId: poResult.insertId,
-      sparePartId: part.id,
-      quantity: reorderQty,
-      unitPrice: '0.00',
-      receivedQty: 0,
-    });
+    return {
+      ...result,
+      autoPoTriggered: result.needsAutoPo && hasEmittedEvent,
+    };
   }
 }

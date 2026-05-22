@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InventoryService } from '../src/inventory/inventory.service';
 import { StockMovementsService } from '../src/stock-movements/stock-movements.service';
 import { spareParts, purchaseOrders, poItems } from '../src/database/schema';
@@ -19,6 +20,10 @@ const mockInsert = jest.fn().mockReturnValue({
   values: jest.fn().mockResolvedValue([{ insertId: 100 }]),
 });
 
+const mockEventEmitter = {
+  emit: jest.fn(),
+};
+
 const mockDb = {
   query: {
     spareParts: mockSparePartsQuery,
@@ -36,6 +41,7 @@ describe('InventoryService', () => {
         InventoryService,
         { provide: 'DB_CONNECTION', useValue: mockDb },
         { provide: StockMovementsService, useValue: mockStockMovementsService },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 
@@ -127,7 +133,10 @@ describe('InventoryService', () => {
       expect(result.softBlock).toBe(false);
       expect(result.autoPoTriggered).toBe(true);
       expect(result.newStock).toBe(4);
-      expect(mockInsert).toHaveBeenCalledWith(purchaseOrders);
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('stock.level-changed', {
+        sparePartId: 1,
+        newStock: 4,
+      });
     });
 
     it('should throw BadRequestException when stock is zero', async () => {

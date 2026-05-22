@@ -6,8 +6,6 @@ import {
   Param,
   HttpCode,
   HttpStatus,
-  UsePipes,
-  ValidationPipe,
   Get,
   Query,
 } from '@nestjs/common';
@@ -17,6 +15,7 @@ import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
 import { ApproveQuoteDto } from './dto/approve-quote.dto';
 import { SaveQuoteDto } from './dto/save-quote.dto';
 import { CancelQuoteDto } from './dto/cancel-quote.dto';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('service-request')
 export class ServiceRequestsController {
@@ -54,16 +53,18 @@ export class ServiceRequestsController {
 
   @Post('entry')
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  async create(@Body() createDto: CreateServiceRequestDto) {
-    const adminId = 1;
-
-    return await this.serviceRequestService.createEntry(createDto, adminId);
+  async create(
+    @Body() createDto: CreateServiceRequestDto,
+    @CurrentUser() user: any,
+  ) {
+    return await this.serviceRequestService.createEntry(
+      createDto,
+      user.staffId ?? user.id,
+    );
   }
 
   @Patch(':ticketNumber')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async update(
     @Param('ticketNumber') ticketNumber: string,
     @Body() updateDto: CreateServiceRequestDto
@@ -76,7 +77,6 @@ export class ServiceRequestsController {
 
   @Post(':ticketNumber/diagnose')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async diagnose(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: DiagnoseSrDto
@@ -86,7 +86,6 @@ export class ServiceRequestsController {
 
   @Post(':ticketNumber/save-quote')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async saveQuote(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: SaveQuoteDto
@@ -96,7 +95,6 @@ export class ServiceRequestsController {
 
   @Post(':ticketNumber/cancel-quote')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async cancelQuote(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: CancelQuoteDto
@@ -106,7 +104,6 @@ export class ServiceRequestsController {
 
   @Post(':ticketNumber/retry-awaiting-parts')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async retryAwaitingParts(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: CancelQuoteDto
@@ -116,7 +113,6 @@ export class ServiceRequestsController {
 
   @Post(':ticketNumber/approve-quote')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async approveQuote(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: ApproveQuoteDto

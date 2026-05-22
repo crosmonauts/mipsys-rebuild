@@ -8,12 +8,20 @@ export interface ServiceRequest {
   customerName: string;
   phone: string;
   address: string;
+  customerPhone?: string;
+  customerAddress?: string;
   modelName: string;
   serialNumber: string;
   problemDescription: string;
   serviceType: ServiceType;
   customerType: CustomerType;
   statusService: ServiceStatus;
+  statusSystem?: string;
+  incomingDate?: string;
+  serviceFee?: string;
+  partFee?: string;
+  remarksHistory?: string;
+  parts?: Array<{ partName: string; quantity: number; unitPrice: string }>;
   createdAt: string;
   updatedAt: string;
 }

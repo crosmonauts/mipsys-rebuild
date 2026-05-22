@@ -77,9 +77,10 @@ export default function InventoryPage() {
     setIsRestockOpen(true);
   };
 
-  const handleStockAction = async (id: number, qty: number, type: 'ADD' | 'SUBTRACT') => {
+  const handleStockAction = async (id: number, qty: number, type: 'ADD' | 'SUBTRACT' | 'RESET') => {
     if (type === 'ADD') await partsApi.addStock(id, qty);
     else if (type === 'SUBTRACT') await partsApi.reduceStock(id, qty);
+    else if (type === 'RESET') await partsApi.reduceStock(id, qty);
   };
 
   return (

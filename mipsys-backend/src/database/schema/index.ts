@@ -10,3 +10,4 @@ export * from './category-model.schema';
 export * from './payment-history.schema';
 export * from './expense.schema';
 export * from './finance-setting.schema';
+export * from './users.schema';

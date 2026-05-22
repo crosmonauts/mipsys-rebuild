@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { CustomersService } from './customers.service';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -17,13 +19,13 @@ export class CustomersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() data: { name: string; phone?: string; address?: string; customerType?: string }) {
-    return this.service.create(data);
+  async create(@Body() dto: CreateCustomerDto) {
+    return this.service.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() data: { name?: string; phone?: string; address?: string; customerType?: string }) {
-    return this.service.update(id, data);
+  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCustomerDto) {
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')

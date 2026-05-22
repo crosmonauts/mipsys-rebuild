@@ -90,6 +90,7 @@ export function DiagnosisModal({
   }
 
   async function fetchExistingParts() {
+    if (!serviceRequestId) return;
     try {
       const data = await orderPartsApi.getBySR(serviceRequestId);
       setExistingParts(Array.isArray(data) ? data : []);

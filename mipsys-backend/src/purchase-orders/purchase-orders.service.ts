@@ -6,16 +6,15 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
 import {
   purchaseOrders,
   poItems,
   spareParts,
-  serviceRequests,
-  orderParts,
-  serviceLogs,
+  financeSettings,
 } from '../database/schema';
 import { CreatePoHeaderDto, CreatePoItemDto } from './dto/create-po-header.dto';
 import { ReceivePoDto } from './dto/receive-po.dto';
@@ -34,7 +33,8 @@ export class PurchaseOrdersService {
   constructor(
     @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
     private stockMovementsService: StockMovementsService,
-    private poItemsService: PoItemsService
+    private poItemsService: PoItemsService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   validateTransition(current: PoStatusType, next: PoStatusType) {
@@ -125,7 +125,7 @@ export class PurchaseOrdersService {
         throw new BadRequestException('PO harus memiliki minimal 1 item');
       }
 
-      const poNumber = this.generatePoNumber();
+      const poNumber = await this.generatePoNumber();
       let totalAmount = 0;
 
       for (const item of dto.items) {
@@ -200,7 +200,9 @@ export class PurchaseOrdersService {
   }
 
   async receivePO(id: number, dto: ReceivePoDto) {
-    return this.db.transaction(async (tx) => {
+    let receivedSparePartIds: number[] = [];
+
+    const result = await this.db.transaction(async (tx) => {
       const po = await tx.query.purchaseOrders.findFirst({
         where: eq(purchaseOrders.id, id),
       });
@@ -297,6 +299,8 @@ export class PurchaseOrdersService {
         if (cumulativeReceived < poItem.quantity) {
           allFullyReceived = false;
         }
+
+        receivedSparePartIds.push(sparePartId);
       }
 
       const finalStatus = allFullyReceived ? 'RECEIVED' : 'PARTIALLY_RECEIVED';
@@ -310,108 +314,39 @@ export class PurchaseOrdersService {
         })
         .where(eq(purchaseOrders.id, id));
 
-      // --- SR Transition Hook: Check if any SR in AWAITING_PARTS can now proceed ---
-      const receivedSparePartIds = dto.items
-        .map((item) => {
-          const poItem = items.find((i) => i.id === item.poItemId);
-          return poItem?.sparePartId;
-        })
-        .filter((id): id is number => id != null);
-
-      if (receivedSparePartIds.length > 0) {
-        const awaitingSrs = await tx.query.serviceRequests.findMany({
-          where: eq(serviceRequests.statusService, 'AWAITING_PARTS'),
-          columns: { id: true, ticketNumber: true },
-        });
-
-        for (const sr of awaitingSrs) {
-          const srParts = await tx.query.orderParts.findMany({
-            where: and(
-              eq(orderParts.serviceRequestId, sr.id),
-              eq(orderParts.status, 'OUT_OF_STOCK'),
-              inArray(orderParts.sparePartId, receivedSparePartIds),
-            ),
-          });
-
-          if (srParts.length === 0) continue;
-
-          const allOutOfStockParts = await tx.query.orderParts.findMany({
-            where: and(
-              eq(orderParts.serviceRequestId, sr.id),
-              eq(orderParts.status, 'OUT_OF_STOCK'),
-            ),
-          });
-
-          let canTransition = true;
-          for (const op of allOutOfStockParts) {
-            const sp = await tx.query.spareParts.findFirst({
-              where: eq(spareParts.id, op.sparePartId!),
-              columns: { id: true, stock: true, partName: true },
-            });
-            if (!sp || sp.stock < op.quantity) {
-              canTransition = false;
-              break;
-            }
-          }
-
-          if (canTransition) {
-            for (const op of allOutOfStockParts) {
-              const sp = await tx.query.spareParts.findFirst({
-                where: eq(spareParts.id, op.sparePartId!),
-                columns: { id: true, stock: true },
-              });
-              if (sp) {
-                await this.stockMovementsService.createMovement(
-                  {
-                    sparePartId: sp.id,
-                    quantity: -op.quantity,
-                    movementType: 'SERVICE_USE',
-                    referenceType: 'SR_TICKET',
-                    referenceId: sr.ticketNumber!,
-                    performedBy: dto.performedBy,
-                  },
-                  tx,
-                );
-
-                await this.stockMovementsService.updateStock(
-                  tx,
-                  sp.id,
-                  -op.quantity,
-                  'SERVICE_USE',
-                );
-              }
-
-              await tx
-                .update(orderParts)
-                .set({ status: 'IN_STOCK' })
-                .where(eq(orderParts.id, op.id));
-            }
-
-            await tx
-              .update(serviceRequests)
-              .set({
-                statusService: 'SERVICE',
-                spDate: new Date(),
-              })
-              .where(eq(serviceRequests.id, sr.id));
-
-            await tx.insert(serviceLogs).values({
-              serviceRequestId: sr.id,
-              action: 'SR_AUTO_TRANSITION',
-              description: `Stok tersedia setelah PO diterima. ${allOutOfStockParts.length} part dipotong dari stok. Status → SERVICE`,
-              performedBy: dto.performedBy ?? null,
-            });
-          }
-        }
-      }
-
       return { success: true, status: finalStatus, message: `PO #${id} → ${finalStatus}` };
     });
+
+    if (receivedSparePartIds.length > 0) {
+      this.eventEmitter.emit('purchase-order.received', {
+        receivedSparePartIds,
+        performedBy: dto.performedBy,
+      });
+    }
+
+    return result;
   }
 
-  private generatePoNumber(): string {
+  private async generatePoNumber(): Promise<string> {
+    const prefix = 'PO';
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const random = String(Math.floor(Math.random() * 9000) + 1000);
-    return `PO-${dateStr}-${random}`;
+    const counterKey = `po_counter_${dateStr}`;
+
+    await this.db
+      .insert(financeSettings)
+      .values({ key: counterKey, value: '0', description: `PO counter for ${dateStr}` })
+      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+
+    await this.db
+      .update(financeSettings)
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .where(eq(financeSettings.key, counterKey) as any);
+
+    const updated = await this.db.query.financeSettings.findFirst({
+      where: eq(financeSettings.key, counterKey) as any,
+    });
+    const counter = updated ? parseInt(updated.value, 10) : 1;
+
+    return `${prefix}-${dateStr}-${String(counter).padStart(4, '0')}`;
   }
 }

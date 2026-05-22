@@ -37,6 +37,16 @@ export const srApi = {
     api
       .get(`/spare-parts/search`, { params: { q: query } })
       .then((r) => r.data),
+
+  prosesKasir: async (ticketNumber: string, data: { serviceFee: number; partFee: number }) => {
+    const invoice = await api.post(`/finance/invoices/from-sr/${ticketNumber}`).then((r) => r.data);
+    await api.post(`/finance/invoices/${invoice.id}/pay`, {
+      amount: data.serviceFee + data.partFee,
+      paymentMethod: 'CASH',
+      paidAt: new Date().toISOString(),
+    });
+    return invoice;
+  },
 };
 
 export default api;

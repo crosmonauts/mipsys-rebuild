@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsNumber, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export enum InvoiceStatus {
   PAID = 'PAID',
@@ -45,9 +45,11 @@ export class CreateInvoiceDto {
 export class QueryInvoiceDto {
   @IsOptional()
   @IsString()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   search?: string;
 
   @IsOptional()
   @IsEnum(InvoiceStatus)
+  @Transform(({ value }) => (value === '' ? undefined : value))
   status?: InvoiceStatus;
 }

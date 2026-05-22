@@ -4,11 +4,12 @@ import { StockMovementsModule } from '../stock-movements/stock-movements.module'
 import { InventoryController } from './inventory.controller';
 import { SparePartsController } from './spare-parts.controller';
 import { InventoryService } from './inventory.service';
+import { InventoryListener } from './listeners/inventory.listener';
 
 @Module({
   imports: [DatabaseModule, StockMovementsModule],
   controllers: [InventoryController, SparePartsController],
-  providers: [InventoryService],
+  providers: [InventoryService, InventoryListener],
   exports: [InventoryService],
 })
 export class InventoryModule {}

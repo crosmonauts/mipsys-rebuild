@@ -11,6 +11,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CategoryModelsService } from './category-models.service';
+import { CreateCategoryModelDto } from './dto/create-category-model.dto';
+import { UpdateCategoryModelDto } from './dto/update-category-model.dto';
 
 @Controller('category-models')
 export class CategoryModelsController {
@@ -28,17 +30,16 @@ export class CategoryModelsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body('name') name: string, @Body('description') description?: string) {
-    return this.service.create(name, description);
+  async create(@Body() dto: CreateCategoryModelDto) {
+    return this.service.create(dto.name, dto.description);
   }
 
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body('name') name: string,
-    @Body('description') description?: string
+    @Body() dto: UpdateCategoryModelDto
   ) {
-    return this.service.update(id, name, description);
+    return this.service.update(id, dto.name!, dto.description);
   }
 
   @Delete(':id')

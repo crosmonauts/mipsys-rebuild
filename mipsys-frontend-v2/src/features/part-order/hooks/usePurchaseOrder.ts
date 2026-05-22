@@ -11,7 +11,7 @@ export const usePurchaseOrders = () => {
     try {
       setIsLoading(true);
       const result = await poApi.getAll();
-      setData(Array.isArray(result) ? result : result.data || []);
+      setData(Array.isArray(result) ? result : []);
     } catch {
       toast.error('Gagal memuat data purchase orders');
     } finally {

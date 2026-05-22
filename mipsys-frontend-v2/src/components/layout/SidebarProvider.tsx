@@ -8,7 +8,14 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen planner-bg text-foreground overflow-x-hidden">
+    <div className="flex min-h-screen w-full">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       <button
         className="md:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-sidebar-bg text-sidebar-foreground shadow-lg border border-white/5"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -22,9 +29,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         onClose={() => setIsSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col w-full min-w-0">
-        <main className="flex-1 overflow-x-hidden">{children}</main>
-      </div>
+      {children}
     </div>
   );
 }

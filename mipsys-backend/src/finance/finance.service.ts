@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, like, or } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from '../database/schema';
 import {
@@ -13,6 +13,7 @@ import {
   serviceRequests,
   paymentHistories,
   financeSettings,
+  customers,
 } from '../database/schema';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { RecordPaymentDto } from './dto/record-payment.dto';
@@ -28,25 +29,27 @@ export class FinanceService {
   ) {}
 
   async findAll(search?: string, status?: string) {
-    const results = await this.db.query.invoices.findMany({
-      orderBy: [desc(invoices.invoiceDate)],
-    });
+    const conditions: any[] = [];
 
-    let filtered: any[] = results;
     if (status) {
-      filtered = filtered.filter((i) => i.status === status);
+      conditions.push(eq(invoices.status, status as any));
     }
     if (search) {
-      const pattern = search.toLowerCase();
-      filtered = filtered.filter(
-        (i) =>
-          i.invoiceNumber?.toLowerCase().includes(pattern) ||
-          i.clientName?.toLowerCase().includes(pattern) ||
-          i.ticketNumber?.toLowerCase().includes(pattern),
+      conditions.push(
+        or(
+          like(invoices.invoiceNumber, `%${search}%`),
+          like(invoices.clientName, `%${search}%`),
+          like(invoices.ticketNumber, `%${search}%`),
+        ),
       );
     }
 
-    return filtered;
+    const results = await this.db.query.invoices.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: [desc(invoices.invoiceDate)],
+    });
+
+    return results;
   }
 
   async findOne(id: number) {
@@ -172,56 +175,71 @@ export class FinanceService {
     };
   }
 
-  async generateFromServiceRequest(ticketNumber: string) {
-    const sr = await this.db.query.serviceRequests.findFirst({
-      where: eq(serviceRequests.ticketNumber, ticketNumber) as any,
-    });
-    if (!sr) throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+   async generateFromServiceRequest(ticketNumber: string) {
+     const result = await this.db
+       .select({
+         id: serviceRequests.id,
+         ticketNumber: serviceRequests.ticketNumber,
+         customerName: customers.name,
+         serviceFee: serviceRequests.serviceFee,
+         partFee: serviceRequests.partFee,
+         shippingFee: serviceRequests.shippingFee,
+       })
+       .from(serviceRequests)
+       .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
+       .where(eq(serviceRequests.ticketNumber, ticketNumber))
+       .limit(1);
 
-    const existing = await this.db.query.invoices.findFirst({
-      where: eq(invoices.ticketNumber, ticketNumber) as any,
-    });
-    if (existing) throw new BadRequestException(`Invoice untuk tiket ${ticketNumber} sudah ada.`);
+     if (!result.length) {
+       throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+     }
 
-    const partsCost = await this.orderPartsService.getTotalPartsCost(sr.id);
-    const serviceFee = parseFloat(sr.serviceFee || '0');
-    const shippingFee = parseFloat(sr.shippingFee || '0');
-    const ppnRate = await this.getPpnRate();
+     const sr = result[0];
 
-    const subtotal = serviceFee + shippingFee + partsCost;
-    const ppn = subtotal * (ppnRate / 100);
-    const total = subtotal + ppn;
+     const existing = await this.db.query.invoices.findFirst({
+       where: eq(invoices.ticketNumber, ticketNumber) as any,
+     });
+     if (existing) throw new BadRequestException(`Invoice untuk tiket ${ticketNumber} sudah ada.`);
 
-    const invoiceNumber = await this.generateInvoiceNumber();
+     const partsCost = await this.orderPartsService.getTotalPartsCost(sr.id);
+     const serviceFee = parseFloat(sr.serviceFee || '0');
+     const shippingFee = parseFloat(sr.shippingFee || '0');
+     const ppnRate = await this.getPpnRate();
 
-    const [result] = await this.db.insert(invoices).values({
-      invoiceNumber,
-      ticketNumber,
-      serviceRequestId: sr.id,
-      clientName: 'Customer',
-      serviceFee: serviceFee.toString(),
-      partFee: partsCost.toString(),
-      shippingFee: shippingFee.toString(),
-      ppn: ppn.toFixed(2),
-      ppnRate: ppnRate.toString(),
-      total: total.toFixed(2),
-      status: 'UNPAID',
-      invoiceDate: new Date(),
-    });
+     const subtotal = serviceFee + shippingFee + partsCost;
+     const ppn = subtotal * (ppnRate / 100);
+     const total = subtotal + ppn;
 
-    return {
-      success: true,
-      id: result.insertId,
-      invoiceNumber,
-      breakdown: {
-        serviceFee,
-        partsCost,
-        shippingFee,
-        ppn,
-        total,
-      },
-    };
-  }
+     const invoiceNumber = await this.generateInvoiceNumber();
+
+     const [invoiceResult] = await this.db.insert(invoices).values({
+       invoiceNumber,
+       ticketNumber,
+       serviceRequestId: sr.id,
+       clientName: sr.customerName || 'Customer',
+       serviceFee: serviceFee.toString(),
+       partFee: partsCost.toString(),
+       shippingFee: shippingFee.toString(),
+       ppn: ppn.toFixed(2),
+       ppnRate: ppnRate.toString(),
+       total: total.toFixed(2),
+       status: 'UNPAID',
+       invoiceDate: new Date(),
+     });
+
+     return {
+       success: true,
+       id: invoiceResult.insertId,
+       invoiceNumber,
+       breakdown: {
+         serviceFee,
+         partsCost,
+         shippingFee,
+         ppn,
+         total,
+       },
+     };
+   }
 
   private async getPpnRate(): Promise<number> {
     const setting = await this.db.query.financeSettings.findFirst({
