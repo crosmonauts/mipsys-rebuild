@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/src/lib/auth-context';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -12,7 +13,7 @@ import {
   Printer,
   LogOut,
   X,
-  ShoppingBag, // <-- Import icon baru untuk Part Order
+  ShoppingBag,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -23,6 +24,8 @@ export function Sidebar({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
 
   const menuItems = [
     { title: 'Dashboard', icon: <LayoutDashboard size={20} />, link: '/' },
@@ -153,7 +156,14 @@ export function Sidebar({
                 Administrator
               </p>
             </div>
-            <button className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted" aria-label="Logout">
+            <button
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+              className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted"
+              aria-label="Logout"
+            >
               <LogOut size={16} />
             </button>
           </div>
