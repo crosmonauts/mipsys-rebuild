@@ -257,11 +257,11 @@ export class FinanceService {
     await this.db
       .insert(financeSettings)
       .values({ key: counterKey, value: '0', description: `Invoice counter for ${period}` })
-      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+      .onConflictDoUpdate({ target: financeSettings.key, set: { value: sql`EXCLUDED.value` } });
 
     await this.db
       .update(financeSettings)
-      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)` })
       .where(eq(financeSettings.key, counterKey) as any);
 
     const updated = await this.db.query.financeSettings.findFirst({
