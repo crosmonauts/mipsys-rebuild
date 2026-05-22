@@ -5,8 +5,11 @@ Monorepo with two packages: `mipsys-backend/` (NestJS 11) and `mipsys-frontend-v
 ## Quick start
 
 ```bash
+# database
+docker compose -f docker/docker-compose.yml up -d
+
 # backend (port 3001)
-cd mipsys-backend && cp .env.example .env  # edit DB creds
+cd mipsys-backend && cp .env.example .env
 npm install && npm run dev
 
 # frontend (port 3000, API -> localhost:3001)
