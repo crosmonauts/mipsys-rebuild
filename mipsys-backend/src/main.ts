@@ -1,21 +1,23 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common'; 
+import { StandardHttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // 2. Aktifkan X-Ray Global disini
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, 
+      whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true, 
+      transform: true,
     }),
   );
 
-  app.enableCors();
-  await app.listen(3001);
+  app.useGlobalFilters(new StandardHttpExceptionFilter());
 
+  app.enableCors();
+  await app.listen(process.env.PORT ?? 3001);
 }
+
 bootstrap();

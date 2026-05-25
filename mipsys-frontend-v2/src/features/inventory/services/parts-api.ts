@@ -1,24 +1,24 @@
-import axios from 'axios';
-import { SparePart, PartFilterParams } from '../types';
-
-const api = axios.create({
-  baseURL: 'http://localhost:3001',
-  headers: { 'Content-Type': 'application/json' },
-});
+import { apiClient } from '@/src/lib/api-client';
+import { PartFilterParams } from '../types';
 
 export const partsApi = {
-  // 1. Ambil semua master sparepart dengan filter search & pagination
   getAllParts: async (params: PartFilterParams): Promise<any> => {
-    const response = await api.get('/spare-parts', { params });
-    // Mengembalikan seluruh objek response agar metadata pagination (.meta) terbaca
+    const response = await apiClient.get('/spare-parts', { params });
     return response.data;
   },
 
-  // 2. Tambah/Restock stok suku cadang master
   addStock: async (id: number, quantity: number) => {
-    const response = await api.patch(`/spare-parts/${id}/add-stock`, {
+    const response = await apiClient.patch(`/spare-parts/${id}/add-stock`, {
       quantity,
     });
     return response.data;
   },
+
+  reduceStock: async (id: number, quantity: number) => {
+    const response = await apiClient.patch(`/spare-parts/${id}/reduce-stock`, {
+      quantity,
+    });
+    return response.data;
+  },
+
 };

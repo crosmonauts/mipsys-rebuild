@@ -1,50 +1,32 @@
-export interface OrderPart {
-  id?: number;
-  sparePartId?: number | null;
-  refNo: string;
-  partName: string;
-  quantity: number;
-  unitPrice: number;
-  partCode?: string;
-  modelName?: string;
-  block?: string;
-  ipStatus?: 'IP' | 'Non IP';
-}
+export type ServiceStatus = 'PENDING' | 'PROSES' | 'SELESAI' | 'BATAL' | 'AWAITING_PARTS';
+export type CustomerType = 'PERSONAL' | 'CORPORATE' | 'CONTRACT';
+export type ServiceType = 'WARRANTY' | 'NON_WARRANTY';
 
 export interface ServiceRequest {
-  id: number;
+  id: string;
   ticketNumber: string;
   customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  serviceType: 'WARRANTY' | 'NON_WARRANTY';
+  phone: string;
+  address: string;
+  customerPhone?: string;
+  customerAddress?: string;
   modelName: string;
   serialNumber: string;
-  statusService:
-    | 'WAITING CHECK'
-    | 'PENDING APPROVAL'
-    | 'PENDING PART'
-    | 'SERVICE'
-    | 'DONE'
-    | 'CANCEL';
-  statusSystem: 'OPEN' | 'CLOSED';
   problemDescription: string;
-  remarksHistory: string;
-  partFee: number;
-  serviceFee: number;
-  technicianCheckId: number | null;
-  orderParts?: any[];
-  parts?: OrderPart[];
-
-  incomingDate: string;
+  serviceType: ServiceType;
+  customerType: CustomerType;
+  statusService: ServiceStatus;
+  statusSystem?: string;
+  incomingDate?: string;
+  serviceFee?: string;
+  partFee?: string;
+  remarksHistory?: string;
+  parts?: Array<{ partName: string; quantity: number; unitPrice: string }>;
   createdAt: string;
+  updatedAt: string;
 }
 
-export interface UpdateDiagnosisPayload {
-  ticketNumber: string;
-  technicianCheckId: number;
-  remarksHistory: string;
-  statusService: string;
-  serviceFee: number;
-  parts: OrderPart[];
-}
+// Untuk keperluan update (Partial agar tidak wajib semua field)
+export type UpdateSRPayload = Partial<
+  Omit<ServiceRequest, 'id' | 'ticketNumber' | 'createdAt'>
+>;

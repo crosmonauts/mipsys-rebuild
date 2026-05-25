@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -19,23 +19,30 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:push": "npx drizzle-kit push",
-    "db:seed": "npx ts-node src/scripts/seed-excel.ts && npx ts-node src/scripts/spare-parts.service.ts",
-    "db:clean": "D:\\xampp\\mysql\\bin\\mysql -u root db_mipsys -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS service_requests, customers, customer_phones, products, staff, hardware_checks, order_parts, spare_parts, service_logs, attachments, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\"",
+    "db:seed": "npx ts-node src/database/seeds/seed.ts",
+    "db:clean": "C:\\xampp\\mysql\\bin\\mysql -u root db_mipsys -e \"SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS purchase_orders, po_items, stock_movements, invoices, service_requests, customers, customer_phones, products, users, staff, hardware_checks, order_parts, spare_parts, service_logs, attachments, __drizzle_migrations; SET FOREIGN_KEY_CHECKS = 1;\"",
     "db:fresh": "npm run db:clean && npm run db:push && npm run db:seed"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.1.0",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "^2.1.1",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "axios": "^1.15.0",
+    "bcrypt": "^6.0.0",
     "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.4.1",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "mysql2": "^3.22.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -47,10 +54,12 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.1.0",
     "@types/node": "^22.19.17",
+    "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^6.0.2",
     "drizzle-kit": "^0.31.10",
@@ -75,15 +84,15 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "src/**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "./coverage",
     "testEnvironment": "node"
   }
 }

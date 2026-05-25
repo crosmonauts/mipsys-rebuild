@@ -7,6 +7,7 @@ import {
   IsInt,
   IsNumber,
   Min,
+  Matches,
 } from 'class-validator';
 
 export enum ServiceType {
@@ -15,32 +16,28 @@ export enum ServiceType {
 }
 
 export class CreateServiceRequestDto {
-  // --- Target: Tabel Customers ---
+  // --- Customer ---
   @IsString()
   @IsNotEmpty({ message: 'Nama pelanggan wajib diisi' })
   @MaxLength(255)
-  customerName!: string; // Gunakan ! karena @IsNotEmpty
+  customerName!: string;
 
   @IsString()
   @IsOptional()
   address?: string;
-
-  @IsInt({ message: 'Admin ID harus berupa angka' })
-  @IsNotEmpty({ message: 'Admin ID wajib disertakan' })
-  adminId!: number;
 
   @IsString()
   @IsOptional()
   @MaxLength(50)
   customerType?: string;
 
-  // --- Target: Tabel Customer Phones ---
   @IsString()
   @IsNotEmpty({ message: 'Nomor telepon wajib diisi' })
   @MaxLength(50)
-  phone!: string;
+  @Matches(/^[0-9+\-() ]+$/, { message: 'Format nomor telepon tidak valid' })
+  phone?: string;
 
-  // --- Target: Tabel Products ---
+  // --- Product ---
   @IsString()
   @IsNotEmpty({ message: 'Model barang wajib diisi' })
   @MaxLength(100)
@@ -51,7 +48,7 @@ export class CreateServiceRequestDto {
   @MaxLength(100)
   serialNumber!: string;
 
-  // --- Target: Tabel Service Requests ---
+  // --- Service Request ---
   @IsNotEmpty()
   @IsIn(Object.values(ServiceType), {
     message: 'Tipe servis harus WARRANTY atau NON_WARRANTY',
@@ -62,8 +59,7 @@ export class CreateServiceRequestDto {
   @IsOptional()
   problemDescription?: string;
 
-  @IsNumber({}, { message: 'Biaya servis harus berupa angka' })
-  @Min(0, { message: 'Biaya servis tidak boleh negatif' })
-  @IsOptional() // Tambahkan ini jika biaya servis boleh kosong di awal
-  serviceFee?: number;
+  @IsInt({ message: 'Admin ID harus berupa angka' })
+  @IsNotEmpty({ message: 'Admin ID wajib disertakan' })
+  adminId!: number;
 }

@@ -1,71 +1,122 @@
 import {
   Controller,
   Post,
-  Body,
-  Get,
-  Param,
   Patch,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+  Get,
   Query,
-  ParseIntPipe,
-  DefaultValuePipe,
 } from '@nestjs/common';
 import { ServiceRequestService } from './service-requests.service';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
-import { UpdateTechRequestDto } from './dto/update-tech-request.dto';
-import { InputBiayaDto } from './dto/input-biaya.dto';
+import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
+import { ApproveQuoteDto } from './dto/approve-quote.dto';
+import { SaveQuoteDto } from './dto/save-quote.dto';
+import { CancelQuoteDto } from './dto/cancel-quote.dto';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('service-request')
 export class ServiceRequestsController {
-  constructor(private readonly srService: ServiceRequestService) {}
+  constructor(private readonly serviceRequestService: ServiceRequestService) {}
 
-  // 1. DASHBOARD UTAMA (TABEL & PAGINASI)
   @Get('dashboard')
-  async getDashboard(
-    @Query('search', new DefaultValuePipe('')) search: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
+  async findAll(
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
   ) {
-    return await this.srService.getAllDashboard(search, page, limit);
+    return await this.serviceRequestService.findAll({
+      search,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 10,
+      status,
+    });
   }
 
-  // 2. STATISTIK COUNTER (PENTING: Harus di atas :ticketNumber)
-  // Endpoint: GET /service-request/stats
-  @Get('stats')
-  async getStats() {
-    return await this.srService.getDashboardStats();
-  }
-
-  // 3. LOG AKTIVITAS TERKINI
-  // Endpoint: GET /service-request/activities
   @Get('activities')
   async getActivities() {
-    return await this.srService.getLatestActivities();
+    return await this.serviceRequestService.getActivities();
   }
 
-  // 4. DATA MASTER TEKNISI
-  @Get('technicians')
-  async getTechnicians() {
-    return await this.srService.findAllTechnicians();
+  @Get('stats')
+  async getStats() {
+    return await this.serviceRequestService.getDashboardStats();
   }
 
-  // 5. DETAIL TIKET (Diletakkan di bawah agar rute statis tidak ter-intercept)
-  @Get(':ticketNumber')
-  async getDetail(@Param('ticketNumber') ticketNumber: string) {
-    return await this.srService.getDetailByTicketNumber(ticketNumber);
+  @Get(':id')
+  async getDetail(@Param('id') id: string) {
+    return await this.serviceRequestService.findOne(id);
   }
 
-  // 6. ENTRY UNIT BARU
   @Post('entry')
-  async create(@Body() createDto: CreateServiceRequestDto) {
-    return await this.srService.createEntry(createDto, createDto.adminId);
+  @HttpCode(HttpStatus.CREATED)
+  async create(
+    @Body() createDto: CreateServiceRequestDto,
+    @CurrentUser() user: any,
+  ) {
+    return await this.serviceRequestService.createEntry(
+      createDto,
+      user.staffId ?? user.id,
+    );
   }
 
-  // 7. DIAGNOSA TEKNISI (PATCH)
-  @Patch(':id/diagnosis')
-  async updateTechnician(
-    @Param('id') id: string, // Menggunakan Ticket Number
-    @Body() updateTechDto: UpdateTechRequestDto
+  @Patch(':ticketNumber')
+  @HttpCode(HttpStatus.OK)
+  async update(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() updateDto: CreateServiceRequestDto
   ) {
-    return await this.srService.updateTechDiagnosis(id, updateTechDto);
+    return await this.serviceRequestService.updateEntry(
+      ticketNumber,
+      updateDto
+    );
+  }
+
+  @Post(':ticketNumber/diagnose')
+  @HttpCode(HttpStatus.OK)
+  async diagnose(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: DiagnoseSrDto
+  ) {
+    return this.serviceRequestService.diagnose(ticketNumber, dto);
+  }
+
+  @Post(':ticketNumber/save-quote')
+  @HttpCode(HttpStatus.OK)
+  async saveQuote(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: SaveQuoteDto
+  ) {
+    return this.serviceRequestService.saveQuote(ticketNumber, dto);
+  }
+
+  @Post(':ticketNumber/cancel-quote')
+  @HttpCode(HttpStatus.OK)
+  async cancelQuote(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: CancelQuoteDto
+  ) {
+    return this.serviceRequestService.cancelQuote(ticketNumber, dto);
+  }
+
+  @Post(':ticketNumber/retry-awaiting-parts')
+  @HttpCode(HttpStatus.OK)
+  async retryAwaitingParts(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: CancelQuoteDto
+  ) {
+    return this.serviceRequestService.retryAwaitingParts(ticketNumber, dto);
+  }
+
+  @Post(':ticketNumber/approve-quote')
+  @HttpCode(HttpStatus.OK)
+  async approveQuote(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: ApproveQuoteDto
+  ) {
+    return this.serviceRequestService.approveQuote(ticketNumber, dto);
   }
 }
