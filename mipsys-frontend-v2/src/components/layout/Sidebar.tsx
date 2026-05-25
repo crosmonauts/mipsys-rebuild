@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/src/lib/auth-context';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -23,6 +24,8 @@ export function Sidebar({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
   const menuItems = [
     { title: 'Dashboard', icon: <LayoutDashboard size={20} />, link: '/' },
@@ -70,7 +73,7 @@ export function Sidebar({
         className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-sidebar-bg text-sidebar-foreground flex flex-col 
         transform transition-transform duration-300 ease-in-out border-r border-white/5
-        md:relative md:translate-x-0 
+        md:sticky md:top-0 md:h-dvh md:shrink-0 md:translate-x-0 
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
       >
@@ -96,7 +99,7 @@ export function Sidebar({
 
         {/* Navigation Section */}
         <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
-          <p className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-muted mb-4">
+          <p className="px-3 text-[10px] font-black uppercase tracking-widest text-sidebar-muted mb-4">
             Modul Sistem
           </p>
           {menuItems.map((item) => {
@@ -143,17 +146,21 @@ export function Sidebar({
         <div className="p-4 bg-black/20">
           <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5">
             <div className="h-8 w-8 rounded-full bg-sidebar-active flex items-center justify-center font-bold text-xs text-sidebar-bg">
-              N
+              {(user?.username ?? 'U')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-sidebar-foreground truncate uppercase">
-                Nanda Pratama
+                {user?.username ?? 'User'}
               </p>
               <p className="text-[9px] font-black text-sidebar-muted uppercase tracking-tighter">
-                Administrator
+                {user?.role ?? '-'}
               </p>
             </div>
-            <button className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted" aria-label="Logout">
+            <button
+              onClick={() => { logout(); router.push('/login'); }}
+              className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted"
+              aria-label="Logout"
+            >
               <LogOut size={16} />
             </button>
           </div>

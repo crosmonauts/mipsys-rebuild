@@ -1,5 +1,6 @@
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Activity } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
 
 interface UnitSpecsProps {
   modelName: string;
@@ -32,9 +33,7 @@ export function UnitSpecs({
         serialNumber={serialNumber}
       />
 
-      {isEditing && (
-        <SaveButton onClick={onSave} isSaving={isSaving} />
-      )}
+      {isEditing && <SaveButton onClick={onSave} isSaving={isSaving} />}
 
       <FooterBadge />
     </aside>
@@ -78,7 +77,7 @@ function StatusDisplay({ statusService }: { statusService: string }) {
       </p>
       <div className="flex items-center gap-5">
         <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-          <ShieldCheck size={28} strokeWidth={2} />
+          <ShieldCheck size={28} strokeWidth={2} aria-hidden="true" />
         </div>
         <div>
           <p className="micro-label text-muted-foreground mb-1">
@@ -140,28 +139,23 @@ function SaveButton({
   isSaving: boolean;
 }) {
   return (
-    <button
+    <Button
       onClick={onClick}
       disabled={isSaving}
-      className="w-full py-5 bg-primary text-primary-foreground rounded-full font-black text-[10px] tracking-[0.3em] hover:bg-primary/90 transition-all shadow-lg disabled:opacity-50"
+      className="w-full h-14 rounded-full text-[10px] font-black tracking-[0.3em]"
     >
       {isSaving ? 'Saving...' : 'CONFIRM CHANGES'}
-    </button>
+    </Button>
   );
 }
 
 function FooterBadge() {
   return (
     <div className="px-10 flex items-center gap-3 text-muted-foreground">
-      <ActivityIcon />
+      <Activity size={14} aria-hidden="true" />
       <p className="text-[9px] font-bold uppercase tracking-luxury">
         MIPSYS Enterprise AAA Standard
       </p>
     </div>
   );
-}
-
-function ActivityIcon() {
-  const { Activity } = require('lucide-react');
-  return <Activity size={14} />;
 }

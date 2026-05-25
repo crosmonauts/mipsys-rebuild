@@ -1,6 +1,15 @@
 'use client';
 import React from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/src/components/ui/table';
 import { Expense } from '../types';
 
 export function ExpenseTable({
@@ -13,66 +22,70 @@ export function ExpenseTable({
   onDelete: (id: number) => void;
 }) {
   const categoryColors: Record<string, string> = {
-    UTILITY: 'bg-amber-100 text-amber-900',
-    RENT: 'bg-violet-100 text-violet-900',
-    SALARY: 'bg-blue-100 text-blue-900',
-    TRANSPORT: 'bg-cyan-100 text-cyan-900',
-    OTHER: 'bg-slate-100 text-slate-900',
+    UTILITY: 'bg-amber-500/10 text-amber-400',
+    RENT: 'bg-violet-500/10 text-violet-400',
+    SALARY: 'bg-blue-500/10 text-blue-400',
+    TRANSPORT: 'bg-cyan-500/10 text-cyan-400',
+    OTHER: 'bg-muted text-muted-foreground',
   };
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left">
-        <thead>
-          <tr className="bg-slate-100 border-b-2 border-slate-300">
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">No.</th>
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Tipe</th>
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Deskripsi</th>
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-right">Jumlah</th>
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Tanggal</th>
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase">Kategori</th>
-            <th scope="col" className="p-4 text-[11px] font-black text-slate-900 uppercase text-center">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="micro-label text-muted-foreground pl-8">No.</TableHead>
+            <TableHead className="micro-label text-muted-foreground">Tipe</TableHead>
+            <TableHead className="micro-label text-muted-foreground">Deskripsi</TableHead>
+            <TableHead className="micro-label text-muted-foreground text-right">Jumlah</TableHead>
+            <TableHead className="micro-label text-muted-foreground">Tanggal</TableHead>
+            <TableHead className="micro-label text-muted-foreground">Kategori</TableHead>
+            <TableHead className="micro-label text-muted-foreground text-center pr-8">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {expenses.length === 0 ? (
-            <tr><td colSpan={7} className="p-8 text-center text-xs font-bold text-slate-500">Tidak ada expense.</td></tr>
+            <TableRow>
+              <TableCell colSpan={7} className="p-8 text-center text-xs font-bold text-muted-foreground">
+                Tidak ada expense.
+              </TableCell>
+            </TableRow>
           ) : (
             expenses.map((exp) => (
-              <tr key={exp.id} className="border-b-2 border-slate-200 hover:bg-slate-50 transition-colors">
-                <td className="p-4 font-mono text-xs font-black text-slate-700">{exp.expenseNumber}</td>
-                <td className="p-4 text-xs">
-                  <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${exp.expenseType === 'PO' ? 'bg-orange-100 text-orange-900' : 'bg-blue-100 text-blue-900'}`}>
+              <TableRow key={exp.id}>
+                <TableCell className="pl-8 font-mono text-xs font-black text-foreground">{exp.expenseNumber}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${exp.expenseType === 'PO' ? 'bg-orange-500/10 text-orange-400' : 'bg-blue-500/10 text-blue-400'}`}>
                     {exp.expenseType}
                   </span>
-                </td>
-                <td className="p-4 text-xs font-bold text-slate-700 max-w-[200px] truncate">{exp.description}</td>
-                <td className="p-4 text-xs font-black text-slate-950 text-right">Rp {exp.amount.toLocaleString('id-ID')}</td>
-                <td className="p-4 text-xs font-bold text-slate-700">{exp.expenseDate}</td>
-                <td className="p-4 text-xs">
+                </TableCell>
+                <TableCell className="text-xs font-bold text-foreground/80 max-w-[200px] truncate">{exp.description}</TableCell>
+                <TableCell className="text-xs font-black text-foreground text-right">Rp {exp.amount.toLocaleString('id-ID')}</TableCell>
+                <TableCell className="text-xs font-bold text-muted-foreground">{exp.expenseDate}</TableCell>
+                <TableCell>
                   <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${categoryColors[exp.category] || categoryColors.OTHER}`}>
                     {exp.category}
                   </span>
-                </td>
-                <td className="p-4 text-center">
+                </TableCell>
+                <TableCell className="text-center pr-8">
                   <div className="flex items-center justify-center gap-1">
                     {exp.expenseType === 'OPERATIONAL' && (
                       <>
-                        <button onClick={() => onEdit(exp)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
-                          <Pencil size={16} />
-                        </button>
-                        <button onClick={() => { if (confirm('Hapus expense ini?')) onDelete(exp.id); }} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
-                          <Trash2 size={16} />
-                        </button>
+                        <Button onClick={() => onEdit(exp)} variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10" aria-label="Edit expense">
+                          <Pencil size={16} aria-hidden="true" />
+                        </Button>
+                        <Button onClick={() => { if (window.confirm('Hapus expense ini?')) onDelete(exp.id); }} variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10" aria-label="Hapus expense">
+                          <Trash2 size={16} aria-hidden="true" />
+                        </Button>
                       </>
                     )}
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

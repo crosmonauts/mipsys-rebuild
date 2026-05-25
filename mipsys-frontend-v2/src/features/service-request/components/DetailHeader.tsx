@@ -66,9 +66,9 @@ function TicketInfo({
     <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-muted-foreground hover:text-amber-700 transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
+        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
       >
-        <ArrowLeft size={14} /> Back to Dashboard
+        <ArrowLeft size={14} aria-hidden="true" /> Back to Dashboard
       </button>
       <div className="space-y-2">
         <div className="flex items-center gap-3">
@@ -117,19 +117,19 @@ function ActionButtons({
   return (
     <div className="flex gap-3">
       <ActionButton
-        icon={<ClipboardCheck size={16} />}
+        icon={<ClipboardCheck size={16} aria-hidden="true" />}
         label="DIAGNOSIS"
         color="blue"
         onClick={onDiagnosis}
       />
       <ActionButton
-        icon={<CreditCard size={16} />}
+        icon={<CreditCard size={16} aria-hidden="true" />}
         label="PAYMENT"
         color="emerald"
         onClick={onPayment}
       />
       <ActionButton
-        icon={<PrinterIcon size={16} />}
+        icon={<PrinterIcon size={16} aria-hidden="true" />}
         label="PRINT"
         color="slate"
         onClick={onPrint}
@@ -151,15 +151,15 @@ function ActionButton({
   onClick: () => void;
 }) {
   const colorClasses = {
-    blue: 'bg-primary hover:bg-primary/90',
-    emerald: 'bg-emerald-600 hover:bg-emerald-700',
-    slate: 'bg-card hover:bg-accent/20 border border-border/30',
+    blue: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    emerald: 'bg-accent text-accent-foreground hover:bg-accent/90',
+    slate: 'bg-card text-foreground hover:bg-accent/20 border border-border/30',
   };
 
   return (
     <button
       onClick={onClick}
-      className={`group flex items-center gap-3 px-6 py-4 rounded-full text-xs font-black tracking-widest text-white ${colorClasses[color]} shadow-lg`}
+      className={`group flex items-center gap-3 px-6 py-4 rounded-full text-xs font-black tracking-widest ${colorClasses[color]} shadow-lg`}
     >
       {icon} {label}
     </button>
@@ -182,7 +182,7 @@ function EditToggle({
           : 'bg-card text-foreground hover:bg-primary/20 border border-border/30 shadow-lg'
       }`}
     >
-      {isEditing ? <X size={16} /> : <Edit3 size={16} />}
+      {isEditing ? <X size={16} aria-hidden="true" /> : <Edit3 size={16} aria-hidden="true" />}
       {isEditing ? 'CANCEL' : 'EDIT'}
     </button>
   );

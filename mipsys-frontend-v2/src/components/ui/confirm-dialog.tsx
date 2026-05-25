@@ -63,7 +63,7 @@ export function ConfirmDialog({
             className="flex-1 h-12 rounded-xl font-black text-xs uppercase tracking-widest"
           >
             {loading ? (
-              <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+              <span className="motion-safe:animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
             ) : null}
             {confirmLabel}
           </Button>

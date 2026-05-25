@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { User, Smartphone, MapPin } from 'lucide-react';
+import { Input } from '@/src/components/ui/input';
+import { Textarea } from '@/src/components/ui/textarea';
 
 interface ClientProfileProps {
   customerName: string;
@@ -26,14 +28,14 @@ export function ClientProfile({
         <EditableField
           label="Full Name"
           value={customerName}
-          icon={<User size={14} />}
+          icon={<User size={14} aria-hidden="true" />}
           isEditing={isEditing}
           onChange={(v) => onChange('customerName', v)}
         />
         <EditableField
           label="WhatsApp"
           value={phone}
-          icon={<Smartphone size={14} />}
+          icon={<Smartphone size={14} aria-hidden="true" />}
           isEditing={isEditing}
           onChange={(v) => onChange('phone', v)}
         />
@@ -41,7 +43,7 @@ export function ClientProfile({
           <EditableField
             label="Service Address"
             value={address}
-            icon={<MapPin size={14} />}
+            icon={<MapPin size={14} aria-hidden="true" />}
             isEditing={isEditing}
             isTextarea
             onChange={(v) => onChange('address', v)}
@@ -83,55 +85,25 @@ function EditableField({
       </label>
       {isEditing ? (
         isTextarea ? (
-          <Textarea value={value} onChange={onChange} />
+          <Textarea
+            value={value}
+            onChange={(e) => onChange?.(e.target.value)}
+            className="border-0 border-b border-border/30 rounded-none px-0 focus-visible:border-primary min-h-[80px] resize-none font-bold"
+          />
         ) : (
-          <TextInput value={value} onChange={onChange} />
+          <Input
+            value={value}
+            onChange={(e) => onChange?.(e.target.value)}
+            className="border-0 border-b border-border/30 rounded-none px-0 focus-visible:border-primary font-bold"
+          />
         )
       ) : (
-        <DisplayValue value={value} />
+        <p className="text-2xl font-black text-foreground tracking-tight leading-none pt-1">
+          {value || (
+            <span className="text-muted-foreground/40 font-normal italic">N/A</span>
+          )}
+        </p>
       )}
     </div>
-  );
-}
-
-function TextInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange?: (v: string) => void;
-}) {
-  return (
-    <input
-      className="w-full p-0 bg-transparent border-b border-border/30 focus:border-primary outline-none transition-all font-bold text-foreground py-2"
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-    />
-  );
-}
-
-function Textarea({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange?: (v: string) => void;
-}) {
-  return (
-    <textarea
-      className="w-full p-0 bg-transparent border-b border-border/30 focus:border-primary outline-none transition-all font-bold text-foreground py-2 min-h-[80px] resize-none"
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-    />
-  );
-}
-
-function DisplayValue({ value }: { value: string }) {
-  return (
-    <p className="text-2xl font-black text-foreground tracking-tight leading-none pt-1">
-      {value || (
-        <span className="text-muted-foreground/40 font-normal italic">N/A</span>
-      )}
-    </p>
   );
 }

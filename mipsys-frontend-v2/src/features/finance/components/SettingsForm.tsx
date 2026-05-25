@@ -37,26 +37,26 @@ export function SettingsForm() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-xs font-bold text-slate-500">Memuat...</div>;
+  if (loading) return <div className="p-8 text-center text-xs font-bold text-muted-foreground">Memuat…</div>;
 
   return (
-    <div className="bg-white border-2 border-slate-300 rounded-2xl p-6 shadow-sm">
-      <h3 className="font-black text-sm mb-4 flex items-center gap-2"><Settings size={16} /> Pengaturan Finance</h3>
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <h3 className="font-black text-sm mb-4 flex items-center gap-2 text-foreground"><Settings size={16} aria-hidden="true" /> Pengaturan Finance</h3>
       <div className="space-y-4 max-w-md">
         <div>
-          <label className="text-xs font-bold block mb-1">PPN Rate (%)</label>
+          <label className="text-xs font-bold block mb-1 text-foreground/80">PPN Rate (%)</label>
           <div className="flex gap-2">
             <input type="number" step="0.25" min="0" max="100" value={ppnRate} onChange={(e) => setPpnRate(e.target.value)}
-              className="flex-1 p-2.5 border-2 border-slate-300 rounded-xl text-sm font-bold focus:border-blue-700 focus:ring-4 focus:ring-blue-100 outline-none" />
-            <button onClick={handleSavePpn} className="px-4 py-2 bg-blue-700 text-white rounded-xl text-xs font-bold hover:bg-blue-800 transition-all">Simpan</button>
+              className="flex-1 p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-foreground" />
+            <button onClick={handleSavePpn} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:bg-primary/90 transition-all motion-safe:active:scale-95">Simpan</button>
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold block mb-1">Prefix Invoice</label>
+          <label className="text-xs font-bold block mb-1 text-foreground/80">Prefix Invoice</label>
           <div className="flex gap-2">
             <input type="text" value={invoicePrefix} onChange={(e) => setInvoicePrefix(e.target.value)}
-              className="flex-1 p-2.5 border-2 border-slate-300 rounded-xl text-sm font-bold focus:border-blue-700 focus:ring-4 focus:ring-blue-100 outline-none" />
-            <button onClick={handleSavePrefix} className="px-4 py-2 bg-blue-700 text-white rounded-xl text-xs font-bold hover:bg-blue-800 transition-all">Simpan</button>
+              className="flex-1 p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-foreground" />
+            <button onClick={handleSavePrefix} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:bg-primary/90 transition-all motion-safe:active:scale-95">Simpan</button>
           </div>
         </div>
       </div>

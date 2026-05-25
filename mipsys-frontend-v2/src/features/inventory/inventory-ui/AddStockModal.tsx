@@ -71,19 +71,19 @@ export function AddStockModal({
   if (!part) return null;
 
   const theme = {
-    ADD: { bg: 'bg-primary', text: 'text-primary', border: 'border-primary/30' },
-    SUBTRACT: { bg: 'bg-destructive', text: 'text-destructive', border: 'border-destructive/30' },
-    RESET: { bg: 'bg-amber-500', text: 'text-amber-500', border: 'border-amber-500/30' },
-  }[currentType] ?? { bg: 'bg-primary', text: 'text-primary', border: 'border-primary/30' };
+    ADD: { bg: 'bg-primary', fg: 'text-primary-foreground', border: 'border-primary/30' },
+    SUBTRACT: { bg: 'bg-destructive', fg: 'text-destructive-foreground', border: 'border-destructive/30' },
+    RESET: { bg: 'bg-amber-500', fg: 'text-primary-foreground', border: 'border-amber-500/30' },
+  }[currentType] ?? { bg: 'bg-primary', fg: 'text-primary-foreground', border: 'border-primary/30' };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
-        <DialogOverlay />
+        <DialogOverlay className="backdrop-blur-sm" />
         <DialogPrimitive.Content
           className={cn(
             'fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card shadow-lg duration-200 sm:max-w-md p-0 overflow-hidden rounded-[2rem] border-border/20 outline-none',
-            'animate-in fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-to-left-1/2 data-[state=open]:slide-in-to-top-1/2 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-1/2',
+            'motion-safe:animate-in motion-safe:fade-in data-[state=closed]:motion-safe:animate-out data-[state=closed]:motion-safe:fade-out-0 data-[state=open]:motion-safe:zoom-in-95 data-[state=closed]:motion-safe:zoom-out-95 data-[state=open]:motion-safe:slide-in-from-left-1/2 data-[state=open]:motion-safe:slide-in-from-top-1/2 data-[state=closed]:motion-safe:slide-out-to-left-1/2 data-[state=closed]:motion-safe:slide-out-to-top-1/2',
           )}
         >
           <DialogDescription className="sr-only">
@@ -92,12 +92,13 @@ export function AddStockModal({
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full text-left">
             {/* HEADER */}
-            <div className={`p-8 text-white transition-colors duration-300 ${theme.bg}`}>
+            <div className={`p-8 ${theme.fg} transition-colors duration-300 ${theme.bg}`}>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                  <div className="p-3 rounded-2xl backdrop-blur-md bg-black/10" aria-hidden="true">
                     {currentType === 'ADD' && <Plus size={24} />}
                     {currentType === 'SUBTRACT' && <Minus size={24} />}
+                    {currentType === 'RESET' && <RefreshCcw size={24} />}
                   </div>
                   <div>
                     <DialogTitle className="text-xl font-black uppercase tracking-tight">
@@ -109,8 +110,8 @@ export function AddStockModal({
                     </p>
                   </div>
                 </div>
-                <button type="button" onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all outline-none">
-                  <X size={20} />
+                <button type="button" onClick={onClose} className="p-2 hover:bg-black/10 rounded-xl transition-all outline-none" aria-label="Tutup dialog">
+                  <X size={20} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -149,7 +150,7 @@ export function AddStockModal({
 
               {/* INPUT */}
               <div className="space-y-3">
-                <label className="text-[11px] font-black uppercase text-muted-foreground tracking-widest ml-1">
+                <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">
                   Jumlah yang di {currentType === 'ADD' ? 'tambahkan' : 'kurangi'}
                 </label>
                 <div className="relative">
@@ -180,15 +181,16 @@ export function AddStockModal({
                 type="submit"
                 disabled={isSubmitting}
                 className={cn(
-                  'flex-1 h-14 text-white font-black text-xs uppercase rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2',
+                  'flex-1 h-14 font-black text-xs uppercase rounded-2xl shadow-xl transition-all hover:shadow-2xl active:opacity-80 flex items-center justify-center gap-2',
                   theme.bg,
+                  theme.fg,
                 )}
               >
                 {isSubmitting ? (
-                  <RefreshCcw className="animate-spin" size={18} />
+                  <RefreshCcw className="motion-safe:animate-spin" size={18} aria-hidden="true" />
                 ) : (
                   <>
-                    <RefreshCcw size={18} />
+                    <RefreshCcw size={18} aria-hidden="true" />
                     Konfirmasi
                   </>
                 )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,7 +22,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/src/components/ui/card';
-import { useCreatePurchaseOrder, useUpdatePurchaseOrder } from '@/src/features/part-order/hooks/usePurchaseOrder';
+import {
+  useCreatePurchaseOrder,
+  useUpdatePurchaseOrder,
+} from '@/src/features/part-order/hooks/usePurchaseOrder';
 import { poApi } from '@/src/features/part-order/api/po-api';
 import { inventoryApi } from '@/src/features/inventory/api/inventory-api';
 
@@ -39,7 +42,7 @@ interface OrderItem {
 export default function NewPartOrderPage({
   searchParams,
 }: {
-  searchParams?: { id?: string };
+  searchParams?: Promise<{ id?: string }>;
 }) {
   const router = useRouter();
   const { create, isSubmitting } = useCreatePurchaseOrder();
@@ -54,28 +57,34 @@ export default function NewPartOrderPage({
     { id: '1', partName: '', modelName: '', qty: 1, price: 0, isEditing: true },
   ]);
 
-  const sp = searchParams ?? {};
+  const sp = use(searchParams ?? Promise.resolve<{ id?: string }>({}));
   const editId = sp.id ? Number(sp.id) : null;
   const isEditMode = editId !== null;
 
   useEffect(() => {
     setMounted(true);
-    inventoryApi.getModels().then(setCategories).catch(() => {});
+    inventoryApi
+      .getModels()
+      .then(setCategories)
+      .catch(() => {});
 
     if (isEditMode && editId) {
-      poApi.getById(editId).then((po) => {
-        setSupplier(po.supplierName);
-        setItems(
-          po.items?.map((item, i) => ({
-            id: String(item.id || i),
-            partName: item.partName || '',
-            modelName: item.modelName || '',
-            qty: item.quantity,
-            price: parseFloat(item.unitPrice || '0'),
-            isEditing: false,
-          })) || []
-        );
-      }).catch(() => {});
+      poApi
+        .getById(editId)
+        .then((po) => {
+          setSupplier(po.supplierName);
+          setItems(
+            po.items?.map((item, i) => ({
+              id: String(item.id || i),
+              partName: item.partName || '',
+              modelName: item.modelName || '',
+              qty: item.quantity,
+              price: parseFloat(item.unitPrice || '0'),
+              isEditing: false,
+            })) || [],
+          );
+        })
+        .catch(() => {});
     }
   }, [isEditMode, editId]);
 
@@ -132,7 +141,8 @@ export default function NewPartOrderPage({
   const validate = (): string[] => {
     const errs: string[] = [];
     for (const item of items) {
-      if (!item.partName.trim()) errs.push('Setiap item harus memiliki nama part.');
+      if (!item.partName.trim())
+        errs.push('Setiap item harus memiliki nama part.');
       if (item.qty < 1) errs.push('Qty minimal 1.');
       if (item.price < 1) errs.push('Harga minimal Rp 1.');
     }
@@ -171,13 +181,14 @@ export default function NewPartOrderPage({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link href="/part-order">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-xl border-2 border-border/20 hover:border-foreground transition-all"
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ChevronLeft size={20} strokeWidth={3} />
-            </Button>
+              <ChevronLeft size={16} aria-hidden="true" />
+              Kembali
+            </button>
           </Link>
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground tracking-tight uppercase">
@@ -195,19 +206,25 @@ export default function NewPartOrderPage({
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-10 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting || isUpdating ? (
-            <Loader2 size={18} strokeWidth={3} className="animate-spin" />
+            <Loader2
+              size={18}
+              strokeWidth={3}
+              className="motion-safe:animate-spin"
+            />
           ) : (
-            <Save size={18} strokeWidth={3} />
+            <Save size={18} strokeWidth={3} aria-hidden="true" />
           )}{' '}
           {isEditMode ? 'Update Data' : 'Simpan Pesanan'}
         </Button>
       </div>
 
       {errors.length > 0 && (
-        <div className="bg-red-950/20 border border-red-500/30 rounded-2xl p-5">
+        <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-5">
           <ul className="list-disc list-inside space-y-1">
             {errors.map((e, i) => (
-              <li key={i} className="text-sm font-bold text-red-400">{e}</li>
+              <li key={i} className="text-sm font-bold text-destructive">
+                {e}
+              </li>
             ))}
           </ul>
         </div>
@@ -219,7 +236,7 @@ export default function NewPartOrderPage({
           <Card className="border-none rounded-[2.5rem] shadow-sm overflow-hidden bg-card">
             <CardHeader className="bg-muted/50 border-b border-border/10 p-6">
               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <Store size={14} /> Detail Pengadaan
+                <Store size={14} aria-hidden="true" /> Detail Pengadaan
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-5">
@@ -244,14 +261,16 @@ export default function NewPartOrderPage({
             <CardHeader className="bg-card text-foreground p-6 border-b border-border/20">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                  <Package size={16} /> Rincian Item (Editable)
+                  <Package size={16} aria-hidden="true" /> Rincian Item
+                  (Editable)
                 </CardTitle>
                 <Button
                   onClick={addItem}
                   variant="ghost"
-                  className="text-white hover:bg-white/10 font-black text-[10px] uppercase tracking-widest flex gap-2 border-none"
+                  className="text-foreground hover:bg-muted font-black text-[10px] uppercase tracking-widest flex gap-2 border-none"
                 >
-                  <Plus size={14} strokeWidth={3} /> Tambah Row
+                  <Plus size={14} strokeWidth={3} aria-hidden="true" /> Tambah
+                  Row
                 </Button>
               </div>
             </CardHeader>
@@ -330,12 +349,16 @@ export default function NewPartOrderPage({
                           {item.isEditing ? (
                             <select
                               value={item.modelName}
-                              onChange={(e) => updateItem(item.id, 'modelName', e.target.value)}
+                              onChange={(e) =>
+                                updateItem(item.id, 'modelName', e.target.value)
+                              }
                               className="w-full h-11 rounded-xl border border-border/20 bg-muted/50 px-3 font-bold text-sm outline-none focus:border-primary transition-all appearance-none text-foreground"
                             >
                               <option value="">Pilih Model</option>
                               {categories.map((model) => (
-                                <option key={model} value={model}>{model}</option>
+                                <option key={model} value={model}>
+                                  {model}
+                                </option>
                               ))}
                             </select>
                           ) : (
@@ -351,26 +374,34 @@ export default function NewPartOrderPage({
                               onClick={() => toggleEdit(item.id)}
                               className={`p-2.5 rounded-xl transition-all shadow-sm ${
                                 item.isEditing
-                                  ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                                  ? 'bg-accent text-accent-foreground hover:bg-accent/90'
                                   : 'bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground'
                               }`}
-                              title={item.isEditing ? 'Simpan Baris' : 'Edit Baris'}
-                              aria-label={item.isEditing ? 'Simpan baris' : 'Edit baris'}
+                              title={
+                                item.isEditing ? 'Simpan Baris' : 'Edit Baris'
+                              }
+                              aria-label={
+                                item.isEditing ? 'Simpan baris' : 'Edit baris'
+                              }
                             >
                               {item.isEditing ? (
-                                <Check size={18} strokeWidth={3} />
+                                <Check
+                                  size={18}
+                                  strokeWidth={3}
+                                  aria-hidden="true"
+                                />
                               ) : (
-                                <Pencil size={18} />
+                                <Pencil size={18} aria-hidden="true" />
                               )}
                             </button>
 
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="p-2.5 text-muted-foreground hover:text-white hover:bg-destructive transition-all bg-muted/50 rounded-xl"
+                              className="p-2.5 text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all bg-muted/50 rounded-xl"
                               title="Hapus Baris"
                               aria-label="Hapus baris"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={18} aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -383,7 +414,7 @@ export default function NewPartOrderPage({
               {/* FOOTER TOTAL */}
               <div className="p-8 bg-muted/30 border-t border-border/10 flex flex-col items-end">
                 <div className="space-y-1 text-right">
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                     Total Estimasi
                   </p>
                   <h2 className="text-4xl font-bold text-foreground tracking-tighter">

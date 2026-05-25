@@ -1,62 +1,80 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useServiceRequest } from '../hooks/useServiceRequest';
-import { DiagnosisModal } from '@/src/components/layout/DiagnosisModal';
-import { ApproveQuoteModal } from '@/src/components/layout/ApproveQuoteModal';
-import { srApi } from '../api/sr-api';
-import { financeApi } from '../../finance/api/finance-api';
-import toast from 'react-hot-toast';
 import {
-  User,
-  Smartphone,
-  Printer,
-  Hash,
   ShieldCheck,
-  AlertCircle,
-  Edit3,
-  Save,
-  X,
-  ArrowLeft,
-  Loader2,
-  MapPin,
-  Activity,
-  FileText,
   CheckCircle2,
   Ban,
   RefreshCw,
   FileDown,
+  FileText,
+  ArrowLeft,
+  Edit3,
+  X,
+  Loader2,
+  Activity,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useServiceRequest, type ServiceRequestDetail } from '../hooks/useServiceRequest';
+import { DiagnosisModal } from '@/src/components/layout/DiagnosisModal';
+import { ApproveQuoteModal } from '@/src/components/layout/ApproveQuoteModal';
+import { srApi } from '../api/sr-api';
+import { financeApi } from '../../finance/api/finance-api';
+import { Badge } from '@/src/components/ui/badge';
+import { Button } from '@/src/components/ui/button';
+import { Card, CardContent } from '@/src/components/ui/card';
+import { ConfirmDialog } from '@/src/components/ui/confirm-dialog';
+import { ClientProfile } from './ClientProfile';
+import { ProblemDescription } from './ProblemDescription';
 
-// DoD: Type Safety untuk menghindari error 7006
-interface DataFieldProps {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-  isEditing?: boolean;
-  isTextarea?: boolean;
-  onChange?: (v: string) => void;
-}
+const statusToBadge: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+  WAITING_CHECK: { label: 'Pending', variant: 'secondary' },
+  CHECK: { label: 'Check', variant: 'secondary' },
+  WAITING_APPROVE: { label: 'Menunggu Approve', variant: 'outline' },
+  SERVICE: { label: 'In Service', variant: 'default' },
+  AWAITING_PARTS: { label: 'Menunggu Part', variant: 'outline' },
+  DONE: { label: 'Ready', variant: 'default' },
+  CANCEL: { label: 'Cancelled', variant: 'destructive' },
+};
 
 const ServiceRequestDetail = () => {
   const params = useParams();
-  const router = useRouter();
   const ticketNumber = params.id as string;
-  const { data, setData, isLoading } = useServiceRequest(ticketNumber);
+  const { data, setData, isLoading, refetch } = useServiceRequest(ticketNumber);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [originalData, setOriginalData] = useState<any>(null);
+  const [originalData, setOriginalData] = useState<ServiceRequestDetail | null>(null);
   const [showDiagnosis, setShowDiagnosis] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [showPrintQuote, setShowPrintQuote] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isRetryingStock, setIsRetryingStock] = useState(false);
   const [isDoneProcessing, setIsDoneProcessing] = useState(false);
-  const [hasInvoice, setHasInvoice] = useState(data?.hasInvoice ?? false);
+  const [hasInvoice, setHasInvoice] = useState(false);
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const hasUnsavedChanges = isEditing;
+
+  useEffect(() => {
+    if (data) setHasInvoice(data.hasInvoice ?? false);
+  }, [data]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
 
   const hasSavedQuote =
     data && (parseFloat(data.serviceFee || '0') > 0 || parseFloat(data.partFee || '0') > 0);
@@ -64,10 +82,37 @@ const ServiceRequestDetail = () => {
   const handleEditToggle = () => {
     if (!isEditing) {
       if (data) setOriginalData({ ...data });
+    } else if (originalData) {
+      setData(originalData);
     }
-    else setData(originalData);
     setIsEditing(!isEditing);
   };
+
+  const handleFieldChange = useCallback((field: string, value: string) => {
+    setData((prev) => prev ? { ...prev, [field]: value } : prev);
+  }, [setData]);
+
+  async function handleSaveChanges() {
+    if (!ticketNumber || !data) return;
+    setIsSaving(true);
+    try {
+      await srApi.updateEntry(ticketNumber, {
+        customerName: data.customerName,
+        phone: data.phone,
+        address: data.address,
+        modelName: data.modelName,
+        serialNumber: data.serialNumber,
+        problemDescription: data.problemDescription,
+      });
+      toast.success('Perubahan berhasil disimpan');
+      setIsEditing(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Gagal menyimpan perubahan';
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   async function handleApproveQuote() {
     if (!ticketNumber) return;
@@ -78,10 +123,9 @@ const ServiceRequestDetail = () => {
       if (result.allInStock) {
         toast.success(`Penawaran disetujui. Status → SERVICE. ${result.partsProcessed} part dipotong dari stok.`);
       } else {
-        toast.success(`Penawaran disetujui. Beberapa part tidak tersedia. Status → AWAITING_PARTS.`);
+        toast.success('Penawaran disetujui. Beberapa part tidak tersedia. Status → AWAITING_PARTS.');
       }
-
-      window.location.reload();
+      await refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal menyetujui penawaran';
       toast.error(message);
@@ -92,18 +136,17 @@ const ServiceRequestDetail = () => {
 
   async function handleCancelQuote() {
     if (!ticketNumber) return;
-    if (!window.confirm('Yakin ingin membatalkan tiket ini? Semua part yang diusulkan akan dibatalkan.')) return;
-
     setIsCancelling(true);
     try {
       await srApi.cancelQuote(ticketNumber, { performedBy: 1 });
       toast.success('Tiket dibatalkan.');
-      window.location.reload();
+      await refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal membatalkan tiket';
       toast.error(message);
     } finally {
       setIsCancelling(false);
+      setShowCancelConfirm(false);
     }
   }
 
@@ -118,8 +161,7 @@ const ServiceRequestDetail = () => {
       } else {
         toast.error('Stok masih belum mencukupi. PO perlu dilanjutkan.');
       }
-
-      window.location.reload();
+      await refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal cek ulang stok';
       toast.error(message);
@@ -142,18 +184,15 @@ const ServiceRequestDetail = () => {
         setHasInvoice(true);
         toast.success(
           <div className="flex items-center gap-2">
-            <span>Invoice berhasil dibuat:</span>
-            <Link
-              href={`/finance?search=${res.invoice.invoiceNumber}`}
-              className="underline font-bold"
-            >
+            <span>Invoice berhasil dibuat: </span>
+            <Link href={`/finance?search=${res.invoice.invoiceNumber}`} className="underline font-bold">
               {res.invoice.invoiceNumber}
             </Link>
           </div>,
           { duration: 5000 }
         );
       }
-      window.location.reload();
+      await refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal menyelesaikan service';
       toast.error(message);
@@ -169,17 +208,15 @@ const ServiceRequestDetail = () => {
       const result = await financeApi.generateFromSR(ticketNumber);
       toast.success(
         <div className="flex items-center gap-2">
-          <span>Invoice berhasil dibuat:</span>
-          <Link
-            href={`/finance?search=${result.invoiceNumber}`}
-            className="underline font-bold"
-          >
+          <span>Invoice berhasil dibuat: </span>
+          <Link href={`/finance?search=${result.invoiceNumber}`} className="underline font-bold">
             {result.invoiceNumber}
           </Link>
         </div>,
         { duration: 5000 }
       );
       setHasInvoice(true);
+      await refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal membuat invoice';
       toast.error(message);
@@ -190,316 +227,234 @@ const ServiceRequestDetail = () => {
 
   if (isLoading || !data) return <LoadingState />;
 
+  const badgeCfg = statusToBadge[data.statusService] || { label: data.statusService, variant: 'secondary' as const };
+
   return (
     <main className="min-h-screen planner-bg text-foreground font-sans selection:bg-primary/20">
-      <div className="max-w-8xl mx-auto p-8 md:p-10 lg:p-10">
-        {/* --- HEADER IDENTITY --- */}
+      <div className="max-w-7xl mx-auto p-8 md:p-10 lg:p-10">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-5 gap-10">
           <div className="space-y-6">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
+            <Link
+              href="/service-request"
+              className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft size={14} /> Back to Dashboard
-            </button>
+              <ArrowLeft size={14} aria-hidden="true" /> Back to Dashboard
+            </Link>
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 bg-primary/15 text-amber-400 text-[9px] font-black rounded uppercase tracking-widest">
+                <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
                   {data.serviceType || 'NON_WARRANTY'}
-                </span>
+                </Badge>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  ENTRY: {data.incomingDate?.split('T')[0]}
+                  ENTRY: {new Date(data.incomingDate).toLocaleDateString('id-ID')}
                 </span>
               </div>
-              <h1 className="text-6xl md:text-4xl font-black text-foreground tracking-tighter leading-none">
+              <h1 className="text-4xl md:text-4xl font-black text-foreground tracking-tighter leading-none break-all text-balance">
                 {ticketNumber}
               </h1>
             </div>
           </div>
 
-          <button
+          <Button
+            variant={isEditing ? 'secondary' : 'outline'}
+            size="lg"
             onClick={handleEditToggle}
-            className={`group flex items-center gap-3 px-10 py-4 rounded-full text-xs font-black tracking-widest transition-all ${
-              isEditing
-                ? 'bg-muted text-muted-foreground hover:bg-muted/80'
-                : 'bg-card text-foreground hover:bg-primary/20 shadow-lg'
-            }`}
+            className="gap-3 px-10 h-14 rounded-2xl text-xs font-black tracking-widest"
           >
-            {isEditing ? (
-              <>
-                <X size={16} /> CANCEL
-              </>
-            ) : (
-              <>
-                <Edit3 size={16} /> EDIT TICKET
-              </>
-            )}
-          </button>
+            {isEditing ? <X size={16} aria-hidden="true" /> : <Edit3 size={16} aria-hidden="true" />}
+            {isEditing ? 'CANCEL' : 'EDIT TICKET'}
+          </Button>
         </header>
 
-        {/* --- CONTENT GRID --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* LEFT COLUMN: CUSTOMER & PROBLEM (RUANG LEBIH LUAS) */}
-          <div className="lg:col-span-7 space-y-10">
-            {/* SEKSI 01: PELANGGAN */}
-            <section className="space-y-8">
-              <h2 className="micro-label text-primary flex items-center gap-6">
-                01. Client Profile{' '}
-                <span className="h-[1px] flex-1 bg-border/20"></span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                <DataField
-                  label="Full Name"
-                  value={data.customerName}
-                  isEditing={isEditing}
-                  onChange={(v) => setData({ ...data, customerName: v })}
-                />
-                <DataField
-                  label="WhatsApp"
-                  value={data.phone}
-                  icon={<Smartphone size={14} />}
-                  isEditing={isEditing}
-                  onChange={(v) => setData({ ...data, phone: v })}
-                />
-                <div className="md:col-span-2">
-                  <DataField
-                    label="Service Address"
-                    value={data.address}
-                    icon={<MapPin size={14} />}
-                    isEditing={isEditing}
-                    isTextarea
-                    onChange={(v) => setData({ ...data, address: v })}
-                  />
-                </div>
-              </div>
-            </section>
+          <div className="lg:col-span-7 space-y-8">
+            <ClientProfile
+              customerName={data.customerName}
+              phone={data.phone}
+              address={data.address}
+              isEditing={isEditing}
+              onChange={handleFieldChange}
+            />
 
-            {/* SEKSI 02: PROBLEM DESCRIPTION (PINDAH KE KIRI) */}
-            <section className="space-y-10">
-              <h2 className="micro-label text-primary flex items-center gap-6">
-                02. Issue Description{' '}
-                <span className="h-[1px] flex-1 bg-border/20"></span>
-              </h2>
-              <div className="group">
-                {isEditing ? (
-                  <textarea
-                    className="w-full p-6 bg-card border border-border/20 rounded-3xl outline-none focus:border-primary transition-all font-medium text-foreground/80 min-h-[150px] shadow-sm"
-                    value={data.problemDescription}
-                    onChange={(e) =>
-                      setData({ ...data, problemDescription: e.target.value })
-                    }
-                  />
-                ) : (
-                  <div className="glass-panel p-10 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-primary/20"></div>
-                    <p className="text-xl font-medium leading-relaxed text-foreground/80 italic">
-                      "
-                      {data.problemDescription ||
-                        'No detailed problem reported.'}
-                      "
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
+            <ProblemDescription
+              value={data.problemDescription}
+              isEditing={isEditing}
+              onChange={(v) => handleFieldChange('problemDescription', v)}
+            />
           </div>
 
-          {/* RIGHT COLUMN: STATUS & DEVICE INTEL (SIDEBAR) */}
           <div className="lg:col-span-5">
-            <aside className="sticky top-10 space-y-10">
-              {/* CARD STATUS */}
-              <div className="paper-card p-10 space-y-10">
-                <div className="space-y-6">
-                  <p className="micro-label text-muted-foreground">
-                    Live Progress
-                  </p>
+            <aside className="sticky top-10 space-y-6">
+              <Card className="!p-6 space-y-6">
+                <CardContent className="space-y-6 !p-0">
+                  <p className="micro-label text-muted-foreground">Live Progress</p>
                   <div className="flex items-center gap-5">
                     <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                      <ShieldCheck size={28} strokeWidth={2} />
+                      <ShieldCheck size={28} strokeWidth={2} aria-hidden="true" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                        Status
-                      </p>
-                      <p className="text-xl font-black text-amber-400 uppercase tracking-tighter italic">
-                        {data.statusService?.replace('_', ' ')}
-                      </p>
-                    </div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Status</p>
+                      <Badge variant={badgeCfg.variant} className="text-lg font-black uppercase tracking-tighter italic px-4 py-1.5 h-auto">
+                        {badgeCfg.label}
+                      </Badge>
                     </div>
                   </div>
+                </CardContent>
 
-                  <div className="space-y-3 mt-4">
-                    {(data.statusService === 'WAITING_CHECK' || data.statusService === 'CHECK') && (
-                      <button
+                <CardContent className="space-y-3 !p-0">
+                  {(data.statusService === 'WAITING_CHECK' || data.statusService === 'CHECK') && (
+                    <>
+                      <Button
+                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest"
                         onClick={() => setShowDiagnosis(true)}
-                        className="w-full py-4 bg-primary text-primary-foreground rounded-full text-xs font-black tracking-widest hover:bg-primary/90 transition-all shadow-lg"
                       >
                         DIAGNOSA & UPDATE STATUS
-                      </button>
-                    )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
+                        onClick={() => setShowCancelConfirm(true)}
+                      >
+                        <Ban size={16} aria-hidden="true" /> BATALKAN
+                      </Button>
+                    </>
+                  )}
 
-                    {data.statusService === 'WAITING_APPROVE' && (
-                      <>
-                        <button
-                          onClick={() => setShowDiagnosis(true)}
-                          className="w-full py-4 bg-primary text-primary-foreground rounded-full text-xs font-black tracking-widest hover:bg-primary/90 transition-all shadow-lg"
+                  {data.statusService === 'WAITING_APPROVE' && (
+                    <>
+                      <Button
+                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest"
+                        onClick={() => setShowDiagnosis(true)}
+                      >
+                        DIAGNOSA
+                      </Button>
+
+                      {!hasSavedQuote ? (
+                        <Button
+                          variant="default"
+                          className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                          onClick={() => setShowQuote(true)}
                         >
-                          DIAGNOSA
-                        </button>
+                          <FileText size={16} aria-hidden="true" /> BUAT PENAWARAN
+                        </Button>
+                      ) : (
+                        <>
+                          <div className="p-3 rounded-xl bg-primary/10 border-2 border-primary/30">
+                            <p className="text-[10px] font-black text-primary text-center">
+                              Penawaran sudah dibuat
+                            </p>
+                          </div>
 
-                        {!hasSavedQuote ? (
-                          <button
-                            onClick={() => setShowQuote(true)}
-                            className="w-full py-4 bg-emerald-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                          <Button
+                            variant="outline"
+                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                            onClick={() => setShowPrintQuote(true)}
                           >
-                            <FileText size={16} /> BUAT PENAWARAN
-                          </button>
-                        ) : (
-                          <>
-                            <div className="p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/30">
-                              <p className="text-[10px] font-black text-emerald-400 text-center">
-                                Penawaran sudah dibuat
-                              </p>
-                            </div>
+                            <FileText size={16} aria-hidden="true" /> CETAK PENAWARAN
+                          </Button>
 
-                            <button
-                              onClick={() => setShowPrintQuote(true)}
-                              className="w-full py-4 bg-transparent text-emerald-400 rounded-full text-xs font-black tracking-widest hover:bg-emerald-500/10 transition-all shadow-lg border-2 border-emerald-500/50 flex items-center justify-center gap-2"
-                            >
-                              <FileText size={16} /> CETAK PENAWARAN
-                            </button>
+                          <Button
+                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                            onClick={() => setShowApproveConfirm(true)}
+                            disabled={isApproving}
+                          >
+                            {isApproving ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
+                            SETUJUI
+                          </Button>
 
-                            <button
-                              onClick={handleApproveQuote}
-                              disabled={isApproving}
-                              className="w-full py-4 bg-emerald-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2"
-                            >
-                              {isApproving ? (
-                                <Loader2 className="animate-spin" size={16} />
-                              ) : (
-                                <CheckCircle2 size={16} />
-                              )}
-                              SETUJUI
-                            </button>
+                          <Button
+                            variant="destructive"
+                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
+                            onClick={() => setShowCancelConfirm(true)}
+                            disabled={isCancelling}
+                          >
+                            {isCancelling ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <Ban size={16} aria-hidden="true" />}
+                            BATALKAN
+                          </Button>
+                        </>
+                      )}
+                    </>
+                  )}
 
-                            <button
-                              onClick={handleCancelQuote}
-                              disabled={isCancelling}
-                              className="w-full py-4 bg-red-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2"
-                            >
-                              {isCancelling ? (
-                                <Loader2 className="animate-spin" size={16} />
-                              ) : (
-                                <Ban size={16} />
-                              )}
-                              BATALKAN
-                            </button>
-                          </>
-                        )}
-                      </>
-                    )}
+                  {data.statusService === 'SERVICE' && (
+                    <Button
+                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                      onClick={handleMarkDone}
+                      disabled={isDoneProcessing}
+                    >
+                      {isDoneProcessing ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
+                      SELESAIKAN
+                    </Button>
+                  )}
 
-                    {data.statusService === 'SERVICE' && (
-                      <button
-                        onClick={handleMarkDone}
-                        disabled={isDoneProcessing}
-                        className="w-full py-4 bg-emerald-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2"
-                      >
-                        {isDoneProcessing ? (
-                          <Loader2 className="animate-spin" size={16} />
-                        ) : (
-                          <CheckCircle2 size={16} />
-                        )}
-                        SELESAIKAN
-                      </button>
-                    )}
-
-                    {data.statusService === 'AWAITING_PARTS' && (
-                      <div className="space-y-3">
-                        <div className="p-4 rounded-xl bg-amber-500/10 border-2 border-amber-500/30 text-center">
-                          <p className="text-xs font-bold text-amber-400">Menunggu Part — PO sedang diproses</p>
-                        </div>
-                        <button
-                          onClick={handleRetryStock}
-                          disabled={isRetryingStock}
-                          className="w-full py-4 bg-primary text-primary-foreground rounded-full text-xs font-black tracking-widest hover:bg-primary/90 transition-all shadow-lg flex items-center justify-center gap-2"
-                        >
-                          {isRetryingStock ? (
-                            <Loader2 className="animate-spin" size={16} />
-                          ) : (
-                            <RefreshCw size={16} />
-                          )}
-                          CEK ULANG STOK
-                        </button>
+                  {data.statusService === 'AWAITING_PARTS' && (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-xl bg-amber-500/10 border-2 border-amber-500/30 text-center motion-safe:animate-in motion-safe:fade-in">
+                        <p className="text-xs font-bold text-amber-400">Menunggu Part — PO sedang diproses</p>
                       </div>
-                    )}
-
-                    {data.statusService === 'DONE' && !hasInvoice && (
-                      <button
-                        onClick={handleCreateInvoice}
-                        disabled={isCreatingInvoice}
-                        className="w-full py-4 bg-emerald-600 text-white rounded-full text-xs font-black tracking-widest hover:bg-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                      <Button
+                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
+                        onClick={handleRetryStock}
+                        disabled={isRetryingStock}
                       >
-                        {isCreatingInvoice ? (
-                          <Loader2 className="animate-spin" size={16} />
-                        ) : (
-                          <FileDown size={16} />
-                        )}
-                        BUAT INVOICE
-                      </button>
-                    )}
+                        {isRetryingStock ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <RefreshCw size={16} aria-hidden="true" />}
+                        CEK ULANG STOK
+                      </Button>
+                    </div>
+                  )}
 
-                    {data.statusService === 'DONE' && hasInvoice && (
-                      <Link
-                        href="/finance"
-                        className="w-full py-4 bg-primary text-primary-foreground rounded-full text-xs font-black tracking-widest hover:bg-primary/90 transition-all shadow-lg flex items-center justify-center gap-2"
-                      >
-                        <FileText size={16} />
-                        LIHAT INVOICE
-                      </Link>
-                    )}
-                  </div>
+                  {data.statusService === 'DONE' && !hasInvoice && (
+                    <Button
+                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                      onClick={handleCreateInvoice}
+                      disabled={isCreatingInvoice}
+                    >
+                      {isCreatingInvoice ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <FileDown size={16} aria-hidden="true" />}
+                      BUAT INVOICE
+                    </Button>
+                  )}
 
-                  <hr className="border-border/10" />
+                  {data.statusService === 'DONE' && hasInvoice && (
+                    <Link href="/finance">
+                      <Button className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2">
+                        <FileText size={16} aria-hidden="true" /> LIHAT INVOICE
+                      </Button>
+                    </Link>
+                  )}
+                </CardContent>
 
-                {/* SEKSI 03: DEVICE INTEL (PINDAH KE SINI) */}
-                <div className="space-y-8">
-                  <p className="micro-label text-muted-foreground">
-                    03. Unit Specification
-                  </p>
+                <div className="border-t border-border/10 !mx-0" />
+
+                <CardContent className="space-y-8 !p-0">
+                  <p className="micro-label text-muted-foreground">03. Unit Specification</p>
                   <div className="space-y-6">
                     <div className="flex justify-between items-end border-b border-border/10 pb-4">
-                      <span className="micro-label text-muted-foreground">
-                        Model
-                      </span>
-                      <span className="text-lg font-bold text-foreground">
-                        {data.modelName || '-'}
-                      </span>
+                      <span className="micro-label text-muted-foreground">Model</span>
+                      <span className="text-lg font-bold text-foreground">{data.modelName || '-'}</span>
                     </div>
                     <div className="flex justify-between items-end border-b border-border/10 pb-4">
-                      <span className="micro-label text-muted-foreground">
-                        S/N
-                      </span>
-                      <span className="text-lg font-bold text-foreground">
-                        {data.serialNumber || '-'}
-                      </span>
+                      <span className="micro-label text-muted-foreground">S/N</span>
+                      <span className="text-lg font-bold text-foreground">{data.serialNumber || '-'}</span>
                     </div>
                   </div>
-                </div>
+                </CardContent>
 
                 {isEditing && (
-                  <button className="w-full py-5 bg-primary text-primary-foreground rounded-full font-black text-[10px] tracking-[0.3em] hover:bg-primary/90 transition-all shadow-lg">
-                    CONFIRM CHANGES
-                  </button>
+                  <CardContent className="!p-0">
+                    <Button
+                      className="w-full h-14 rounded-2xl text-[10px] font-black tracking-[0.3em]"
+                      onClick={handleSaveChanges}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? 'MENYIMPAN…' : 'CONFIRM CHANGES'}
+                    </Button>
+                  </CardContent>
                 )}
-              </div>
+              </Card>
 
-              {/* OPTIONAL: QUICK INFO FOOTER */}
               <div className="px-10 flex items-center gap-3 text-muted-foreground">
-                <Activity size={14} />
-                <p className="text-[9px] font-bold uppercase tracking-luxury">
-                  MIPSYS Enterprise AAA Standard
-                </p>
+                <Activity size={14} aria-hidden="true" />
+                <p className="text-[9px] font-bold uppercase tracking-luxury">MIPSYS Enterprise AAA Standard</p>
               </div>
             </aside>
           </div>
@@ -512,7 +467,7 @@ const ServiceRequestDetail = () => {
           serviceRequestId={data?.id ?? null}
           isOpen={showDiagnosis}
           onClose={() => setShowDiagnosis(false)}
-          onSuccess={() => { window.location.reload(); }}
+          onSuccess={() => { refetch(); }}
           currentStatus={data?.statusService}
         />
       )}
@@ -523,7 +478,7 @@ const ServiceRequestDetail = () => {
           serviceRequestId={data?.id ?? null}
           isOpen={showQuote}
           onClose={() => setShowQuote(false)}
-          onSuccess={() => { window.location.reload(); }}
+          onSuccess={() => { refetch(); }}
         />
       )}
 
@@ -533,59 +488,41 @@ const ServiceRequestDetail = () => {
           serviceRequestId={data?.id ?? null}
           isOpen={showPrintQuote}
           onClose={() => setShowPrintQuote(false)}
-          onSuccess={() => { window.location.reload(); }}
+          onSuccess={() => { refetch(); }}
           initialServiceFee={data?.serviceFee}
           initialPartFee={data?.partFee}
           initialShippingFee={data?.shippingFee}
         />
       )}
+
+      <ConfirmDialog
+        open={showApproveConfirm}
+        onOpenChange={setShowApproveConfirm}
+        title="Setujui Penawaran?"
+        description="Yakin ingin menyetujui penawaran ini? Status tiket akan berubah menjadi SERVICE atau AWAITING_PARTS."
+        confirmLabel="Ya, Setujui"
+        variant="default"
+        loading={isApproving}
+        onConfirm={handleApproveQuote}
+      />
+      <ConfirmDialog
+        open={showCancelConfirm}
+        onOpenChange={setShowCancelConfirm}
+        title="Batalkan Tiket?"
+        description="Yakin ingin membatalkan tiket ini? Semua part yang diusulkan akan dibatalkan."
+        confirmLabel="Ya, Batalkan"
+        variant="destructive"
+        loading={isCancelling}
+        onConfirm={handleCancelQuote}
+      />
     </main>
   );
 };
 
-// --- LUXE DATA FIELD COMPONENT ---
-const DataField = ({
-  label,
-  value,
-  icon,
-  isEditing,
-  isTextarea,
-  onChange,
-}: DataFieldProps) => (
-  <div className="group space-y-3">
-    <label className="micro-label text-muted-foreground flex items-center gap-2">
-      {icon} {label}
-    </label>
-    {isEditing ? (
-      isTextarea ? (
-        <textarea
-          className="w-full p-0 bg-transparent border-b border-border/30 focus:border-primary outline-none transition-all font-bold text-foreground py-2 min-h-[80px] resize-none"
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-        />
-      ) : (
-        <input
-          className="w-full p-0 bg-transparent border-b border-border/30 focus:border-primary outline-none transition-all font-bold text-foreground py-2"
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-        />
-      )
-    ) : (
-      <p className="text-2xl font-black text-foreground tracking-tight leading-none pt-1">
-        {value || (
-          <span className="text-muted-foreground/40 font-normal italic">N/A</span>
-        )}
-      </p>
-    )}
-  </div>
-);
-
 const LoadingState = () => (
   <div className="min-h-screen planner-bg flex flex-col items-center justify-center gap-6 text-primary">
-    <Loader2 className="animate-spin" size={40} strokeWidth={1} />
-    <p className="text-[10px] font-black uppercase tracking-[0.6em]">
-      Synchronizing
-    </p>
+    <Loader2 className="motion-safe:animate-spin" size={40} strokeWidth={1} aria-hidden="true" />
+    <p className="text-[10px] font-black uppercase tracking-[0.6em]">Synchronizing…</p>
   </div>
 );
 

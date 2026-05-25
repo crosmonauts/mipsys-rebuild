@@ -2,13 +2,14 @@
 import React from 'react';
 import { ProfitLossChart } from './ProfitLossChart';
 import { PpnReportView } from './PpnReport';
+import { PageHeader } from '@/src/components/ui/page-header';
 
 export default function ReportsPage() {
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight">
-        Laporan <span className="text-blue-800">Keuangan</span>
-      </h2>
+      <PageHeader
+        title="Laporan Keuangan"
+      />
       <ProfitLossChart />
       <PpnReportView />
     </div>

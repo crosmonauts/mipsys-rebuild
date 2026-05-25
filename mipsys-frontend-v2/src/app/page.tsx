@@ -15,11 +15,24 @@ import {
   Clock,
   Globe,
 } from 'lucide-react';
-import { srApi } from '@/src/features/service-request/services/sr-api';
+import { srApi } from '@/src/features/service-request/api/sr-api';
 import { toast } from 'react-hot-toast';
 import { LoadingSkeleton } from '@/src/components/ui/loading-skeleton';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/src/components/ui/table';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from '@/src/components/ui/card';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/src/components/ui/table';
 import { Button } from '@/src/components/ui/button';
 
 const userName = 'Irgi';
@@ -48,7 +61,10 @@ export default function DashboardPage() {
       setActivities(logsData);
       setStats(statsData);
     } catch (error: any) {
-      console.error('Dashboard fetch error:', error.response?.data || error.message);
+      console.error(
+        'Dashboard fetch error:',
+        error.response?.data || error.message,
+      );
       toast.error('Gagal memuat data dashboard');
     } finally {
       setLoadingLogs(false);
@@ -64,20 +80,35 @@ export default function DashboardPage() {
   const getIcon = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'DONE':
-        return <CheckCircle2 size={14} className="text-accent" aria-label="Status: Selesai" />;
+        return (
+          <CheckCircle2
+            size={14}
+            className="text-accent"
+            aria-label="Status: Selesai"
+          />
+        );
       case 'SERVICE':
-        return <Clock size={14} className="text-primary" aria-label="Status: Dalam Servis" />;
+        return (
+          <Clock
+            size={14}
+            className="text-primary"
+            aria-label="Status: Dalam Servis"
+          />
+        );
       default:
-        return <AlertCircle size={14} className="text-amber-400" aria-label="Status: Pending" />;
+        return (
+          <AlertCircle
+            size={14}
+            className="text-amber-400"
+            aria-label="Status: Pending"
+          />
+        );
     }
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <section className="space-y-1.5 text-left">
-        <div className="flex items-center gap-2 w-fit px-2.5 py-0.5 bg-primary/20 text-primary rounded text-[9px] font-black uppercase tracking-widest border border-primary/30">
-          <ShieldCheck size={10} /> Keamanan Terverifikasi
-        </div>
         <h2 className="text-3xl font-bold text-foreground tracking-tight">
           Selamat Datang, <span className="text-primary">{userName}.</span>
         </h2>
@@ -101,9 +132,7 @@ export default function DashboardPage() {
             <p className="text-4xl font-bold text-foreground tracking-tighter">
               {stats.total}
             </p>
-            <p className="text-xs text-muted-foreground">
-              Total Antrean
-            </p>
+            <p className="text-xs text-muted-foreground">Total Antrean</p>
           </CardContent>
           <CardFooter className="justify-between text-[10px] font-black uppercase">
             <span className="text-amber-400">Pending: {stats.pending}</span>
@@ -122,9 +151,7 @@ export default function DashboardPage() {
             <p className="text-4xl font-bold text-foreground tracking-tighter">
               05
             </p>
-            <p className="text-xs text-muted-foreground">
-              Part Urgent
-            </p>
+            <p className="text-xs text-muted-foreground">Part Urgent</p>
           </CardContent>
           <CardFooter className="flex-col items-start gap-2">
             <div className="w-full bg-muted/50 h-1.5 rounded-full overflow-hidden">
@@ -146,9 +173,7 @@ export default function DashboardPage() {
             <p className="text-4xl font-bold text-foreground tracking-tighter">
               82%
             </p>
-            <p className="text-xs text-muted-foreground">
-              Penagihan Selesai
-            </p>
+            <p className="text-xs text-muted-foreground">Penagihan Selesai</p>
           </CardContent>
           <CardFooter>
             <p className="text-[10px] font-black text-emerald-400 flex items-center gap-1 uppercase tracking-tight bg-primary/10 w-fit px-2 py-0.5 rounded">
@@ -163,7 +188,9 @@ export default function DashboardPage() {
             <div className="h-2 w-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,1)]" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground tracking-tighter">99.9%</p>
+            <p className="text-3xl font-bold text-foreground tracking-tighter">
+              99.9%
+            </p>
             <p className="text-[10px] text-blue-200 font-black uppercase tracking-widest">
               Uptime
             </p>
@@ -219,13 +246,11 @@ export default function DashboardPage() {
                       <TableCell className="font-mono text-[10px] font-bold">
                         {log.time}
                       </TableCell>
-                      <TableCell>
-                        {getIcon(log.status)}
-                      </TableCell>
-                      <TableCell className="font-bold text-[11px] uppercase tracking-tight">
+                      <TableCell>{getIcon(log.status)}</TableCell>
+                      <TableCell className="font-bold text-xs uppercase tracking-tight">
                         {log.user}
                       </TableCell>
-                      <TableCell className="text-muted-foreground italic text-[11px]">
+                      <TableCell className="text-muted-foreground italic text-xs">
                         {log.task}
                       </TableCell>
                     </TableRow>
@@ -275,11 +300,13 @@ export default function DashboardPage() {
       </section>
 
       {/* --- FOOTER: MINIMALIST --- */}
-      <footer className="pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center md:text-left">
+      <footer className="pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center md:text-left">
         <div className="flex items-center gap-2">
           <Globe size={12} className="text-primary" /> Semarang, Indonesia
         </div>
-        <p className="text-muted-foreground">© 2026 PT Mitrainfoparama — V2.1.0-AAA</p>
+        <p className="text-muted-foreground">
+          © 2026 PT Mitrainfoparama — V2.1.0-AAA
+        </p>
       </footer>
     </div>
   );

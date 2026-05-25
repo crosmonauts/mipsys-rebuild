@@ -47,7 +47,7 @@ export default function ConfirmModal({
               disabled={loading}
               className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest border-none disabled:opacity-50"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : null}{' '}
+              {loading ? <Loader2 size={16} className="motion-safe:animate-spin" /> : null}{' '}
               {confirmLabel}
             </Button>
           </div>

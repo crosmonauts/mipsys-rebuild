@@ -1,9 +1,16 @@
 import { apiClient } from '@/src/lib/api-client';
 
+export interface DashboardParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+  status?: string;
+}
+
 export const srApi = {
-  getAll: (search = '', page = 1, limit = 10) =>
+  getAll: (search = '', page = 1, limit = 10, status = 'ALL') =>
     apiClient
-      .get('/service-request/dashboard', { params: { search, page, limit } })
+      .get('/service-request/dashboard', { params: { search, page, limit, status } })
       .then((r) => r.data),
 
   getDetail: (ticketNumber: string) =>
@@ -19,7 +26,7 @@ export const srApi = {
     apiClient.get('/service-request/activities').then((r) => r.data),
 
   create: (data: Record<string, unknown>) =>
-    apiClient.post('/service-request/entry', data).then((r) => r.data),
+    apiClient.post('/service-request/entry', { ...data, adminId: 1 }).then((r) => r.data),
 
   prosesKasir: (ticketNumber: string, paymentData: Record<string, unknown>) =>
     apiClient
@@ -64,4 +71,17 @@ export const srApi = {
     performedBy?: number;
   }) =>
     apiClient.post(`/service-request/${ticketNumber}/retry-awaiting-parts`, data).then((r) => r.data),
+
+  createInvoice: async (ticketNumber: string) => {
+    const invoice = await apiClient.post(`/finance/invoices/from-sr/${ticketNumber}`).then((r) => r.data);
+    return invoice;
+  },
+
+  payInvoice: async (invoiceId: number, amount: number) => {
+    await apiClient.post(`/finance/invoices/${invoiceId}/pay`, {
+      amount,
+      paymentMethod: 'CASH',
+      paidAt: new Date().toISOString(),
+    });
+  },
 };

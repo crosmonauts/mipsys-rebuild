@@ -38,21 +38,21 @@ export function POReceivingModal({ poId, items, onClose, onSuccess }: POReceivin
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900">Konfirmasi Penerimaan Barang</h2>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200" role="dialog" aria-modal="true">
+      <div className="bg-card rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-bold text-foreground">Konfirmasi Penerimaan Barang</h2>
         </div>
 
         <div className="p-6 space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
               <div>
-                <div className="font-semibold text-sm text-slate-900">{item.partName || `Part #${item.sparePartId}`}</div>
-                <div className="text-xs text-slate-500">Order: {item.quantity} | Sudah diterima: {item.receivedQty || 0}</div>
+                <div className="font-semibold text-sm text-foreground">{item.partName || `Part #${item.sparePartId}`}</div>
+                <div className="text-xs text-muted-foreground">Order: {item.quantity} | Sudah diterima: {item.receivedQty || 0}</div>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-500">Terima:</label>
+                <label className="text-xs text-muted-foreground">Terima:</label>
                 <input
                   type="number"
                   min={0}
@@ -61,24 +61,24 @@ export function POReceivingModal({ poId, items, onClose, onSuccess }: POReceivin
                   onChange={(e) =>
                     setReceivedQtys((prev) => ({ ...prev, [item.id!]: parseInt(e.target.value) || 0 }))
                   }
-                  className="w-20 h-8 text-center text-sm font-bold border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  className="w-20 h-8 text-center text-sm font-bold border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
           ))}
         </div>
 
-        <div className="p-6 border-t border-slate-200 flex gap-3">
+        <div className="p-6 border-t border-border flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-12 bg-white hover:bg-slate-100 text-slate-500 font-bold text-sm uppercase rounded-xl border border-slate-300 transition-all"
+            className="flex-1 h-12 bg-background hover:bg-muted/50 text-muted-foreground font-bold text-sm uppercase rounded-xl border border-border transition-all motion-safe:active:scale-98"
           >
             Batal
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm uppercase rounded-xl shadow-lg transition-all disabled:opacity-50"
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm uppercase rounded-xl shadow-lg transition-all disabled:opacity-50 motion-safe:active:scale-98"
           >
             {isSubmitting ? 'Memproses...' : 'Konfirmasi Penerimaan'}
           </button>

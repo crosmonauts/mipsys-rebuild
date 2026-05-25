@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import {
   Printer,
   User,
@@ -12,11 +13,12 @@ import {
   AlertCircle,
   Loader2,
   ChevronRight,
+  ArrowLeft,
 } from 'lucide-react';
 
 // --- IMPORT DARI STRUKTUR FEATURE (Anti-Defect) ---
 import { serviceRequestSchema, type SRFormValues } from '../schemas/sr-schema';
-import { srApi } from '../services/sr-api';
+import { srApi } from '../api/sr-api';
 
 // Shadcn UI (Sesuaikan path jika berbeda)
 import {
@@ -30,15 +32,9 @@ import {
 import { Input } from '@/src/components/ui/input';
 import { Textarea } from '@/src/components/ui/textarea';
 import { Button } from '@/src/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/src/components/ui/select';
 
 export function CreateSRForm() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SRFormValues>({
@@ -67,9 +63,10 @@ export function CreateSRForm() {
       );
 
       form.reset();
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
       const errorMsg =
-        error.response?.data?.message || 'Gagal menyambung ke server';
+        err.response?.data?.message || 'Gagal menyambung ke server';
       toast.error(
         `Gagal: ${Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg}`,
       );
@@ -79,14 +76,21 @@ export function CreateSRForm() {
   };
 
   return (
-     <div className="max-w-4xl mx-auto my-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      {/* HEADER PAGE - MIP SEMARANG Branding */}
+    <div className="max-w-4xl mx-auto my-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-300">
       <header className="mb-10 text-left px-4">
+        <button
+          type="button"
+          onClick={() => router.push('/service-request')}
+          className="mb-6 flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Kembali
+        </button>
         <h1 className="text-5xl font-display font-bold text-foreground tracking-tight flex items-center gap-3">
           <div className="p-2 bg-primary rounded-xl" aria-hidden="true">
-            <Printer className="text-white w-8 h-8" />
+            <Printer className="text-primary-foreground w-8 h-8" />
           </div>
-          T-RECS Entry
+          Service Requests Entry
         </h1>
         <p className="text-muted-foreground mt-2 font-medium">
           Pendaftaran Unit Epson Masuk •{' '}
@@ -99,23 +103,20 @@ export function CreateSRForm() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 px-4 pb-28"
         >
-          {/* SEKSI 01: PELANGGAN (WCAG Labeling) */}
-          <section className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-blue-200">
+          <section className="bg-card border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-primary/30">
             <div
-              className="bg-slate-50 px-6 py-4 border-b flex items-center justify-between"
+              className="bg-muted/50 px-6 py-4 border-b border-border/20 flex items-center justify-between"
               aria-hidden="true"
             >
-               <div className="flex items-center gap-3">
-                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white">
-                   01
-                 </span>
-                 <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
-                   Informasi Pelanggan
-                 </h2>
-               </div>
-               <div className="relative h-10 w-10">
-                 <User size={18} className="absolute inset-0 flex items-center justify-center text-slate-300" />
-               </div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">
+                  01
+                </span>
+                <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">
+                  Informasi Pelanggan
+                </h2>
+              </div>
+              <User size={18} className="text-muted-foreground" />
             </div>
 
             <div className="p-8 space-y-6">
@@ -125,12 +126,12 @@ export function CreateSRForm() {
                   name="customerName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      <FormLabel className="micro-label text-muted-foreground">
                         Nama Lengkap / Instansi
                       </FormLabel>
                       <FormControl>
                         <Input
-                          className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white rounded-xl"
+                          className="h-12 bg-card border-border/30 rounded-xl"
                           placeholder="Bpk. Nanda / Kantor Pajak"
                           {...field}
                         />
@@ -144,23 +145,23 @@ export function CreateSRForm() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      <FormLabel className="micro-label text-muted-foreground">
                         WhatsApp / Telepon
                       </FormLabel>
-                       <FormControl>
-                         <div className="relative h-10 w-10">
-                           <Smartphone
-                             size={16}
-                             className="absolute inset-0 flex items-center justify-center text-slate-400"
-                             aria-hidden="true"
-                           />
-                         </div>
-                         <Input
-                           className="h-12 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
-                           placeholder="0812..."
-                           {...field}
-                         />
-                       </FormControl>
+                      <FormControl>
+                        <div className="relative">
+                          <Smartphone
+                            size={16}
+                            className="absolute left-4 top-4 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          <Input
+                            className="h-12 pl-10 bg-card border-border/30 rounded-xl"
+                            placeholder="0812..."
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
                       <FormMessage className="text-xs font-bold" />
                     </FormItem>
                   )}
@@ -172,23 +173,23 @@ export function CreateSRForm() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <FormLabel className="micro-label text-muted-foreground">
                       Alamat Lengkap
                     </FormLabel>
-                       <FormControl>
-                         <div className="relative h-10 w-10">
-                           <MapPin
-                             size={16}
-                             className="absolute inset-0 flex items-center justify-center text-slate-400"
-                             aria-hidden="true"
-                           />
-                         </div>
-                         <Textarea
-                           className="min-h-24 pl-10 bg-slate-50/50 border-slate-200 rounded-xl"
-                           placeholder="Jl. Gajahmada No. XX, Semarang..."
-                           {...field}
-                         />
-                       </FormControl>
+                    <FormControl>
+                      <div className="relative">
+                        <MapPin
+                          size={16}
+                          className="absolute left-4 top-4 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                        <Textarea
+                          className="min-h-24 pl-10 bg-card border-border/30 rounded-xl"
+                          placeholder="Jl. Gajahmada No. XX, Semarang..."
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
                     <FormMessage className="text-xs font-bold" />
                   </FormItem>
                 )}
@@ -196,39 +197,35 @@ export function CreateSRForm() {
             </div>
           </section>
 
-          {/* SEKSI 02: PERANGKAT */}
-          <section className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-orange-200">
-             <div
-               className="bg-slate-50 px-6 py-4 border-b flex items-center justify-between"
-               aria-hidden="true"
-             >
-               <div className="flex items-center gap-3">
-                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white">
-                   02
-                 </span>
-                 <h2 className="font-bold text-slate-800 uppercase tracking-wider text-xs">
-                   Detail Unit & Masalah
-                 </h2>
-               </div>
-               <div className="relative h-10 w-10">
-                 <AlertCircle size={18} className="absolute inset-0 flex items-center justify-center text-slate-300" />
-               </div>
-             </div>
+          <section className="bg-card border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-primary/30">
+            <div
+              className="bg-muted/50 px-6 py-4 border-b border-border/20 flex items-center justify-between"
+              aria-hidden="true"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">
+                  02
+                </span>
+                <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">
+                  Detail Unit & Masalah
+                </h2>
+              </div>
+              <AlertCircle size={18} className="text-muted-foreground" />
+            </div>
 
             <div className="p-8 space-y-6">
-              {/* Grid untuk Model dan Serial Number */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="modelName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      <FormLabel className="micro-label text-muted-foreground">
                         Model Mesin
                       </FormLabel>
                       <FormControl>
                         <Input
-                          className="h-12 bg-slate-50/50 border-slate-200 rounded-xl uppercase font-bold"
+                          className="h-12 bg-card border-border/30 rounded-xl uppercase font-bold"
                           placeholder="L3110"
                           {...field}
                         />
@@ -242,12 +239,12 @@ export function CreateSRForm() {
                   name="serialNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      <FormLabel className="micro-label text-muted-foreground">
                         Serial Number (S/N)
                       </FormLabel>
                       <FormControl>
                         <Input
-                          className="h-12 bg-slate-50/50 border-slate-200 rounded-xl uppercase font-mono"
+                          className="h-12 bg-card border-border/30 rounded-xl uppercase font-mono"
                           placeholder="X7YZ..."
                           {...field}
                         />
@@ -263,12 +260,12 @@ export function CreateSRForm() {
                 name="problemDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <FormLabel className="micro-label text-muted-foreground">
                       Keluhan Pelanggan
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        className="min-h-32 bg-slate-50/50 border-slate-200 rounded-xl italic"
+                        className="min-h-32 bg-card border-border/30 rounded-xl italic"
                         placeholder="Contoh: Hasil print garis, mati total..."
                         {...field}
                       />
@@ -280,14 +277,16 @@ export function CreateSRForm() {
             </div>
           </section>
 
-          {/* SUBMIT BUTTON - DoD Focus Ring */}
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full md:w-auto h-14 px-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-lg rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
+            className="w-full md:w-auto h-14 px-12 font-black text-lg rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
           >
             {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2
+                className="w-5 h-5 motion-safe:animate-spin"
+                aria-hidden="true"
+              />
             ) : (
               <>
                 SIMPAN TIKET

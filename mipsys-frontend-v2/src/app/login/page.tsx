@@ -34,7 +34,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <div className="inline-flex p-3 bg-primary rounded-2xl mb-4" aria-hidden="true">
-            <Printer className="text-white w-8 h-8" />
+            <Printer className="text-primary-foreground w-8 h-8" />
           </div>
           <h1 className="text-4xl font-display font-bold text-foreground tracking-tight">
             MiPSys
@@ -91,7 +91,7 @@ export default function LoginPage() {
             className="w-full h-12 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
           >
             {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 motion-safe:animate-spin" aria-hidden="true" />
             ) : (
               'MASUK'
             )}

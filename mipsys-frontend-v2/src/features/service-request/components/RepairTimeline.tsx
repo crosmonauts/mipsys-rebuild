@@ -5,7 +5,6 @@ import {
   Wrench,
   Package,
   CheckCircle2,
-  ArrowRight,
 } from 'lucide-react';
 
 type ServiceStep = {
@@ -112,35 +111,35 @@ function buildSteps(
     {
       key: 'received',
       label: 'Unit Diterima',
-      icon: <ClipboardList size={16} />,
+      icon: <ClipboardList size={16} aria-hidden="true" />,
       status: getStepStatus('received', currentStep),
       date: dates.incomingDate,
     },
     {
       key: 'checked',
       label: 'Pengecekan',
-      icon: <Search size={16} />,
+      icon: <Search size={16} aria-hidden="true" />,
       status: getStepStatus('checked', currentStep),
       date: dates.checkDate,
     },
     {
       key: 'diagnosed',
       label: 'Diagnosa',
-      icon: <Wrench size={16} />,
+      icon: <Wrench size={16} aria-hidden="true" />,
       status: getStepStatus('diagnosed', currentStep),
       date: dates.spDate,
     },
     {
       key: 'parts',
       label: 'Penggantian Part',
-      icon: <Package size={16} />,
+      icon: <Package size={16} aria-hidden="true" />,
       status: getStepStatus('parts', currentStep),
       date: dates.approveDate,
     },
     {
       key: 'done',
       label: 'Selesai',
-      icon: <CheckCircle2 size={16} />,
+      icon: <CheckCircle2 size={16} aria-hidden="true" />,
       status: getStepStatus('done', currentStep),
       date: dates.readyDate || dates.closeDate,
     },
@@ -176,7 +175,7 @@ function getStepStatus(
 function getStatusRing(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'bg-emerald-500/20 text-emerald-400';
+      return 'bg-accent/20 text-accent';
     case 'current':
       return 'bg-primary/20 text-primary ring-2 ring-primary/40';
     default:
@@ -187,7 +186,7 @@ function getStatusRing(status: ServiceStep['status']): string {
 function getLineColor(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'bg-emerald-500/30';
+      return 'bg-accent/30';
     case 'current':
       return 'bg-primary/30';
     default:
@@ -198,7 +197,7 @@ function getLineColor(status: ServiceStep['status']): string {
 function getTextColor(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'text-emerald-400';
+      return 'text-accent';
     case 'current':
       return 'text-primary';
     default:

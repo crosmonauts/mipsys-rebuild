@@ -85,6 +85,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --font-sans: var(--font-body);
   --font-body: var(--font-body);
   --font-display: var(--font-display);
   --font-code: var(--font-mono);
@@ -144,10 +145,6 @@
     background:
       repeating-linear-gradient(0deg, transparent, transparent 20px, oklch(0.98 0.02 88 / 3%) 20px, oklch(0.98 0.02 88 / 3%) 21px),
       repeating-linear-gradient(90deg, transparent, transparent 20px, oklch(0.98 0.02 88 / 3%) 20px, oklch(0.98 0.02 88 / 3%) 21px);
-  }
-
-  .command-strip {
-    background: linear-gradient(135deg, oklch(0.78 0.16 61), oklch(0.77 0.134 178), oklch(0.68 0.18 286));
   }
 
   .micro-label {

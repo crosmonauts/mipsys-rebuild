@@ -25,7 +25,7 @@ interface DeviceSectionProps {
 
 export function DeviceSection({ form }: DeviceSectionProps) {
   return (
-    <section className="bg-card border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-orange-500/30">
+    <section className="bg-card border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-primary/30">
       <SectionHeader
         number="02"
         title="Detail Unit & Masalah"
@@ -56,7 +56,7 @@ function SectionHeader({
       aria-hidden="true"
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 text-[10px] font-black text-orange-400">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">
           {number}
         </span>
         <h2 className="text-foreground uppercase tracking-wider text-xs font-bold">

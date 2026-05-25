@@ -1,9 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
-import { srApi } from '../services/sr-api';
+import { srApi } from '../api/sr-api';
 import { toast } from 'react-hot-toast';
 
+export interface ServiceRequestDetail {
+  id: number | null;
+  customerName: string;
+  phone: string;
+  address: string;
+  modelName: string;
+  serialNumber: string;
+  problemDescription: string;
+  statusService: string;
+  serviceType: string;
+  incomingDate: string;
+  serviceFee: string;
+  partFee: string;
+  shippingFee: string;
+  hasInvoice?: boolean;
+}
+
 export const useServiceRequest = (ticketNumber: string) => {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ServiceRequestDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchDetail = useCallback(async () => {
@@ -26,6 +43,7 @@ export const useServiceRequest = (ticketNumber: string) => {
         serviceFee: res.serviceFee || '0',
         partFee: res.partFee || '0',
         shippingFee: res.shippingFee || '0',
+        hasInvoice: res.hasInvoice ?? false,
       });
     } catch (error) {
       toast.error('Gagal sinkronisasi data unit');
@@ -38,5 +56,5 @@ export const useServiceRequest = (ticketNumber: string) => {
     fetchDetail();
   }, [fetchDetail]);
 
-  return { data, setData, isLoading };
+  return { data, setData, isLoading, refetch: fetchDetail };
 };

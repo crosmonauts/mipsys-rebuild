@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import {
   X,
   Loader2,
-  CheckCircle2,
   Package,
   AlertTriangle,
   FileText,
@@ -20,6 +19,7 @@ import {
   DialogOverlay,
 } from '@/src/components/ui/dialog';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { srApi } from '@/src/features/service-request/api/sr-api';
 import { orderPartsApi } from '@/src/features/service-request/api/order-parts-api';
@@ -186,7 +186,7 @@ export function ApproveQuoteModal({
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogPortal>
           <DialogOverlay />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-card shadow-lg duration-200 sm:rounded-[2rem] p-0 overflow-hidden">
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-popover shadow-lg duration-200 sm:rounded-[2rem] p-0 overflow-hidden">
             <DialogDescription className="sr-only">
               {step === 'form'
                 ? 'Form pembuatan penawaran biaya service'
@@ -327,11 +327,11 @@ function FormHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-emerald-600 text-white">
+    <div className="p-8 bg-accent text-accent-foreground">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-card/20 rounded-2xl backdrop-blur-md">
-            <FileText size={24} />
+          <div className="p-3 bg-background/20 rounded-2xl backdrop-blur-md">
+            <FileText size={24} aria-hidden="true" />
           </div>
           <div>
             <DialogTitle className="text-xl font-black uppercase tracking-tight">
@@ -345,9 +345,9 @@ function FormHeader({
         <button
           type="button"
           onClick={onClose}
-          className="p-2 hover:bg-card/10 rounded-xl transition-all outline-none"
+          className="p-2 hover:bg-background/10 rounded-xl transition-all outline-none"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -418,7 +418,7 @@ function PartsList({
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
-        <Loader2 className="animate-spin" size={14} /> Memuat part...
+        <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> Memuat part…
       </div>
     );
   }
@@ -428,14 +428,14 @@ function PartsList({
   return (
     <div className="space-y-3">
       <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-2">
-        <Package size={14} /> Part Diusulkan
+        <Package size={14} aria-hidden="true" /> Part Diusulkan
       </label>
 
       <div className="space-y-2">
         {parts.map((part) => (
           <div
             key={part.id}
-            className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border-2 border-amber-200"
+            className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30"
           >
             <div className="flex-1 min-w-0">
               <p className="font-bold text-foreground text-sm truncate">{part.partName}</p>
@@ -443,16 +443,16 @@ function PartsList({
                 {part.partCode ?? 'Manual'} x {part.quantity}
               </p>
             </div>
-            <p className="font-black text-stone-900 text-sm">
+            <p className="font-black text-amber-400 text-sm">
               Rp {part.lineTotal.toLocaleString('id-ID')}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-blue-100">
-        <AlertTriangle size={14} className="text-primary shrink-0" />
-        <p className="text-[10px] text-blue-700 font-bold">
+      <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+        <AlertTriangle size={14} className="text-primary shrink-0" aria-hidden="true" />
+        <p className="text-[10px] text-primary font-bold">
           Setelah disimpan, penawaran bisa dicetak untuk diberikan ke pelanggan.
         </p>
       </div>
@@ -472,7 +472,7 @@ function SummaryRow({
   const grandTotal = totalPartCost + serviceFee + shippingFee;
 
   return (
-    <div className="space-y-3 p-4 rounded-xl bg-muted/50 border-2 border-border/30">
+    <div className="space-y-3 p-4 rounded-xl bg-muted/50 border border-border/30">
       <div className="flex justify-between items-center text-sm">
         <span className="font-bold text-muted-foreground">Biaya Part</span>
         <span className="font-black text-foreground">Rp {totalPartCost.toLocaleString('id-ID')}</span>
@@ -485,10 +485,10 @@ function SummaryRow({
         <span className="font-bold text-muted-foreground">Biaya Kirim</span>
         <span className="font-black text-foreground">Rp {shippingFee.toLocaleString('id-ID')}</span>
       </div>
-      <hr className="border-slate-300" />
+      <hr className="border-border/30" />
       <div className="flex justify-between items-center">
         <span className="text-sm font-black text-foreground/70">Grand Total</span>
-        <span className="text-xl font-black text-emerald-700">Rp {grandTotal.toLocaleString('id-ID')}</span>
+        <span className="text-xl font-black text-accent">Rp {grandTotal.toLocaleString('id-ID')}</span>
       </div>
     </div>
   );
@@ -505,28 +505,27 @@ function FormFooter({
 }) {
   return (
     <div className="p-8 bg-muted/50 border-t flex gap-3">
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={onClose}
-        className="flex-1 h-14 bg-card hover:bg-muted text-muted-foreground font-black text-xs uppercase rounded-2xl border-2 border-border/30 transition-all"
+        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase"
       >
         Batal
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={onSave}
         disabled={isSubmitting}
-        className="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
+        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase gap-2 bg-accent hover:bg-accent/90"
       >
         {isSubmitting ? (
-          <Loader2 className="animate-spin" size={18} />
+          <Loader2 className="motion-safe:animate-spin" size={18} aria-hidden="true" />
         ) : (
-          <>
-            <Save size={18} />
-            Simpan Penawaran
-          </>
+          <Save size={18} aria-hidden="true" />
         )}
-      </button>
+        Simpan Penawaran
+      </Button>
     </div>
   );
 }
@@ -541,11 +540,11 @@ function PreviewHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-emerald-600 text-white no-print">
+    <div className="p-8 bg-accent text-accent-foreground no-print">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-card/20 rounded-2xl backdrop-blur-md">
-            <FileText size={24} />
+          <div className="p-3 bg-background/20 rounded-2xl backdrop-blur-md">
+            <FileText size={24} aria-hidden="true" />
           </div>
           <div>
             <DialogTitle className="text-xl font-black uppercase tracking-tight">
@@ -559,9 +558,9 @@ function PreviewHeader({
         <button
           type="button"
           onClick={onClose}
-          className="p-2 hover:bg-card/10 rounded-xl transition-all outline-none no-print"
+          className="p-2 hover:bg-background/10 rounded-xl transition-all outline-none no-print"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -577,21 +576,22 @@ function PreviewFooter({
 }) {
   return (
     <div className="p-8 bg-muted/50 border-t flex gap-3 no-print">
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={onClose}
-        className="flex-1 h-14 bg-card hover:bg-muted text-muted-foreground font-black text-xs uppercase rounded-2xl border-2 border-border/30 transition-all"
+        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase"
       >
         Tutup
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={onPrint}
-        className="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
+        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase gap-2 bg-accent hover:bg-accent/90"
       >
-        <Printer size={18} />
+        <Printer size={18} aria-hidden="true" />
         Cetak
-      </button>
+      </Button>
     </div>
   );
 }

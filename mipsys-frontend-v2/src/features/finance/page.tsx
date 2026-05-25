@@ -2,33 +2,48 @@
 
 import React, { useState } from 'react';
 import {
-  Search,
   TrendingUp,
   CreditCard,
   AlertCircle,
-  RefreshCcw,
+  CheckCircle,
+  Ban,
+  Eye,
 } from 'lucide-react';
-import { InvoiceTableRow } from './components/InvoiceTableRow';
+import { PageHeader } from '@/src/components/ui/page-header';
+import { SearchBar } from '@/src/components/ui/search-bar';
+import { DataTable } from '@/src/components/ui/data-table';
+import type { Column } from '@/src/components/ui/data-table';
+import { Card, CardContent } from '@/src/components/ui/card';
+import { Button } from '@/src/components/ui/button';
 import { InvoiceDetailModal } from './components/InvoiceDetailModal';
 import { PaymentForm } from './components/PaymentForm';
 import { useInvoices, useFinanceStats } from './hooks/useFinance';
 import { financeApi } from './api/finance-api';
-import { Invoice } from './types';
+import { Invoice, PaymentHistory } from './types';
 import { toast } from 'react-hot-toast';
-import { LoadingSkeleton } from '@/src/components/ui/loading-skeleton';
+
+const statusStyles: Record<string, string> = {
+  PAID: 'bg-accent/15 text-accent border-accent/30',
+  UNPAID: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  OVERDUE: 'bg-destructive/10 text-destructive border-destructive/30',
+  VOID: 'bg-muted text-muted-foreground border-border',
+};
 
 export default function FinancePage() {
   const [search, setSearch] = useState('');
   const { data: invoices, isLoading, refetch } = useInvoices(search);
   const { stats } = useFinanceStats();
-  const [selectedInvoice, setSelectedInvoice] = useState<(Invoice & { payments?: any[] }) | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<
+    (Invoice & { payments?: PaymentHistory[] }) | null
+  >(null);
   const [showPayInvoiceId, setShowPayInvoiceId] = useState<number | null>(null);
   const [payInvoiceTotal, setPayInvoiceTotal] = useState(0);
 
-  const filtered = invoices.filter((inv) =>
-    inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
-    inv.clientName?.toLowerCase().includes(search.toLowerCase()) ||
-    inv.ticketNumber?.toLowerCase().includes(search.toLowerCase())
+  const filtered = invoices.filter(
+    (inv) =>
+      inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      inv.clientName?.toLowerCase().includes(search.toLowerCase()) ||
+      inv.ticketNumber?.toLowerCase().includes(search.toLowerCase()),
   );
 
   async function handleView(invoice: Invoice) {
@@ -55,29 +70,119 @@ export default function FinancePage() {
     }
   }
 
-  return (
-    <main className="planner-bg min-h-screen">
-      <div className="max-w-[1500px] mx-auto px-4 py-8 lg:py-12 space-y-8 animate-in fade-in duration-500">
-        {/* HEADER */}
-        <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 w-fit px-2.5 py-0.5 bg-primary/20 text-primary rounded text-[9px] font-black uppercase tracking-widest border border-primary/30">
-              <CreditCard size={10} /> Penagihan
-            </div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground tracking-tight">
-              Finance & <span className="text-primary">Billing</span>
-            </h2>
-            <p className="text-xs md:text-sm text-muted-foreground font-bold italic">
-              &quot;Monitor pendapatan dan status penagihan secara real-time.&quot;
-            </p>
-          </div>
-        </section>
+  const columns: Column<Invoice>[] = [
+    {
+      header: 'No. Invoice',
+      cell: (inv) => (
+        <span className="font-mono text-xs font-black text-foreground">
+          {inv.invoiceNumber}
+        </span>
+      ),
+    },
+    {
+      header: 'Klien',
+      cell: (inv) => (
+        <span className="text-xs font-black text-foreground">
+          {inv.clientName}
+        </span>
+      ),
+    },
+    {
+      header: 'Tiket',
+      cell: (inv) => (
+        <span className="text-xs font-bold text-muted-foreground">
+          {inv.ticketNumber}
+        </span>
+      ),
+    },
+    {
+      header: 'Total',
+      headerClassName: 'text-right',
+      cell: (inv) => (
+        <span className="text-xs font-black text-foreground block text-right">
+          Rp {parseFloat(inv.total || '0').toLocaleString('id-ID')}
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
+      headerClassName: 'text-center',
+      cell: (inv) => (
+        <div className="flex justify-center">
+          <span
+            className={`px-2.5 py-1 rounded-md text-[10px] font-black border-2 uppercase ${statusStyles[inv.status] || ''}`}
+          >
+            {inv.status}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: 'Aksi',
+      headerClassName: 'text-center',
+      cell: (inv) => (
+        <div className="flex items-center justify-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleView(inv)}
+            className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10"
+            aria-label="Lihat detail invoice"
+          >
+            <Eye size={16} aria-hidden="true" />
+          </Button>
+          {inv.status === 'UNPAID' && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handlePay(inv)}
+                className="h-8 w-8 rounded-lg text-accent hover:bg-accent/10"
+                aria-label="Catat pembayaran"
+              >
+                <CheckCircle size={16} aria-hidden="true" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (window.confirm('Void invoice ini?')) handleVoid(inv);
+                }}
+                className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+                aria-label="Void invoice"
+              >
+                <Ban size={16} aria-hidden="true" />
+              </Button>
+            </>
+          )}
+          {inv.status === 'PAID' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled
+              className="h-8 w-8 rounded-lg text-muted-foreground/30 cursor-not-allowed"
+              aria-label="Sudah dibayar"
+            >
+              <CheckCircle size={16} aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
-        {/* SUMMARY CARDS */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="paper-card p-6">
-            <div className="p-2.5 bg-primary/10 text-primary rounded-xl w-fit mb-4">
-              <TrendingUp size={20} />
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Finance & Billing"
+        subtitle="Monitor pendapatan dan status penagihan secara real-time."
+      />
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Card className="border-none rounded-[2rem] shadow-sm">
+          <CardContent className="p-4">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl w-fit mb-2">
+              <TrendingUp size={16} />
             </div>
             <p className="micro-label text-muted-foreground">
               Total Pendapatan
@@ -85,10 +190,12 @@ export default function FinancePage() {
             <h3 className="text-2xl font-black text-foreground tracking-tighter">
               Rp {stats.totalRevenue.toLocaleString('id-ID')}
             </h3>
-          </div>
-          <div className="paper-card p-6">
-            <div className="p-2.5 bg-accent/10 text-accent rounded-xl w-fit mb-4">
-              <CreditCard size={20} />
+          </CardContent>
+        </Card>
+        <Card className="border-none rounded-[2rem] shadow-sm">
+          <CardContent className="p-4">
+            <div className="p-2 bg-accent/10 text-accent rounded-xl w-fit mb-2">
+              <CreditCard size={16} />
             </div>
             <p className="micro-label text-muted-foreground">
               Menunggu Pembayaran
@@ -96,124 +203,74 @@ export default function FinancePage() {
             <h3 className="text-2xl font-black text-foreground tracking-tighter">
               Rp {stats.outstanding.toLocaleString('id-ID')}
             </h3>
-          </div>
-          <div className="paper-card p-6">
-            <div className="p-2.5 bg-destructive/10 text-destructive rounded-xl w-fit mb-4">
-              <AlertCircle size={20} />
+          </CardContent>
+        </Card>
+        <Card className="border-none rounded-[2rem] shadow-sm">
+          <CardContent className="p-4">
+            <div className="p-2 bg-destructive/10 text-destructive rounded-xl w-fit mb-2">
+              <AlertCircle size={16} />
             </div>
-            <p className="micro-label text-muted-foreground">
-              Tagihan Overdue
-            </p>
+            <p className="micro-label text-muted-foreground">Tagihan Overdue</p>
             <h3 className="text-2xl font-black text-foreground tracking-tighter">
               {stats.overdueCount}
             </h3>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
+      </section>
 
-        {/* SEARCH */}
-        <section className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Cari No. Invoice atau Nama Klien..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-input border border-border rounded-xl text-xs font-bold text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/50 outline-none transition-all"
-            />
-          </div>
-          <button
-            onClick={() => refetch()}
-            className="px-4 py-3 bg-card border border-border rounded-xl text-xs font-black uppercase tracking-wider text-foreground hover:bg-muted transition-all flex items-center gap-2"
-          >
-            <RefreshCcw size={16} />
-            Perbarui
-          </button>
-        </section>
-
-        {/* DATA TABLE */}
-        <section className="paper-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th scope="col" className="p-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest">
-                    No. Invoice
-                  </th>
-                  <th scope="col" className="p-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest">
-                    Klien
-                  </th>
-                  <th scope="col" className="p-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest">
-                    Tiket
-                  </th>
-                  <th scope="col" className="p-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-right">
-                    Total
-                  </th>
-                  <th scope="col" className="p-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-center">
-                    Status
-                  </th>
-                  <th scope="col" className="p-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-center">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="p-8">
-                      <LoadingSkeleton variant="table-row" className="h-8" />
-                      <LoadingSkeleton variant="table-row" className="h-8 mt-2" />
-                      <LoadingSkeleton variant="table-row" className="h-8 mt-2" />
-                    </td>
-                  </tr>
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-12 text-center text-muted-foreground font-bold italic text-sm">
-                      Tidak ada invoice.
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((inv) => (
-                    <InvoiceTableRow
-                      key={inv.id}
-                      invoice={inv}
-                      onView={() => handleView(inv)}
-                      onPay={() => handlePay(inv)}
-                      onVoid={() => handleVoid(inv)}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Invoice Detail Modal */}
-        {selectedInvoice && (
-          <InvoiceDetailModal
-            invoice={selectedInvoice}
-            onClose={() => setSelectedInvoice(null)}
-          />
-        )}
-
-        {/* Payment Form Modal */}
-        {showPayInvoiceId && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPayInvoiceId(null)}>
-            <div className="paper-card p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-black text-lg text-foreground mb-4">Catat Pembayaran</h3>
-              <PaymentForm
-                invoiceId={showPayInvoiceId}
-                invoiceTotal={payInvoiceTotal}
-                onSuccess={() => { setShowPayInvoiceId(null); refetch(); }}
-                onCancel={() => setShowPayInvoiceId(null)}
-              />
-            </div>
-          </div>
-        )}
+      <div className="flex flex-col md:flex-row gap-4">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Cari No. Invoice atau Nama Klien..."
+        />
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase tracking-wider shrink-0"
+        >
+          Perbarui
+        </Button>
       </div>
-    </main>
+
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyExtractor={(inv) => inv.id}
+        isLoading={isLoading}
+      />
+
+      {selectedInvoice && (
+        <InvoiceDetailModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+
+      {showPayInvoiceId && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
+          onClick={() => setShowPayInvoiceId(null)}
+        >
+          <div
+            className="bg-card rounded-[2.5rem] p-6 max-w-md w-full mx-4 shadow-2xl border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-black text-lg text-foreground mb-4">
+              Catat Pembayaran
+            </h3>
+            <PaymentForm
+              invoiceId={showPayInvoiceId}
+              invoiceTotal={payInvoiceTotal}
+              onSuccess={() => {
+                setShowPayInvoiceId(null);
+                refetch();
+              }}
+              onCancel={() => setShowPayInvoiceId(null)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
