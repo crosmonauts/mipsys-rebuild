@@ -13,7 +13,7 @@ import {
   Printer,
   LogOut,
   X,
-  ShoppingBag, // <-- Import icon baru untuk Part Order
+  ShoppingBag,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -123,7 +123,9 @@ export function Sidebar({
                 <div className="flex items-center gap-3">
                   <span
                     className={
-                      isActive ? 'text-sidebar-active' : 'group-hover:text-sidebar-active'
+                      isActive
+                        ? 'text-sidebar-active'
+                        : 'group-hover:text-sidebar-active'
                     }
                   >
                     {item.icon}
@@ -157,7 +159,10 @@ export function Sidebar({
               </p>
             </div>
             <button
-              onClick={() => { logout(); router.push('/login'); }}
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
               className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted"
               aria-label="Logout"
             >
