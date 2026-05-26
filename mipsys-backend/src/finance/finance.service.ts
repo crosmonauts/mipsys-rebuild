@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { eq, and, desc, sql, like, or } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
   invoices,
@@ -24,7 +24,7 @@ export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private orderPartsService: OrderPartsService,
   ) {}
 
@@ -90,11 +90,11 @@ export class FinanceService {
       total: total.toFixed(2),
       status: 'UNPAID',
       paymentMethod: dto.paymentMethod || null,
-      invoiceDate: new Date(),
+      invoiceDate: new Date().toISOString().split('T')[0],
       notes: dto.notes?.trim() ?? null,
-    });
+    }).returning({ id: invoices.id });
 
-    return { success: true, id: result.insertId, invoiceNumber };
+    return { success: true, id: result.id, invoiceNumber };
   }
 
   async recordPayment(id: number, dto: RecordPaymentDto) {
@@ -123,7 +123,7 @@ export class FinanceService {
       .set({
         status: 'PAID',
         paymentMethod: dto.paymentMethod,
-        paidDate: new Date(),
+        paidDate: new Date().toISOString().split('T')[0],
         updatedAt: new Date(),
       })
       .where(eq(invoices.id, id) as any);
@@ -212,24 +212,24 @@ export class FinanceService {
 
      const invoiceNumber = await this.generateInvoiceNumber();
 
-     const [invoiceResult] = await this.db.insert(invoices).values({
-       invoiceNumber,
-       ticketNumber,
-       serviceRequestId: sr.id,
-       clientName: sr.customerName || 'Customer',
-       serviceFee: serviceFee.toString(),
-       partFee: partsCost.toString(),
-       shippingFee: shippingFee.toString(),
-       ppn: ppn.toFixed(2),
-       ppnRate: ppnRate.toString(),
-       total: total.toFixed(2),
-       status: 'UNPAID',
-       invoiceDate: new Date(),
-     });
+      const [invoiceResult] = await this.db.insert(invoices).values({
+        invoiceNumber,
+        ticketNumber,
+        serviceRequestId: sr.id,
+        clientName: sr.customerName || 'Customer',
+        serviceFee: serviceFee.toString(),
+        partFee: partsCost.toString(),
+        shippingFee: shippingFee.toString(),
+        ppn: ppn.toFixed(2),
+        ppnRate: ppnRate.toString(),
+        total: total.toFixed(2),
+        status: 'UNPAID',
+        invoiceDate: new Date().toISOString().split('T')[0],
+      }).returning({ id: invoices.id });
 
-     return {
-       success: true,
-       id: invoiceResult.insertId,
+      return {
+        success: true,
+        id: invoiceResult.id,
        invoiceNumber,
        breakdown: {
          serviceFee,
@@ -257,11 +257,11 @@ export class FinanceService {
     await this.db
       .insert(financeSettings)
       .values({ key: counterKey, value: '0', description: `Invoice counter for ${period}` })
-      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+      .onConflictDoUpdate({ target: financeSettings.key, set: { value: sql`EXCLUDED.value` } });
 
     await this.db
       .update(financeSettings)
-      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)` })
       .where(eq(financeSettings.key, counterKey) as any);
 
     const updated = await this.db.query.financeSettings.findFirst({

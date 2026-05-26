@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { staff } from '../database/schema';
 
@@ -9,7 +9,7 @@ export class StaffService {
   private readonly logger = new Logger(StaffService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async findAll() {
@@ -23,8 +23,8 @@ export class StaffService {
   }
 
   async create(data: { name: string; role: 'ADMIN' | 'TECHNICIAN' }) {
-    const [result] = await this.db.insert(staff).values(data);
-    return { success: true, id: result.insertId };
+    const [result] = await this.db.insert(staff).values(data).returning({ id: staff.id });
+    return { success: true, id: result.id };
   }
 
   async update(id: number, data: { name?: string; role?: 'ADMIN' | 'TECHNICIAN' }) {

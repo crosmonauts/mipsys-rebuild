@@ -1,19 +1,19 @@
 import { Module, Global } from '@nestjs/common';
-import { drizzle } from 'drizzle-orm/mysql2';
-import * as mysql from 'mysql2/promise';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { databaseConfig } from '../config';
 import * as schema from './schema';
 
-const pool = mysql.createPool({
+const pool = new Pool({
   host: databaseConfig.host,
   user: databaseConfig.user,
   password: databaseConfig.password,
   database: databaseConfig.database,
   port: databaseConfig.port,
-  connectionLimit: databaseConfig.connectionLimit,
+  max: databaseConfig.connectionLimit,
 });
 
-export const db = drizzle(pool, { schema, mode: 'default' });
+export const db = drizzle(pool, { schema });
 
 @Global()
 @Module({

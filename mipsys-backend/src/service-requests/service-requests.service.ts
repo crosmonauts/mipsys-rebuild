@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { desc, eq, and, like, or, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
   serviceRequests,
@@ -38,7 +38,7 @@ export class ServiceRequestService {
   private readonly logger = new Logger(ServiceRequestService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private inventoryService: InventoryService,
     private orderPartsService: OrderPartsService,
     private financeService: FinanceService,
@@ -179,10 +179,10 @@ export class ServiceRequestService {
           adminId: adminId,
           problemDescription: dto.problemDescription?.trim(),
           statusService: StatusService.WAITING_CHECK,
-          incomingDate: new Date(),
-        });
+          incomingDate: new Date().toISOString().split('T')[0],
+        }).returning({ id: serviceRequests.id });
 
-        const srId = insertResult.insertId;
+        const srId = insertResult.id;
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const finalTicket = `SR-${dateStr}-${String(srId).padStart(4, '0')}`;
 
@@ -281,28 +281,29 @@ export class ServiceRequestService {
         }
       }
 
+      const today = new Date().toISOString().split('T')[0];
       await tx
         .update(serviceRequests)
         .set({
           statusService: dto.newStatus,
           ...(dto.newStatus === 'CHECK' && !sr.checkDate
-            ? { checkDate: new Date() }
+            ? { checkDate: today }
             : {}),
           ...(dto.newStatus === 'WAITING_APPROVE' && !sr.spDate
-            ? { spDate: new Date() }
+            ? { spDate: today }
             : {}),
           ...(dto.newStatus === 'SERVICE'
             ? {
-                spDate: !sr.spDate ? new Date() : sr.spDate,
+                spDate: !sr.spDate ? today : sr.spDate,
                 approveDate: !sr.approveDate
-                  ? new Date()
+                  ? today
                   : sr.approveDate,
               }
             : {}),
           ...(dto.newStatus === 'DONE'
             ? {
-                readyDate: new Date(),
-                closeDate: new Date(),
+                readyDate: today,
+                closeDate: today,
               }
             : {}),
         })
@@ -534,8 +535,8 @@ export class ServiceRequestService {
         .update(serviceRequests)
         .set({
           statusService: newStatus as any,
-          approveDate: new Date(),
-          ...(allInStock && !sr.spDate ? { spDate: new Date() } : {}),
+          approveDate: new Date().toISOString().split('T')[0],
+          ...(allInStock && !sr.spDate ? { spDate: new Date().toISOString().split('T')[0] } : {}),
         })
         .where(eq(serviceRequests.ticketNumber, ticketNumber));
 
@@ -640,7 +641,7 @@ export class ServiceRequestService {
         .update(serviceRequests)
         .set({
           statusService: 'SERVICE' as any,
-          spDate: new Date(),
+          spDate: new Date().toISOString().split('T')[0],
           updatedAt: new Date(),
         })
         .where(eq(serviceRequests.id, sr.id));

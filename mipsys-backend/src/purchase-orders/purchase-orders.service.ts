@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, and, desc, inArray, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
   purchaseOrders,
@@ -23,7 +23,7 @@ import { PoItemsService } from './po-items.service';
 import { validatePoTransition, PoStatusType } from './po-state-machine.guard';
 
 type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];
 
 @Injectable()
@@ -31,7 +31,7 @@ export class PurchaseOrdersService {
   private readonly logger = new Logger(PurchaseOrdersService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private stockMovementsService: StockMovementsService,
     private poItemsService: PoItemsService,
     private eventEmitter: EventEmitter2,
@@ -139,11 +139,11 @@ export class PurchaseOrdersService {
         requestedBy: dto.requestedBy,
         notes: dto.notes?.trim() ?? null,
         totalAmount: totalAmount.toString(),
-      });
+      }).returning({ id: purchaseOrders.id });
 
-      await this.poItemsService.addItems(tx, poResult.insertId, dto.items);
+      await this.poItemsService.addItems(tx, poResult.id, dto.items);
 
-      return { success: true, id: poResult.insertId, poNumber };
+      return { success: true, id: poResult.id, poNumber };
     });
   }
 
@@ -188,8 +188,8 @@ export class PurchaseOrdersService {
     const updates: Record<string, unknown> = { status: newStatus, updatedAt: new Date() };
 
     if (newStatus === 'APPROVED') updates.approvedBy = performedBy;
-    if (newStatus === 'ORDERED') updates.orderDate = new Date();
-    if (newStatus === 'RECEIVED') updates.receivedDate = new Date();
+    if (newStatus === 'ORDERED') updates.orderDate = new Date().toISOString().split('T')[0];
+    if (newStatus === 'RECEIVED') updates.receivedDate = new Date().toISOString().split('T')[0];
 
     await this.db
       .update(purchaseOrders)
@@ -221,7 +221,7 @@ export class PurchaseOrdersService {
         const poItem = items.find((i) => i.id === receiveItem.poItemId);
         if (!poItem) throw new BadRequestException(`Item ID ${receiveItem.poItemId} tidak ditemukan.`);
 
-        let sparePartId = poItem.sparePartId;
+        let sparePartId = poItem.sparePartId!;
 
         if (!sparePartId) {
           const partName = poItem.partName || `PO Item #${poItem.id}`;
@@ -248,8 +248,8 @@ export class PurchaseOrdersService {
               stock: 0,
               minStock: 5,
               price: poItem.unitPrice,
-            });
-            sparePartId = newPart.insertId;
+            }).returning({ id: spareParts.id });
+            sparePartId = newPart.id;
 
             await tx
               .update(spareParts)
@@ -309,7 +309,7 @@ export class PurchaseOrdersService {
         .update(purchaseOrders)
         .set({
           status: finalStatus,
-          receivedDate: finalStatus === 'RECEIVED' ? new Date() : po.receivedDate,
+          receivedDate: finalStatus === 'RECEIVED' ? new Date().toISOString().split('T')[0] : po.receivedDate,
           updatedAt: new Date(),
         })
         .where(eq(purchaseOrders.id, id));
@@ -335,11 +335,11 @@ export class PurchaseOrdersService {
     await this.db
       .insert(financeSettings)
       .values({ key: counterKey, value: '0', description: `PO counter for ${dateStr}` })
-      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+      .onConflictDoUpdate({ target: financeSettings.key, set: { value: sql`EXCLUDED.value` } });
 
     await this.db
       .update(financeSettings)
-      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)` })
       .where(eq(financeSettings.key, counterKey) as any);
 
     const updated = await this.db.query.financeSettings.findFirst({

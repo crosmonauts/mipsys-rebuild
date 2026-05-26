@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { categoryModels } from '../database/schema';
 
@@ -14,7 +14,7 @@ export class CategoryModelsService {
   private readonly logger = new Logger(CategoryModelsService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async findAll() {
@@ -35,8 +35,8 @@ export class CategoryModelsService {
     const [result] = await this.db.insert(categoryModels).values({
       name: name.trim(),
       description: description?.trim() || null,
-    });
-    return { success: true, id: result.insertId, name: name.trim() };
+    }).returning({ id: categoryModels.id });
+    return { success: true, id: result.id, name: name.trim() };
   }
 
   async update(id: number, name: string, description?: string) {

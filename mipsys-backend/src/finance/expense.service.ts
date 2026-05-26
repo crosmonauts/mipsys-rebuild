@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { eq, desc, and, between, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { expenses, purchaseOrders, financeSettings } from '../database/schema';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/create-expense.dto';
@@ -8,7 +8,7 @@ import { CreateExpenseDto, UpdateExpenseDto } from './dto/create-expense.dto';
 @Injectable()
 export class ExpenseService {
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {}
 
   async findAll(filters: { type?: string; category?: string; startDate?: string; endDate?: string }) {
@@ -16,7 +16,7 @@ export class ExpenseService {
     if (filters.type) sqlConditions.push(eq(expenses.expenseType, filters.type as any));
     if (filters.category) sqlConditions.push(eq(expenses.category, filters.category as any));
     if (filters.startDate && filters.endDate) {
-      sqlConditions.push(between(expenses.expenseDate, new Date(filters.startDate), new Date(filters.endDate)));
+      sqlConditions.push(between(expenses.expenseDate, filters.startDate, filters.endDate));
     }
 
     return this.db.query.expenses.findMany({
@@ -40,10 +40,10 @@ export class ExpenseService {
       expenseType: 'OPERATIONAL',
       description: dto.description,
       amount: dto.amount.toString(),
-      expenseDate: new Date(dto.expenseDate),
+      expenseDate: dto.expenseDate,
       category: dto.category || 'OTHER',
-    });
-    return { success: true, id: result.insertId, expenseNumber };
+    }).returning({ id: expenses.id });
+    return { success: true, id: result.id, expenseNumber };
   }
 
   async update(id: number, dto: UpdateExpenseDto) {
@@ -51,7 +51,7 @@ export class ExpenseService {
     const values: any = {};
     if (dto.description !== undefined) values.description = dto.description;
     if (dto.amount !== undefined) values.amount = dto.amount.toString();
-    if (dto.expenseDate !== undefined) values.expenseDate = new Date(dto.expenseDate);
+    if (dto.expenseDate !== undefined) values.expenseDate = dto.expenseDate;
     if (dto.category !== undefined) values.category = dto.category;
     await this.db.update(expenses).set(values).where(eq(expenses.id, id) as any);
     return { success: true };
@@ -84,10 +84,10 @@ export class ExpenseService {
         poId: po.id,
         description: `PO ${po.poNumber} — ${po.supplierName}`,
         amount: po.totalAmount || '0',
-        expenseDate: po.receivedDate ? new Date(po.receivedDate) : new Date(),
+        expenseDate: po.receivedDate ?? new Date().toISOString().split('T')[0],
         category: 'OTHER',
-      });
-      results.push({ id: result.insertId, expenseNumber, poNumber: po.poNumber });
+      }).returning({ id: expenses.id });
+      results.push({ id: result.id, expenseNumber, poNumber: po.poNumber });
     }
 
     return { success: true, synced: results.length, items: results };
@@ -101,11 +101,11 @@ export class ExpenseService {
     await this.db
       .insert(financeSettings)
       .values({ key: counterKey, value: '0', description: `Expense counter for ${period}` })
-      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+      .onConflictDoUpdate({ target: financeSettings.key, set: { value: sql`EXCLUDED.value` } });
 
     await this.db
       .update(financeSettings)
-      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)` })
       .where(eq(financeSettings.key, counterKey) as any);
 
     const updated = await this.db.query.financeSettings.findFirst({

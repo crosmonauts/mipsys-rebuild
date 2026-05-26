@@ -1,23 +1,17 @@
-import {
-  mysqlTable,
-  int,
-  varchar,
-  mysqlEnum,
-  timestamp,
-  index,
-} from 'drizzle-orm/mysql-core';
+import { pgTable, integer, varchar, timestamp, index } from 'drizzle-orm/pg-core';
 import { staff } from './service-request.schema';
+import { userRoleEnum } from './enums';
 
-export const users = mysqlTable(
+export const users = pgTable(
   'users',
   {
-    id: int('id').autoincrement().primaryKey(),
-    staffId: int('staff_id').references(() => staff.id),
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    staffId: integer('staff_id').references(() => staff.id),
     username: varchar('username', { length: 50 }).unique().notNull(),
     password: varchar('password', { length: 255 }).notNull(),
-    role: mysqlEnum('role', ['ADMIN', 'TECHNICIAN']).notNull(),
+    role: userRoleEnum('role').notNull(),
     refreshToken: varchar('refresh_token', { length: 255 }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => ({
     usernameIdx: index('username_idx').on(table.username),

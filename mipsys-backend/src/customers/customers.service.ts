@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { eq, like, or } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { customers } from '../database/schema';
 
@@ -9,7 +9,7 @@ export class CustomersService {
   private readonly logger = new Logger(CustomersService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async findAll(search?: string) {
@@ -38,8 +38,8 @@ export class CustomersService {
       phone: data.phone?.trim() || null,
       address: data.address?.trim() || null,
       customerType: data.customerType?.trim() || null,
-    });
-    return { success: true, id: result.insertId };
+    }).returning({ id: customers.id });
+    return { success: true, id: result.id };
   }
 
   async update(id: number, data: { name?: string; phone?: string; address?: string; customerType?: string }) {

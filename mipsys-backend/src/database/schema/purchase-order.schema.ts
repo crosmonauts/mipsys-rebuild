@@ -1,41 +1,24 @@
-import {
-  mysqlTable,
-  varchar,
-  text,
-  decimal,
-  int,
-  timestamp,
-  date,
-  index,
-  mysqlEnum,
-} from 'drizzle-orm/mysql-core';
+import { pgTable, varchar, text, numeric, integer, timestamp, date, index } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { staff } from './service-request.schema';
+import { poStatusEnum } from './enums';
 
-export const purchaseOrders = mysqlTable(
+export const purchaseOrders = pgTable(
   'purchase_orders',
   {
-    id: int('id').autoincrement().primaryKey(),
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
     poNumber: varchar('po_number', { length: 100 }).unique().notNull(),
     supplierName: varchar('supplier_name', { length: 50 }).default('EPSON').notNull(),
-    status: mysqlEnum('status', [
-      'DRAFT',
-      'REQUESTED',
-      'APPROVED',
-      'ORDERED',
-      'SHIPPED',
-      'PARTIALLY_RECEIVED',
-      'RECEIVED',
-      'CANCELLED',
-    ]).default('DRAFT'),
-    requestedBy: int('requested_by').references(() => staff.id),
-    approvedBy: int('approved_by').references(() => staff.id),
+    status: poStatusEnum('status').default('DRAFT'),
+    requestedBy: integer('requested_by').references(() => staff.id),
+    approvedBy: integer('approved_by').references(() => staff.id),
     orderDate: date('order_date'),
     expectedDate: date('expected_date'),
     receivedDate: date('received_date'),
-    totalAmount: decimal('total_amount', { precision: 14, scale: 2 }).default('0.00'),
+    totalAmount: numeric('total_amount', { precision: 14, scale: 2 }).default('0.00'),
     notes: text('notes'),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().$onUpdate(() => sql`now()`),
   },
   (table) => ({
     poNumberIdx: index('po_number_idx').on(table.poNumber),

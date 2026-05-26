@@ -33,6 +33,6 @@ export const databaseConfig = {
   user: requiredEnv('DB_USER'),
   password: optionalEnv('DB_PASS', ''),
   database: requiredEnv('DB_NAME'),
-  port: parsePort('DB_PORT', 3306),
+  port: parsePort('DB_PORT', 5432),
   connectionLimit: parsePort('DB_CONNECTION_LIMIT', 10),
 };

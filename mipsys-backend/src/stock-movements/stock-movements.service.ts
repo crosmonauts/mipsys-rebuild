@@ -6,13 +6,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { eq, desc } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { stockMovements, spareParts } from '../database/schema';
 import { CreateStockMovementDto, MovementTypeType } from './dto/create-stock-movement.dto';
 
 type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];
 
 @Injectable()
@@ -20,7 +20,7 @@ export class StockMovementsService {
   private readonly logger = new Logger(StockMovementsService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async createMovement(dto: CreateStockMovementDto, tx?: DrizzleTx) {
@@ -60,7 +60,7 @@ export class StockMovementsService {
   }
 
   async updateStock(
-    db: DrizzleTx | MySql2Database<typeof schema>,
+    db: DrizzleTx | NodePgDatabase<typeof schema>,
     sparePartId: number,
     quantity: number,
     movementType: MovementTypeType

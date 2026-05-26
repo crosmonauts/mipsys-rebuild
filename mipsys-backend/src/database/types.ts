@@ -1,6 +1,6 @@
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './schema';
 
 export type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];

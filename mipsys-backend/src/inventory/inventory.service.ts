@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, like, or, desc, and, sql, gt, lt } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { spareParts, stockMovements, categoryModels } from '../database/schema';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
@@ -16,7 +16,7 @@ import { CreateSparePartDto } from './dto/create-spare-part.dto';
 import { UpdateSparePartDto } from './dto/update-spare-part.dto';
 
 type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];
 
 @Injectable()
@@ -24,7 +24,7 @@ export class InventoryService {
   private readonly logger = new Logger(InventoryService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private stockMovementsService: StockMovementsService,
     private eventEmitter: EventEmitter2,
   ) {}
@@ -174,9 +174,9 @@ export class InventoryService {
       block: dto.block?.trim(),
       stock: dto.stock ?? 0,
       price: dto.price.toString(),
-    });
+    }).returning({ id: spareParts.id });
 
-    return { success: true, insertedId: result.insertId };
+    return { success: true, insertedId: result.id };
   }
 
   async update(id: number, dto: UpdateSparePartDto) {

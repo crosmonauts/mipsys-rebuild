@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
 import { products } from '../../database/schema';
 import { DrizzleTx } from '../../database/types';
@@ -8,7 +8,7 @@ import { DrizzleTx } from '../../database/types';
 @Injectable()
 export class ServiceRequestProductResolver {
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async resolveProductId(
@@ -24,11 +24,11 @@ export class ServiceRequestProductResolver {
 
     if (existing) return existing.id;
 
-    const [{ insertId }] = await tx.insert(products).values({
+    const [{ id }] = await tx.insert(products).values({
       serialNumber: serialNumber.trim(),
       modelName: modelName.trim(),
-    });
-    return insertId;
+    }).returning({ id: products.id });
+    return id;
   }
 
   async updateProduct(

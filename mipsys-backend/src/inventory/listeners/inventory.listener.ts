@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { eq, sql } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
 import { spareParts, purchaseOrders, poItems, financeSettings } from '../../database/schema';
 
@@ -15,7 +15,7 @@ export class InventoryListener {
   private readonly logger = new Logger(InventoryListener.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>,
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
   ) {}
 
   @OnEvent('stock.level-changed')
@@ -44,10 +44,10 @@ export class InventoryListener {
           requestedBy: 1,
           notes: `Auto-PO: ${part!.partName} stok menipis (${newStock} < ${part!.minStock})`,
           totalAmount: '0.00',
-        });
+        }).returning({ id: purchaseOrders.id });
 
         await tx.insert(poItems).values({
-          purchaseOrderId: poResult.insertId,
+          purchaseOrderId: poResult.id,
           sparePartId: part!.id,
           quantity: reorderQty,
           unitPrice: '0.00',
@@ -66,11 +66,11 @@ export class InventoryListener {
     await this.db
       .insert(financeSettings)
       .values({ key: counterKey, value: '0', description: `PO counter for ${dateStr}` })
-      .onDuplicateKeyUpdate({ set: { value: sql`value` } });
+      .onConflictDoUpdate({ target: financeSettings.key, set: { value: sql`EXCLUDED.value` } });
 
     await this.db
       .update(financeSettings)
-      .set({ value: sql`CAST(CAST(${financeSettings.value} AS UNSIGNED) + 1 AS CHAR)` })
+      .set({ value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)` })
       .where(eq(financeSettings.key, counterKey) as any);
 
     const updated = await this.db.query.financeSettings.findFirst({

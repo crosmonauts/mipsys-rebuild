@@ -1,11 +1,11 @@
 import { Injectable, Inject, InternalServerErrorException, Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { poItems } from '../database/schema';
 
 type DrizzleTx = Parameters<
-  Parameters<MySql2Database<typeof schema>['transaction']>[0]
+  Parameters<NodePgDatabase<typeof schema>['transaction']>[0]
 >[0];
 
 @Injectable()
@@ -13,7 +13,7 @@ export class PoItemsService {
   private readonly logger = new Logger(PoItemsService.name);
 
   constructor(
-    @Inject('DB_CONNECTION') private db: MySql2Database<typeof schema>
+    @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {}
 
   async addItems(tx: DrizzleTx, purchaseOrderId: number, items: { sparePartId?: number; partName?: string; modelName?: string; quantity: number; unitPrice: number }[]) {
