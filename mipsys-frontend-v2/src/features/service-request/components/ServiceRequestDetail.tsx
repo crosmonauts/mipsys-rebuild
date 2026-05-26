@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useServiceRequest, type ServiceRequestDetail } from '../hooks/useServiceRequest';
+import { useAuth } from '@/src/lib/auth-context';
 import { DiagnosisModal } from '@/src/components/layout/DiagnosisModal';
 import { ApproveQuoteModal } from '@/src/components/layout/ApproveQuoteModal';
 import { srApi } from '../api/sr-api';
@@ -43,6 +44,7 @@ const ServiceRequestDetail = () => {
   const params = useParams();
   const ticketNumber = params.id as string;
   const { data, setData, isLoading, refetch } = useServiceRequest(ticketNumber);
+  const { user } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState<ServiceRequestDetail | null>(null);
@@ -118,7 +120,7 @@ const ServiceRequestDetail = () => {
     if (!ticketNumber) return;
     setIsApproving(true);
     try {
-      const result = await srApi.approveQuote(ticketNumber, { performedBy: 1 });
+      const result = await srApi.approveQuote(ticketNumber, { performedBy: user?.staffId });
 
       if (result.allInStock) {
         toast.success(`Penawaran disetujui. Status → SERVICE. ${result.partsProcessed} part dipotong dari stok.`);
@@ -138,7 +140,7 @@ const ServiceRequestDetail = () => {
     if (!ticketNumber) return;
     setIsCancelling(true);
     try {
-      await srApi.cancelQuote(ticketNumber, { performedBy: 1 });
+      await srApi.cancelQuote(ticketNumber, { performedBy: user?.staffId });
       toast.success('Tiket dibatalkan.');
       await refetch();
     } catch (error) {
@@ -154,7 +156,7 @@ const ServiceRequestDetail = () => {
     if (!ticketNumber) return;
     setIsRetryingStock(true);
     try {
-      const result = await srApi.retryAwaitingParts(ticketNumber, { performedBy: 1 });
+      const result = await srApi.retryAwaitingParts(ticketNumber, { performedBy: user?.staffId });
 
       if (result.available) {
         toast.success(`Stok tersedia! ${result.partsProcessed} part dipotong. Status → SERVICE`);
@@ -177,7 +179,7 @@ const ServiceRequestDetail = () => {
       const res = await srApi.diagnose(ticketNumber, {
         newStatus: 'DONE',
         parts: [],
-        performedBy: 1,
+        performedBy: user?.staffId,
       });
       toast.success('Service selesai!');
       if (res.invoice) {

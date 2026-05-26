@@ -20,6 +20,7 @@ import { PaymentForm } from './components/PaymentForm';
 import { useInvoices, useFinanceStats } from './hooks/useFinance';
 import { financeApi } from './api/finance-api';
 import { Invoice, PaymentHistory } from './types';
+import { ConfirmDialog } from '@/src/components/ui/confirm-dialog';
 import { toast } from 'react-hot-toast';
 
 const statusStyles: Record<string, string> = {
@@ -38,6 +39,9 @@ export default function FinancePage() {
   >(null);
   const [showPayInvoiceId, setShowPayInvoiceId] = useState<number | null>(null);
   const [payInvoiceTotal, setPayInvoiceTotal] = useState(0);
+  const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+  const [voidTarget, setVoidTarget] = useState<Invoice | null>(null);
+  const [isVoiding, setIsVoiding] = useState(false);
 
   const filtered = invoices.filter(
     (inv) =>
@@ -60,13 +64,19 @@ export default function FinancePage() {
     setPayInvoiceTotal(parseFloat(invoice.total || '0'));
   }
 
-  async function handleVoid(invoice: Invoice) {
+  async function handleVoid() {
+    if (!voidTarget) return;
+    setIsVoiding(true);
     try {
-      await financeApi.voidInvoice(invoice.id);
+      await financeApi.voidInvoice(voidTarget.id);
       toast.success('Invoice berhasil di-void');
       refetch();
     } catch {
       toast.error('Gagal void invoice');
+    } finally {
+      setIsVoiding(false);
+      setShowVoidConfirm(false);
+      setVoidTarget(null);
     }
   }
 
@@ -146,7 +156,8 @@ export default function FinancePage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  if (window.confirm('Void invoice ini?')) handleVoid(inv);
+                  setVoidTarget(inv);
+                  setShowVoidConfirm(true);
                 }}
                 className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
                 aria-label="Void invoice"
@@ -271,6 +282,20 @@ export default function FinancePage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showVoidConfirm}
+        onOpenChange={(open) => {
+          setShowVoidConfirm(open);
+          if (!open) setVoidTarget(null);
+        }}
+        title="Void Invoice?"
+        description="Invoice yang di-void tidak bisa dikembalikan. Lanjutkan?"
+        confirmLabel="Ya, Void"
+        variant="destructive"
+        loading={isVoiding}
+        onConfirm={handleVoid}
+      />
     </div>
   );
 }

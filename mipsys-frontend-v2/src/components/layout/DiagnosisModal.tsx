@@ -22,6 +22,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Textarea } from '@/src/components/ui/textarea';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
+import { useAuth } from '@/src/lib/auth-context';
 import { srApi } from '@/src/features/service-request/api/sr-api';
 import { orderPartsApi } from '@/src/features/service-request/api/order-parts-api';
 import { OrderPart } from '@/src/features/service-request/api/order-parts-api';
@@ -51,6 +52,7 @@ export function DiagnosisModal({
   onSuccess,
   currentStatus,
 }: DiagnosisModalProps) {
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [diagnosis, setDiagnosis] = useState('');
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
@@ -155,7 +157,7 @@ export function DiagnosisModal({
           sparePartId: p.sparePartId,
           quantity: p.quantity,
         })),
-        performedBy: 1,
+        performedBy: user?.staffId,
       });
 
       toast.success(`Status → ${newStatus}. ${selectedParts.length} part diusulkan.`);

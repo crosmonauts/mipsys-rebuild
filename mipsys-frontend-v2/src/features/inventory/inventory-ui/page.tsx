@@ -257,11 +257,7 @@ export default function InventoryPage() {
         isOpen={isRestockOpen}
         onClose={() => setIsRestockOpen(false)}
         onSuccess={fetchParts}
-<<<<<<< HEAD
-        onStockAction={handleAddStockSubmit}
-=======
         onStockAction={handleStockAction}
->>>>>>> main
       />
 
       <footer className="pt-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center md:text-left">

@@ -5,8 +5,10 @@ import { poApi } from '../api/po-api';
 import { PO_STATUS_LABEL, PO_STATUS_BADGE } from '../types';
 import type { PurchaseOrder, PoStatus } from '../types';
 import { POReceivingModal } from './POReceivingModal';
+import { useAuth } from '@/src/lib/auth-context';
 import { toast } from 'react-hot-toast';
 import { Loader2, X } from 'lucide-react';
+import { ConfirmDialog } from '@/src/components/ui/confirm-dialog';
 
 interface PODetailModalProps {
   poId: number;
@@ -15,10 +17,12 @@ interface PODetailModalProps {
 }
 
 export function PODetailModal({ poId, onClose, onRefresh }: PODetailModalProps) {
+  const { user } = useAuth();
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showReceiving, setShowReceiving] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   async function loadPO() {
     try {
@@ -38,7 +42,7 @@ export function PODetailModal({ poId, onClose, onRefresh }: PODetailModalProps) 
   async function handleStatusChange(newStatus: PoStatus) {
     setStatusLoading(true);
     try {
-      await poApi.updateStatus(poId, newStatus);
+      await poApi.updateStatus(poId, newStatus, user?.staffId);
       toast.success(`Status PO → ${PO_STATUS_LABEL[newStatus]}`);
       await loadPO();
       onRefresh();
@@ -153,7 +157,7 @@ export function PODetailModal({ poId, onClose, onRefresh }: PODetailModalProps) 
               )}
               {canCancel && (
                 <button
-                  onClick={() => handleStatusChange('CANCELLED')}
+                  onClick={() => setShowCancelConfirm(true)}
                   disabled={statusLoading}
                   className="px-5 py-2.5 bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm font-bold rounded-xl transition-all disabled:opacity-50 motion-safe:active:scale-95"
                 >
@@ -173,6 +177,17 @@ export function PODetailModal({ poId, onClose, onRefresh }: PODetailModalProps) 
           onSuccess={() => { loadPO(); onRefresh(); }}
         />
       )}
+
+      <ConfirmDialog
+        open={showCancelConfirm}
+        onOpenChange={(open) => setShowCancelConfirm(open)}
+        title="Batalkan PO?"
+        description="PO yang dibatalkan tidak bisa dilanjutkan. Lanjutkan?"
+        confirmLabel="Ya, Batalkan"
+        variant="destructive"
+        loading={statusLoading}
+        onConfirm={() => handleStatusChange('CANCELLED')}
+      />
     </>
   );
 }

@@ -22,13 +22,13 @@ export const poApi = {
     return response.data;
   },
 
-  updateStatus: async (id: number, status: PoStatus) => {
-    const response = await apiClient.patch(`/purchase-orders/${id}/status`, { status, performedBy: 1 });
+  updateStatus: async (id: number, status: PoStatus, performedBy?: number) => {
+    const response = await apiClient.patch(`/purchase-orders/${id}/status`, { status, performedBy });
     return response.data;
   },
 
-  receivePO: async (id: number, items: ReceivePoItem[]) => {
-    const response = await apiClient.patch(`/purchase-orders/${id}/receive`, { items, performedBy: 1 });
+  receivePO: async (id: number, items: ReceivePoItem[], performedBy?: number) => {
+    const response = await apiClient.patch(`/purchase-orders/${id}/receive`, { items, performedBy });
     return response.data;
   },
 };

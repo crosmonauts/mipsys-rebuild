@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -41,7 +41,8 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post('http://localhost:3001/auth/refresh', {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await axios.post(`${baseUrl}/auth/refresh`, {
           refreshToken,
         });
         const { accessToken, refreshToken: newRefresh } = res.data;

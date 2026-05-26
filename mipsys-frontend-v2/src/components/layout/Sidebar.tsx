@@ -84,11 +84,7 @@ export function Sidebar({
               <Printer size={18} strokeWidth={3} className="text-sidebar-bg" />
             </div>
             <div>
-<<<<<<< HEAD
-              <h1 className="font-black text-lg tracking-tighter uppercase leading-none text-white">
-=======
               <h1 className="font-black text-lg tracking-tighter uppercase leading-none text-sidebar-foreground">
->>>>>>> main
                 MIPSYS
               </h1>
               <p className="text-[9px] font-black text-sidebar-muted tracking-widest uppercase mt-0.5">
@@ -153,19 +149,11 @@ export function Sidebar({
               {(user?.username ?? 'U')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-<<<<<<< HEAD
-              <p className="text-xs font-bold text-white truncate uppercase">
-                Nanda Pratama
-              </p>
-              <p className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">
-                Administrator
-=======
               <p className="text-xs font-bold text-sidebar-foreground truncate uppercase">
                 {user?.username ?? 'User'}
               </p>
               <p className="text-[9px] font-black text-sidebar-muted uppercase tracking-tighter">
                 {user?.role ?? '-'}
->>>>>>> main
               </p>
             </div>
             <button

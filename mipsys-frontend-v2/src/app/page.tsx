@@ -15,6 +15,7 @@ import {
   Clock,
   Globe,
 } from 'lucide-react';
+import { useAuth } from '@/src/lib/auth-context';
 import { srApi } from '@/src/features/service-request/api/sr-api';
 import { toast } from 'react-hot-toast';
 import { LoadingSkeleton } from '@/src/components/ui/loading-skeleton';
@@ -35,9 +36,8 @@ import {
 } from '@/src/components/ui/table';
 import { Button } from '@/src/components/ui/button';
 
-const userName = 'Irgi';
-
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [activities, setActivities] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [stats, setStats] = useState({
@@ -110,7 +110,7 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <section className="space-y-1.5 text-left">
         <h2 className="text-3xl font-bold text-foreground tracking-tight">
-          Selamat Datang, <span className="text-primary">{userName}.</span>
+          Selamat Datang, <span className="text-primary">{user?.username ?? 'User'}.</span>
         </h2>
         <p className="text-sm text-muted-foreground">
           Sistem optimal. {stats.pending} tugas prioritas terdeteksi.

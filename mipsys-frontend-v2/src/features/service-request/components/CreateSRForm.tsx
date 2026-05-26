@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/src/lib/auth-context';
 import {
   Printer,
   User,
@@ -35,6 +36,7 @@ import { Button } from '@/src/components/ui/button';
 
 export function CreateSRForm() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SRFormValues>({
@@ -55,7 +57,7 @@ export function CreateSRForm() {
   const onSubmit = async (data: SRFormValues) => {
     setIsLoading(true);
     try {
-      const result = await srApi.create(data);
+      const result = await srApi.create({ ...data, adminId: user?.staffId });
 
       // Menggunakan Simple Toast (String Only) sesuai permintaan sebelumnya
       toast.success(

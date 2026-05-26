@@ -21,6 +21,7 @@ import {
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
+import { useAuth } from '@/src/lib/auth-context';
 import { srApi } from '@/src/features/service-request/api/sr-api';
 import { orderPartsApi } from '@/src/features/service-request/api/order-parts-api';
 import { OrderPart } from '@/src/features/service-request/api/order-parts-api';
@@ -50,6 +51,7 @@ export function ApproveQuoteModal({
   initialPartFee,
   initialShippingFee,
 }: ApproveQuoteModalProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<'form' | 'preview'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [parts, setParts] = useState<ProposedPart[]>([]);
@@ -122,7 +124,7 @@ export function ApproveQuoteModal({
       const result = await srApi.saveQuote(ticketNumber, {
         serviceFee,
         shippingFee: shippingFee || 0,
-        performedBy: 1,
+        performedBy: user?.staffId,
       });
 
       setSavedServiceFee(result.serviceFee);

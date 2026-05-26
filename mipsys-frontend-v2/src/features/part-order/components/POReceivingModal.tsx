@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { poApi } from '../api/po-api';
 import type { PurchaseOrderItem } from '../types';
+import { useAuth } from '@/src/lib/auth-context';
 import { toast } from 'react-hot-toast';
 
 interface POReceivingModalProps {
@@ -13,6 +14,7 @@ interface POReceivingModalProps {
 }
 
 export function POReceivingModal({ poId, items, onClose, onSuccess }: POReceivingModalProps) {
+  const { user } = useAuth();
   const [receivedQtys, setReceivedQtys] = useState<Record<number, number>>(
     () => Object.fromEntries(items.map((item) => [item.id!, item.quantity - (item.receivedQty || 0)]))
   );
@@ -26,7 +28,7 @@ export function POReceivingModal({ poId, items, onClose, onSuccess }: POReceivin
         receivedQty: receivedQtys[item.id!] || 0,
       }));
 
-      await poApi.receivePO(poId, payload);
+      await poApi.receivePO(poId, payload, user?.staffId);
       toast.success('Penerimaan barang berhasil dicatat');
       onSuccess();
       onClose();

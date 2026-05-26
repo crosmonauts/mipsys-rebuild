@@ -1,13 +1,5 @@
-<<<<<<< HEAD
-'use client';
-
-import { useState } from 'react';
-import { Sidebar } from '@/src/components/layout/Sidebar';
-import { Search, Bell, Menu } from 'lucide-react';
-=======
 import { SidebarProvider } from '@/src/components/layout/SidebarProvider';
 import { AuthGuard } from '@/src/components/layout/AuthGuard';
->>>>>>> main
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from 'next-themes';

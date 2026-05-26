@@ -26,7 +26,7 @@ export const srApi = {
     apiClient.get('/service-request/activities').then((r) => r.data),
 
   create: (data: Record<string, unknown>) =>
-    apiClient.post('/service-request/entry', { ...data, adminId: 1 }).then((r) => r.data),
+    apiClient.post('/service-request/entry', data).then((r) => r.data),
 
   prosesKasir: (ticketNumber: string, paymentData: Record<string, unknown>) =>
     apiClient

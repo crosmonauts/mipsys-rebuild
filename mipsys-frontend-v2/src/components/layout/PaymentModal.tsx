@@ -1,21 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import { Banknote } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
-import { srApi } from '../../features/service-request/api/sr-api';
+import { srApi } from '@/src/features/service-request/api/sr-api';
 
-export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
-  // 1. PISAHKAN STATE UNTUK UI KASIR
-  const [laborFee, setLaborFee] = useState(0);
-  const [onsiteFee, setOnsiteFee] = useState(0);
+interface ServiceRequestSummary {
+  ticketNumber: string;
+  partFee?: string | number;
+}
+
+interface PaymentModalProps {
+  sr: ServiceRequestSummary;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function PaymentModal({ sr, isOpen, onClose, onSuccess }: PaymentModalProps) {
+  const [serviceFee, setServiceFee] = useState(0);
 
   const partFee = Number(sr?.partFee) || 0;
 
-  // 2. KALKULASI GABUNGAN
-  const totalServiceFee = laborFee + onsiteFee;
-  const subtotal = totalServiceFee + partFee;
+  const subtotal = serviceFee + partFee;
   const ppn = Math.round(subtotal * 0.11);
   const total = subtotal + ppn;
 
@@ -29,8 +38,8 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
   const handleSubmit = async () => {
     try {
       await srApi.prosesKasir(sr.ticketNumber, {
-        serviceFee: totalServiceFee,
-        partFee: partFee,
+        serviceFee,
+        partFee,
       });
       onSuccess();
       onClose();
@@ -47,7 +56,7 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
       <div className="bg-card rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200">
         <div className="p-6 space-y-6">
           <h2 className="text-xl font-black flex items-center gap-2 text-accent">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <Banknote size={24} aria-hidden="true" />
             Penyelesaian & Pembayaran
           </h2>
 
@@ -59,8 +68,8 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
                 min="0"
                 className="text-lg font-medium h-12"
                 placeholder="Rp 0..."
-                value={laborFee === 0 ? '' : laborFee}
-                onChange={(e) => setLaborFee(Number(e.target.value))}
+                value={serviceFee === 0 ? '' : serviceFee}
+                onChange={(e) => setServiceFee(Number(e.target.value))}
               />
             </div>
           </div>
@@ -74,11 +83,11 @@ export function PaymentModal({ sr, isOpen, onClose, onSuccess }: any) {
                 {formatIDR(partFee)}
               </span>
             </div>
-            {laborFee > 0 && (
+            {serviceFee > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground font-medium">Biaya Jasa:</span>
                 <span className="font-bold text-foreground/80">
-                  {formatIDR(laborFee)}
+                  {formatIDR(serviceFee)}
                 </span>
               </div>
             )}
