@@ -210,7 +210,7 @@ export default function PartOrderPage() {
         ))}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 bg-card p-3 rounded-[2rem] border border-border/20 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-card p-3 rounded-[2rem] border border-border/15 shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} aria-hidden="true" />
           <Input

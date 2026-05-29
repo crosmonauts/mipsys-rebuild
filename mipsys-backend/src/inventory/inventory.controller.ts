@@ -7,33 +7,35 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { InventoryService } from './inventory.service';
+import { InventoryReadService } from './inventory-read.service';
+import { StockCommandService } from './stock-command.service';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 
 @Controller('inventory')
 export class InventoryController {
   constructor(
-    private readonly inventoryService: InventoryService,
-    private readonly stockMovementsService: StockMovementsService
+    private readonly readService: InventoryReadService,
+    private readonly stockCommand: StockCommandService,
+    private readonly stockMovementsService: StockMovementsService,
   ) {}
 
   @Get('parts')
   async getParts(
     @Query('search') search?: string,
-    @Query('status') status?: 'ok' | 'low' | 'empty'
+    @Query('status') status?: 'ok' | 'low' | 'empty',
   ) {
-    return this.inventoryService.getParts({ search, status });
+    return this.readService.getParts({ search, status });
   }
 
   @Get('parts/search')
   async searchParts(@Query('q') query: string) {
-    return this.inventoryService.searchParts(query);
+    return this.readService.searchParts(query);
   }
 
   @Get('parts/:id')
   async getPart(@Param('id', ParseIntPipe) id: number) {
-    return this.inventoryService.getPartById(id);
+    return this.readService.getPartById(id);
   }
 
   @Get('parts/:id/movements')
@@ -44,23 +46,23 @@ export class InventoryController {
   @Post('parts/:id/reserve')
   async reserveStock(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ReserveStockDto
+    @Body() dto: ReserveStockDto,
   ) {
-    return this.inventoryService.reserveStock(
+    return this.stockCommand.reserveStock(
       id,
       dto.quantity,
       dto.srTicketNumber,
-      dto.performedBy
+      dto.performedBy,
     );
   }
 
   @Get('models')
   async getModels() {
-    return this.inventoryService.getModels();
+    return this.readService.getModels();
   }
 
   @Get('low-stock-alert')
   async getLowStockAlert() {
-    return this.inventoryService.getLowStockAlert();
+    return this.readService.getLowStockAlert();
   }
 }

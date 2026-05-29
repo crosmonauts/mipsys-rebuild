@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Badge } from '@/src/components/ui/badge';
 
 interface StatusBadgeProps {
@@ -22,6 +23,6 @@ const variantMap: Record<StatusBadgeProps['variant'], 'default' | 'secondary' | 
   awaiting_parts: 'outline',
 };
 
-export function StatusBadge({ status, variant }: StatusBadgeProps) {
+export const StatusBadge = React.memo(function StatusBadge({ status, variant }: StatusBadgeProps) {
   return <Badge variant={variantMap[variant]}>{status.replace('_', ' ')}</Badge>;
-}
+});

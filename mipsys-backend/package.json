@@ -21,7 +21,9 @@
     "db:drop": "npx ts-node src/database/scripts/drop-all.ts",
     "db:push": "npx drizzle-kit push",
     "db:seed": "npx ts-node src/database/seeds/seed.ts",
-    "db:fresh": "npm run db:drop && npm run db:push && npm run db:seed"
+    "db:fresh": "npm run db:drop && npm run db:push && npm run db:seed",
+    "up": "docker compose -f docker/docker-compose.yml up -d",
+    "down": "docker compose -f docker/docker-compose.yml down"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

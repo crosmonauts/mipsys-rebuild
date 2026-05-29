@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useReducer, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -40,31 +40,80 @@ const statusToBadge: Record<string, { label: string; variant: 'default' | 'secon
   CANCEL: { label: 'Cancelled', variant: 'destructive' },
 };
 
+type DetailState = {
+  isEditing: boolean;
+  originalData: ServiceRequestDetail | null;
+  showDiagnosis: boolean;
+  showQuote: boolean;
+  showPrintQuote: boolean;
+  isApproving: boolean;
+  showCancelConfirm: boolean;
+  showApproveConfirm: boolean;
+  isCancelling: boolean;
+  isRetryingStock: boolean;
+  isDoneProcessing: boolean;
+  hasInvoice: boolean;
+  isCreatingInvoice: boolean;
+  isSaving: boolean;
+};
+
+type DetailAction =
+  | { type: 'TOGGLE_EDIT'; payload: { editing: boolean; original?: ServiceRequestDetail | null } }
+  | { type: 'SET_HAS_INVOICE'; payload: boolean }
+  | { type: 'SET_ORIGINAL'; payload: ServiceRequestDetail | null }
+  | { type: 'showDiagnosis'; payload: boolean }
+  | { type: 'showQuote'; payload: boolean }
+  | { type: 'showPrintQuote'; payload: boolean }
+  | { type: 'isApproving'; payload: boolean }
+  | { type: 'showCancelConfirm'; payload: boolean }
+  | { type: 'showApproveConfirm'; payload: boolean }
+  | { type: 'isCancelling'; payload: boolean }
+  | { type: 'isRetryingStock'; payload: boolean }
+  | { type: 'isDoneProcessing'; payload: boolean }
+  | { type: 'isCreatingInvoice'; payload: boolean }
+  | { type: 'isSaving'; payload: boolean };
+
+function detailReducer(state: DetailState, action: DetailAction): DetailState {
+  switch (action.type) {
+    case 'TOGGLE_EDIT':
+      return { ...state, isEditing: action.payload.editing, originalData: action.payload.original ?? state.originalData };
+    case 'SET_HAS_INVOICE':
+      return { ...state, hasInvoice: action.payload };
+    case 'SET_ORIGINAL':
+      return { ...state, originalData: action.payload };
+    default:
+      return { ...state, [action.type]: action.payload };
+  }
+}
+
+const INITIAL_STATE: DetailState = {
+  isEditing: false,
+  originalData: null,
+  showDiagnosis: false,
+  showQuote: false,
+  showPrintQuote: false,
+  isApproving: false,
+  showCancelConfirm: false,
+  showApproveConfirm: false,
+  isCancelling: false,
+  isRetryingStock: false,
+  isDoneProcessing: false,
+  hasInvoice: false,
+  isCreatingInvoice: false,
+  isSaving: false,
+};
+
 const ServiceRequestDetail = () => {
   const params = useParams();
   const ticketNumber = params.id as string;
   const { data, setData, isLoading, refetch } = useServiceRequest(ticketNumber);
   const { user } = useAuth();
+  const [state, dispatch] = useReducer(detailReducer, INITIAL_STATE);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [originalData, setOriginalData] = useState<ServiceRequestDetail | null>(null);
-  const [showDiagnosis, setShowDiagnosis] = useState(false);
-  const [showQuote, setShowQuote] = useState(false);
-  const [showPrintQuote, setShowPrintQuote] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [isRetryingStock, setIsRetryingStock] = useState(false);
-  const [isDoneProcessing, setIsDoneProcessing] = useState(false);
-  const [hasInvoice, setHasInvoice] = useState(false);
-  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const hasUnsavedChanges = isEditing;
+  const hasUnsavedChanges = state.isEditing;
 
   useEffect(() => {
-    if (data) setHasInvoice(data.hasInvoice ?? false);
+    if (data) dispatch({ type: 'SET_HAS_INVOICE', payload: data.hasInvoice ?? false });
   }, [data]);
 
   useEffect(() => {
@@ -78,16 +127,15 @@ const ServiceRequestDetail = () => {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasUnsavedChanges]);
 
-  const hasSavedQuote =
-    data && (parseFloat(data.serviceFee || '0') > 0 || parseFloat(data.partFee || '0') > 0);
+  const hasSavedQuote = data && (parseFloat(data.serviceFee || '0') > 0 || parseFloat(data.partFee || '0') > 0);
 
   const handleEditToggle = () => {
-    if (!isEditing) {
-      if (data) setOriginalData({ ...data });
-    } else if (originalData) {
-      setData(originalData);
+    if (!state.isEditing) {
+      if (data) dispatch({ type: 'SET_ORIGINAL', payload: { ...data } });
+    } else if (state.originalData) {
+      setData(state.originalData);
     }
-    setIsEditing(!isEditing);
+    dispatch({ type: 'TOGGLE_EDIT', payload: { editing: !state.isEditing } });
   };
 
   const handleFieldChange = useCallback((field: string, value: string) => {
@@ -96,7 +144,7 @@ const ServiceRequestDetail = () => {
 
   async function handleSaveChanges() {
     if (!ticketNumber || !data) return;
-    setIsSaving(true);
+    dispatch({ type: 'isSaving', payload: true });
     try {
       await srApi.updateEntry(ticketNumber, {
         customerName: data.customerName,
@@ -107,18 +155,18 @@ const ServiceRequestDetail = () => {
         problemDescription: data.problemDescription,
       });
       toast.success('Perubahan berhasil disimpan');
-      setIsEditing(false);
+      dispatch({ type: 'TOGGLE_EDIT', payload: { editing: false } });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal menyimpan perubahan';
       toast.error(message);
     } finally {
-      setIsSaving(false);
+      dispatch({ type: 'isSaving', payload: false });
     }
   }
 
   async function handleApproveQuote() {
     if (!ticketNumber) return;
-    setIsApproving(true);
+    dispatch({ type: 'isApproving', payload: true });
     try {
       const result = await srApi.approveQuote(ticketNumber, { performedBy: user?.staffId });
 
@@ -132,13 +180,13 @@ const ServiceRequestDetail = () => {
       const message = error instanceof Error ? error.message : 'Gagal menyetujui penawaran';
       toast.error(message);
     } finally {
-      setIsApproving(false);
+      dispatch({ type: 'isApproving', payload: false });
     }
   }
 
   async function handleCancelQuote() {
     if (!ticketNumber) return;
-    setIsCancelling(true);
+    dispatch({ type: 'isCancelling', payload: true });
     try {
       await srApi.cancelQuote(ticketNumber, { performedBy: user?.staffId });
       toast.success('Tiket dibatalkan.');
@@ -147,14 +195,14 @@ const ServiceRequestDetail = () => {
       const message = error instanceof Error ? error.message : 'Gagal membatalkan tiket';
       toast.error(message);
     } finally {
-      setIsCancelling(false);
-      setShowCancelConfirm(false);
+      dispatch({ type: 'isCancelling', payload: false });
+      dispatch({ type: 'showCancelConfirm', payload: false });
     }
   }
 
   async function handleRetryStock() {
     if (!ticketNumber) return;
-    setIsRetryingStock(true);
+    dispatch({ type: 'isRetryingStock', payload: true });
     try {
       const result = await srApi.retryAwaitingParts(ticketNumber, { performedBy: user?.staffId });
 
@@ -168,13 +216,13 @@ const ServiceRequestDetail = () => {
       const message = error instanceof Error ? error.message : 'Gagal cek ulang stok';
       toast.error(message);
     } finally {
-      setIsRetryingStock(false);
+      dispatch({ type: 'isRetryingStock', payload: false });
     }
   }
 
   async function handleMarkDone() {
     if (!ticketNumber) return;
-    setIsDoneProcessing(true);
+    dispatch({ type: 'isDoneProcessing', payload: true });
     try {
       const res = await srApi.diagnose(ticketNumber, {
         newStatus: 'DONE',
@@ -183,7 +231,7 @@ const ServiceRequestDetail = () => {
       });
       toast.success('Service selesai!');
       if (res.invoice) {
-        setHasInvoice(true);
+        dispatch({ type: 'SET_HAS_INVOICE', payload: true });
         toast.success(
           <div className="flex items-center gap-2">
             <span>Invoice berhasil dibuat: </span>
@@ -199,13 +247,13 @@ const ServiceRequestDetail = () => {
       const message = error instanceof Error ? error.message : 'Gagal menyelesaikan service';
       toast.error(message);
     } finally {
-      setIsDoneProcessing(false);
+      dispatch({ type: 'isDoneProcessing', payload: false });
     }
   }
 
   async function handleCreateInvoice() {
     if (!ticketNumber) return;
-    setIsCreatingInvoice(true);
+    dispatch({ type: 'isCreatingInvoice', payload: true });
     try {
       const result = await financeApi.generateFromSR(ticketNumber);
       toast.success(
@@ -217,13 +265,13 @@ const ServiceRequestDetail = () => {
         </div>,
         { duration: 5000 }
       );
-      setHasInvoice(true);
+      dispatch({ type: 'SET_HAS_INVOICE', payload: true });
       await refetch();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Gagal membuat invoice';
       toast.error(message);
     } finally {
-      setIsCreatingInvoice(false);
+      dispatch({ type: 'isCreatingInvoice', payload: false });
     }
   }
 
@@ -258,13 +306,13 @@ const ServiceRequestDetail = () => {
           </div>
 
           <Button
-            variant={isEditing ? 'secondary' : 'outline'}
+            variant={state.isEditing ? 'secondary' : 'outline'}
             size="lg"
             onClick={handleEditToggle}
             className="gap-3 px-10 h-14 rounded-2xl text-xs font-black tracking-widest"
           >
-            {isEditing ? <X size={16} aria-hidden="true" /> : <Edit3 size={16} aria-hidden="true" />}
-            {isEditing ? 'CANCEL' : 'EDIT TICKET'}
+            {state.isEditing ? <X size={16} aria-hidden="true" /> : <Edit3 size={16} aria-hidden="true" />}
+            {state.isEditing ? 'CANCEL' : 'EDIT TICKET'}
           </Button>
         </header>
 
@@ -274,13 +322,13 @@ const ServiceRequestDetail = () => {
               customerName={data.customerName}
               phone={data.phone}
               address={data.address}
-              isEditing={isEditing}
+              isEditing={state.isEditing}
               onChange={handleFieldChange}
             />
 
             <ProblemDescription
               value={data.problemDescription}
-              isEditing={isEditing}
+              isEditing={state.isEditing}
               onChange={(v) => handleFieldChange('problemDescription', v)}
             />
           </div>
@@ -308,14 +356,14 @@ const ServiceRequestDetail = () => {
                     <>
                       <Button
                         className="w-full h-14 rounded-2xl text-xs font-black tracking-widest"
-                        onClick={() => setShowDiagnosis(true)}
+                        onClick={() => dispatch({ type: 'showDiagnosis', payload: true })}
                       >
                         DIAGNOSA & UPDATE STATUS
                       </Button>
                       <Button
                         variant="destructive"
                         className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
-                        onClick={() => setShowCancelConfirm(true)}
+                        onClick={() => dispatch({ type: 'showCancelConfirm', payload: true })}
                       >
                         <Ban size={16} aria-hidden="true" /> BATALKAN
                       </Button>
@@ -326,7 +374,7 @@ const ServiceRequestDetail = () => {
                     <>
                       <Button
                         className="w-full h-14 rounded-2xl text-xs font-black tracking-widest"
-                        onClick={() => setShowDiagnosis(true)}
+                        onClick={() => dispatch({ type: 'showDiagnosis', payload: true })}
                       >
                         DIAGNOSA
                       </Button>
@@ -335,7 +383,7 @@ const ServiceRequestDetail = () => {
                         <Button
                           variant="default"
                           className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
-                          onClick={() => setShowQuote(true)}
+                          onClick={() => dispatch({ type: 'showQuote', payload: true })}
                         >
                           <FileText size={16} aria-hidden="true" /> BUAT PENAWARAN
                         </Button>
@@ -350,27 +398,27 @@ const ServiceRequestDetail = () => {
                           <Button
                             variant="outline"
                             className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 border-primary/50 text-primary hover:bg-primary/10"
-                            onClick={() => setShowPrintQuote(true)}
+                            onClick={() => dispatch({ type: 'showPrintQuote', payload: true })}
                           >
                             <FileText size={16} aria-hidden="true" /> CETAK PENAWARAN
                           </Button>
 
                           <Button
                             className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
-                            onClick={() => setShowApproveConfirm(true)}
-                            disabled={isApproving}
+                            onClick={() => dispatch({ type: 'showApproveConfirm', payload: true })}
+                            disabled={state.isApproving}
                           >
-                            {isApproving ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
+                            {state.isApproving ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
                             SETUJUI
                           </Button>
 
                           <Button
                             variant="destructive"
                             className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
-                            onClick={() => setShowCancelConfirm(true)}
-                            disabled={isCancelling}
+                            onClick={() => dispatch({ type: 'showCancelConfirm', payload: true })}
+                            disabled={state.isCancelling}
                           >
-                            {isCancelling ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <Ban size={16} aria-hidden="true" />}
+                            {state.isCancelling ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <Ban size={16} aria-hidden="true" />}
                             BATALKAN
                           </Button>
                         </>
@@ -382,9 +430,9 @@ const ServiceRequestDetail = () => {
                     <Button
                       className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
                       onClick={handleMarkDone}
-                      disabled={isDoneProcessing}
+                      disabled={state.isDoneProcessing}
                     >
-                      {isDoneProcessing ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
+                      {state.isDoneProcessing ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
                       SELESAIKAN
                     </Button>
                   )}
@@ -397,26 +445,26 @@ const ServiceRequestDetail = () => {
                       <Button
                         className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
                         onClick={handleRetryStock}
-                        disabled={isRetryingStock}
+                        disabled={state.isRetryingStock}
                       >
-                        {isRetryingStock ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <RefreshCw size={16} aria-hidden="true" />}
+                        {state.isRetryingStock ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <RefreshCw size={16} aria-hidden="true" />}
                         CEK ULANG STOK
                       </Button>
                     </div>
                   )}
 
-                  {data.statusService === 'DONE' && !hasInvoice && (
+                  {data.statusService === 'DONE' && !state.hasInvoice && (
                     <Button
                       className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
                       onClick={handleCreateInvoice}
-                      disabled={isCreatingInvoice}
+                      disabled={state.isCreatingInvoice}
                     >
-                      {isCreatingInvoice ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <FileDown size={16} aria-hidden="true" />}
+                      {state.isCreatingInvoice ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <FileDown size={16} aria-hidden="true" />}
                       BUAT INVOICE
                     </Button>
                   )}
 
-                  {data.statusService === 'DONE' && hasInvoice && (
+                  {data.statusService === 'DONE' && state.hasInvoice && (
                     <Link href="/finance">
                       <Button className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2">
                         <FileText size={16} aria-hidden="true" /> LIHAT INVOICE
@@ -441,14 +489,14 @@ const ServiceRequestDetail = () => {
                   </div>
                 </CardContent>
 
-                {isEditing && (
+                {state.isEditing && (
                   <CardContent className="!p-0">
                     <Button
                       className="w-full h-14 rounded-2xl text-[10px] font-black tracking-[0.3em]"
                       onClick={handleSaveChanges}
-                      disabled={isSaving}
+                      disabled={state.isSaving}
                     >
-                      {isSaving ? 'MENYIMPAN…' : 'CONFIRM CHANGES'}
+                      {state.isSaving ? 'MENYIMPAN…' : 'CONFIRM CHANGES'}
                     </Button>
                   </CardContent>
                 )}
@@ -463,33 +511,33 @@ const ServiceRequestDetail = () => {
         </div>
       </div>
 
-      {showDiagnosis && (
+      {state.showDiagnosis && (
         <DiagnosisModal
           ticketNumber={ticketNumber}
           serviceRequestId={data?.id ?? null}
-          isOpen={showDiagnosis}
-          onClose={() => setShowDiagnosis(false)}
+          isOpen={state.showDiagnosis}
+          onClose={() => dispatch({ type: 'showDiagnosis', payload: false })}
           onSuccess={() => { refetch(); }}
           currentStatus={data?.statusService}
         />
       )}
 
-      {showQuote && (
+      {state.showQuote && (
         <ApproveQuoteModal
           ticketNumber={ticketNumber}
           serviceRequestId={data?.id ?? null}
-          isOpen={showQuote}
-          onClose={() => setShowQuote(false)}
+          isOpen={state.showQuote}
+          onClose={() => dispatch({ type: 'showQuote', payload: false })}
           onSuccess={() => { refetch(); }}
         />
       )}
 
-      {showPrintQuote && hasSavedQuote && (
+      {state.showPrintQuote && hasSavedQuote && (
         <ApproveQuoteModal
           ticketNumber={ticketNumber}
           serviceRequestId={data?.id ?? null}
-          isOpen={showPrintQuote}
-          onClose={() => setShowPrintQuote(false)}
+          isOpen={state.showPrintQuote}
+          onClose={() => dispatch({ type: 'showPrintQuote', payload: false })}
           onSuccess={() => { refetch(); }}
           initialServiceFee={data?.serviceFee}
           initialPartFee={data?.partFee}
@@ -498,23 +546,23 @@ const ServiceRequestDetail = () => {
       )}
 
       <ConfirmDialog
-        open={showApproveConfirm}
-        onOpenChange={setShowApproveConfirm}
+        open={state.showApproveConfirm}
+        onOpenChange={(v) => dispatch({ type: 'showApproveConfirm', payload: v })}
         title="Setujui Penawaran?"
         description="Yakin ingin menyetujui penawaran ini? Status tiket akan berubah menjadi SERVICE atau AWAITING_PARTS."
         confirmLabel="Ya, Setujui"
         variant="default"
-        loading={isApproving}
+        loading={state.isApproving}
         onConfirm={handleApproveQuote}
       />
       <ConfirmDialog
-        open={showCancelConfirm}
-        onOpenChange={setShowCancelConfirm}
+        open={state.showCancelConfirm}
+        onOpenChange={(v) => dispatch({ type: 'showCancelConfirm', payload: v })}
         title="Batalkan Tiket?"
         description="Yakin ingin membatalkan tiket ini? Semua part yang diusulkan akan dibatalkan."
         confirmLabel="Ya, Batalkan"
         variant="destructive"
-        loading={isCancelling}
+        loading={state.isCancelling}
         onConfirm={handleCancelQuote}
       />
     </main>

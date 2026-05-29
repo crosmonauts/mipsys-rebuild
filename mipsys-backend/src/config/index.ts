@@ -28,11 +28,25 @@ export const appConfig = {
     : ['http://localhost:3000'],
 };
 
-export const databaseConfig = {
-  host: requiredEnv('DB_HOST'),
-  user: requiredEnv('DB_USER'),
-  password: optionalEnv('DB_PASS', ''),
-  database: requiredEnv('DB_NAME'),
-  port: parsePort('DB_PORT', 5432),
-  connectionLimit: parsePort('DB_CONNECTION_LIMIT', 10),
-};
+export const databaseConfig = (() => {
+  const url = process.env.DATABASE_URL;
+  if (url) {
+    const parsed = new URL(url);
+    return {
+      host: parsed.hostname,
+      user: decodeURIComponent(parsed.username),
+      password: decodeURIComponent(parsed.password),
+      database: parsed.pathname.slice(1),
+      port: parseInt(parsed.port, 10) || 5432,
+      connectionLimit: parsePort('DB_CONNECTION_LIMIT', 10),
+    };
+  }
+  return {
+    host: requiredEnv('DB_HOST'),
+    user: requiredEnv('DB_USER'),
+    password: optionalEnv('DB_PASS', ''),
+    database: requiredEnv('DB_NAME'),
+    port: parsePort('DB_PORT', 5432),
+    connectionLimit: parsePort('DB_CONNECTION_LIMIT', 10),
+  };
+})();

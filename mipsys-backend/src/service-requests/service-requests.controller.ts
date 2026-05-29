@@ -15,7 +15,7 @@ import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
 import { ApproveQuoteDto } from './dto/approve-quote.dto';
 import { SaveQuoteDto } from './dto/save-quote.dto';
 import { CancelQuoteDto } from './dto/cancel-quote.dto';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { CurrentStaffId } from '../auth/current-staff-id.decorator';
 
 @Controller('service-request')
 export class ServiceRequestsController {
@@ -55,12 +55,9 @@ export class ServiceRequestsController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() createDto: CreateServiceRequestDto,
-    @CurrentUser() user: any,
+    @CurrentStaffId() staffId: number,
   ) {
-    return await this.serviceRequestService.createEntry(
-      createDto,
-      user.staffId ?? user.id,
-    );
+    return await this.serviceRequestService.createEntry(createDto, staffId);
   }
 
   @Patch(':ticketNumber')

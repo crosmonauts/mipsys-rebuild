@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Search, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/src/components/ui/input';
@@ -23,7 +24,7 @@ interface SrFilterBarProps {
   onFilterChange: (v: string) => void;
 }
 
-export function SrFilterBar({
+export const SrFilterBar = React.memo(function SrFilterBar({
   searchInput,
   onSearchInputChange,
   onSearch,
@@ -70,4 +71,4 @@ export function SrFilterBar({
       </div>
     </div>
   );
-}
+});

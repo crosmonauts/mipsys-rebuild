@@ -23,7 +23,7 @@ import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
 import { SaveQuoteDto } from './dto/save-quote.dto';
 import { CancelQuoteDto } from './dto/cancel-quote.dto';
 import { ApproveQuoteDto } from './dto/approve-quote.dto';
-import { InventoryService } from '../inventory/inventory.service';
+import { StockCommandService } from '../inventory/stock-command.service';
 import { OrderPartsService } from '../order-parts/order-parts.service';
 import { FinanceService } from '../finance/finance.service';
 import { ServiceRequestCustomerResolver } from './services/customer-resolver.service';
@@ -39,7 +39,7 @@ export class ServiceRequestService {
 
   constructor(
     @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
-    private inventoryService: InventoryService,
+    private stockCommand: StockCommandService,
     private orderPartsService: OrderPartsService,
     private financeService: FinanceService,
     private customerResolver: ServiceRequestCustomerResolver,
@@ -504,7 +504,7 @@ export class ServiceRequestService {
           });
 
           if (sparePart) {
-            await this.inventoryService.reserveStock(
+            await this.stockCommand.reserveStock(
               sparePart.id,
               part.quantity,
               ticketNumber,
@@ -617,7 +617,7 @@ export class ServiceRequestService {
         });
 
         if (sp) {
-          await this.inventoryService.reserveStock(
+          await this.stockCommand.reserveStock(
             sp.id,
             op.quantity,
             ticketNumber,

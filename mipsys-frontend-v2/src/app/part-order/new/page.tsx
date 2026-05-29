@@ -1,19 +1,18 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ChevronLeft,
-  Plus,
-  Trash2,
-  Save,
-  Package,
-  Store,
-  Pencil,
-  Check,
-  Loader2,
-} from 'lucide-react';
+  CaretLeftIcon,
+  PlusIcon,
+  TrashIcon,
+  FloppyDiskIcon,
+  PackageIcon,
+  StorefrontIcon,
+  PencilSimpleIcon,
+  CheckIcon,
+  SpinnerIcon,
+} from '@phosphor-icons/react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import {
@@ -22,12 +21,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/src/components/ui/card';
+import { LoadingSkeletonCard } from '@/src/components/ui/loading-skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/components/ui/select';
 import {
   useCreatePurchaseOrder,
   useUpdatePurchaseOrder,
 } from '@/src/features/part-order/hooks/usePurchaseOrder';
 import { poApi } from '@/src/features/part-order/api/po-api';
 import { inventoryApi } from '@/src/features/inventory/api/inventory-api';
+import { cn } from '@/src/lib/utils';
 
 interface OrderItem {
   id: string;
@@ -170,53 +178,59 @@ export default function NewPartOrderPage({
     router.push('/part-order');
   };
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <LoadingSkeletonCard />
+          </div>
+          <div className="lg:col-span-2">
+            <LoadingSkeletonCard />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isLoading = isSubmitting || isUpdating;
 
   return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700 text-left">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <Link href="/part-order">
-            <button
-              type="button"
-              onClick={() => router.push('/')}
-              className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft size={16} aria-hidden="true" />
-              Kembali
-            </button>
-          </Link>
+    <div className="flex flex-col gap-8 animate-in slide-in-from-bottom-4 duration-700 text-left">
+      <div>
+        <Button
+          variant="ghost"
+          onClick={() => router.push('/part-order')}
+          className="mb-6 text-muted-foreground hover:text-foreground bg-muted/50 px-4 py-2.5 rounded-xl"
+        >
+          <CaretLeftIcon data-icon="inline-start" aria-hidden="true" />
+          Kembali
+        </Button>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground tracking-tight uppercase">
               {isEditMode ? 'Update' : 'Buat'}{' '}
               <span className="text-primary">Order</span>
             </h1>
-            <p className="text-sm text-muted-foreground font-bold italic">
-              "Lengkapi rincian pengadaan dan status unit."
-            </p>
           </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-10 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all gap-2 uppercase text-xs tracking-widest border-none"
+          >
+            {isLoading ? (
+              <SpinnerIcon data-icon="inline-start" className="motion-safe:animate-spin" />
+            ) : (
+              <FloppyDiskIcon data-icon="inline-start" aria-hidden="true" />
+            )}
+            {isEditMode ? 'Update Data' : 'Simpan Pesanan'}
+          </Button>
         </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting || isUpdating}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-10 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting || isUpdating ? (
-            <Loader2
-              size={18}
-              strokeWidth={3}
-              className="motion-safe:animate-spin"
-            />
-          ) : (
-            <Save size={18} strokeWidth={3} aria-hidden="true" />
-          )}{' '}
-          {isEditMode ? 'Update Data' : 'Simpan Pesanan'}
-        </Button>
       </div>
 
       {errors.length > 0 && (
         <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-5">
-          <ul className="list-disc list-inside space-y-1">
+          <ul className="list-disc list-inside flex flex-col gap-1">
             {errors.map((e, i) => (
               <li key={i} className="text-sm font-bold text-destructive">
                 {e}
@@ -227,23 +241,23 @@ export default function NewPartOrderPage({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border-none rounded-[2.5rem] shadow-sm overflow-hidden bg-card">
-            <CardHeader className="bg-muted/50 border-b border-border/10 p-6">
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <Card className="border border-border/15 rounded-[2.5rem] shadow-sm overflow-hidden bg-card">
+            <CardHeader className="bg-muted/50 border-b border-border/8 p-6">
               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <Store size={14} aria-hidden="true" /> Detail Pengadaan
+                <StorefrontIcon size={14} aria-hidden="true" /> Detail Pengadaan
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
+            <CardContent className="p-6 flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <label className="micro-label text-muted-foreground ml-1">
                   Nama Supplier
                 </label>
                 <Input
                   value={supplier}
                   onChange={(e) => setSupplier(e.target.value)}
                   placeholder="Contoh: PT. Epson Indonesia"
-                  className="rounded-xl border border-border/20 h-12 font-bold focus:border-primary transition-all text-foreground bg-card"
+                  className="rounded-xl border border-border/15 h-12 font-bold focus:border-primary transition-all text-foreground bg-muted/50"
                 />
               </div>
             </CardContent>
@@ -252,24 +266,26 @@ export default function NewPartOrderPage({
 
         <div className="lg:col-span-2">
           <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card">
-            <CardHeader className="bg-card text-foreground p-6 border-b border-border/20">
+            <CardHeader className="bg-muted/50 text-foreground p-6 border-b border-border/8">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                  <Package size={16} aria-hidden="true" /> Rincian Item (Editable)
+                  <PackageIcon size={16} aria-hidden="true" /> Rincian Item
+                  (Editable)
                 </CardTitle>
                 <Button
                   onClick={addItem}
                   variant="ghost"
-                  className="text-foreground hover:bg-muted font-black text-[10px] uppercase tracking-widest flex gap-2 border-none"
+                  className="text-foreground hover:bg-muted font-black text-[10px] uppercase tracking-widest gap-2 border-none"
                 >
-                  <Plus size={14} strokeWidth={3} aria-hidden="true" /> Tambah Row
+                  <PlusIcon data-icon="inline-start" aria-hidden="true" /> Tambah
+                  Row
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-muted/50 border-b border-border/10 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                  <thead className="bg-muted/50 border-b border-border/8 text-[10px] font-black uppercase text-muted-foreground tracking-widest sticky top-0 z-10">
                     <tr>
                       <th className="p-5 pl-8">Nama Part</th>
                       <th className="p-5 w-24 text-center">Qty</th>
@@ -289,10 +305,10 @@ export default function NewPartOrderPage({
                                 updateItem(item.id, 'partName', e.target.value)
                               }
                               placeholder="Input sparepart..."
-                              className="h-11 border-none bg-muted/50 font-bold focus-visible:ring-2 focus-visible:ring-primary rounded-xl text-foreground"
+                              className="h-11 border border-border/30 bg-muted/50 font-bold focus-visible:ring-2 focus-visible:ring-primary rounded-xl text-foreground"
                             />
                           ) : (
-                            <p className="font-bold text-muted-foreground pl-3">
+                            <p className="font-bold text-foreground pl-3">
                               {item.partName || '-'}
                             </p>
                           )}
@@ -309,10 +325,10 @@ export default function NewPartOrderPage({
                                   parseInt(e.target.value) || 0,
                                 )
                               }
-                              className="h-11 border-none bg-muted/50 font-bold text-center rounded-xl text-foreground"
+                              className="h-11 border border-border/30 bg-muted/50 font-bold text-center rounded-xl text-foreground"
                             />
                           ) : (
-                            <p className="font-bold text-muted-foreground text-center">
+                            <p className="font-bold text-foreground text-center">
                               {item.qty}
                             </p>
                           )}
@@ -329,63 +345,73 @@ export default function NewPartOrderPage({
                                   parseInt(e.target.value) || 0,
                                 )
                               }
-                              className="h-11 border-none bg-muted/50 font-bold rounded-xl text-foreground"
+                              className="h-11 border border-border/30 bg-muted/50 font-bold rounded-xl text-foreground"
                             />
                           ) : (
-                            <p className="font-bold text-muted-foreground">
+                            <p className="font-bold text-foreground font-mono">
                               Rp {item.price.toLocaleString('id-ID')}
                             </p>
                           )}
                         </td>
                         <td className="p-4">
                           {item.isEditing ? (
-                            <select
+                            <Select
                               value={item.modelName}
-                              onChange={(e) =>
-                                updateItem(item.id, 'modelName', e.target.value)
+                              onValueChange={(value) =>
+                                updateItem(item.id, 'modelName', value)
                               }
-                              className="w-full h-11 rounded-xl border border-border/20 bg-muted/50 px-3 font-bold text-sm outline-none focus:border-primary transition-all appearance-none text-foreground"
                             >
-                              <option value="">Pilih Model</option>
-                              {categories.map((model) => (
-                                <option key={model} value={model}>
-                                  {model}
-                                </option>
-                              ))}
-                            </select>
+                              <SelectTrigger className="w-full" aria-label="Pilih model printer">
+                                <SelectValue placeholder="Pilih Model" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((model) => (
+                                  <SelectItem key={model} value={model}>
+                                    {model}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           ) : (
-                            <p className="font-bold text-muted-foreground pl-3">
+                            <p className="font-bold text-foreground pl-3">
                               {item.modelName || '-'}
                             </p>
                           )}
                         </td>
                         <td className="p-4 text-center pr-8">
                           <div className="flex items-center justify-center gap-2">
-                            <button
+                            <Button
                               onClick={() => toggleEdit(item.id)}
-                              className={`p-2.5 rounded-xl transition-all shadow-sm ${
-                                item.isEditing
-                                  ? 'bg-accent text-accent-foreground hover:bg-accent/90'
-                                  : 'bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground'
-                              }`}
-                              title={item.isEditing ? 'Simpan Baris' : 'Edit Baris'}
-                              aria-label={item.isEditing ? 'Simpan baris' : 'Edit baris'}
+                              variant={item.isEditing ? 'secondary' : 'ghost'}
+                              size="icon"
+                              className={cn(
+                                'rounded-xl',
+                                item.isEditing && 'bg-accent text-accent-foreground hover:bg-accent/90',
+                              )}
+                              title={
+                                item.isEditing ? 'Simpan Baris' : 'Edit Baris'
+                              }
+                              aria-label={
+                                item.isEditing ? 'Simpan baris' : 'Edit baris'
+                              }
                             >
                               {item.isEditing ? (
-                                <Check size={18} strokeWidth={3} aria-hidden="true" />
+                                <CheckIcon aria-hidden="true" />
                               ) : (
-                                <Pencil size={18} aria-hidden="true" />
+                                <PencilSimpleIcon aria-hidden="true" />
                               )}
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                               onClick={() => removeItem(item.id)}
-                              className="p-2.5 text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all bg-muted/50 rounded-xl"
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl text-muted-foreground hover:text-destructive-foreground hover:bg-destructive"
                               title="Hapus Baris"
                               aria-label="Hapus baris"
                             >
-                              <Trash2 size={18} aria-hidden="true" />
-                            </button>
+                              <TrashIcon aria-hidden="true" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -394,8 +420,8 @@ export default function NewPartOrderPage({
                 </table>
               </div>
 
-              <div className="p-8 bg-muted/30 border-t border-border/10 flex flex-col items-end">
-                <div className="space-y-1 text-right">
+              <div className="p-8 bg-muted/50 border-t border-border/8 flex flex-col items-end">
+                <div className="flex flex-col gap-1 text-right">
                   <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                     Total Estimasi
                   </p>

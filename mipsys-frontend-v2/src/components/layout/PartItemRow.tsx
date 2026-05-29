@@ -11,7 +11,7 @@ interface PartItemRowProps {
   onRemove: () => void;
 }
 
-export function PartItemRow({ index, onRemove }: PartItemRowProps) {
+export const PartItemRow = React.memo(function PartItemRow({ index, onRemove }: PartItemRowProps) {
   const { register, setValue, watch } = useFormContext();
   const [results, setResults] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -156,4 +156,4 @@ export function PartItemRow({ index, onRemove }: PartItemRowProps) {
       )}
     </div>
   );
-}
+});

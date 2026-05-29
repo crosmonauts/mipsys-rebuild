@@ -3,6 +3,7 @@ DESIGN.md
 PROMPT.md
 .agents
 .agents/
+/graphify-out
 /docs
 /.opencode
 skill-lock.json

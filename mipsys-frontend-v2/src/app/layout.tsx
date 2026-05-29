@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/src/lib/auth-context';
 import { IBM_Plex_Sans, IBM_Plex_Mono, Fraunces } from 'next/font/google';
+import { ErrorBoundary } from '@/src/components/ui/error-boundary';
 
 const ibmPlexSans = IBM_Plex_Sans({
   weight: ['400', '500', '600', '700'],
@@ -50,11 +51,13 @@ export default function RootLayout({
             />
             <SidebarProvider>
               <AuthGuard>
-                <main className="flex-1 overflow-y-auto planner-bg">
-                  <div className="max-w-[1500px] mx-auto w-full px-4 py-6 md:px-8 md:py-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    {children}
-                  </div>
-                </main>
+                <ErrorBoundary>
+                  <main className="flex-1 overflow-y-auto planner-bg">
+                    <div className="max-w-[1500px] mx-auto w-full px-4 py-6 md:px-8 md:py-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                      {children}
+                    </div>
+                  </main>
+                </ErrorBoundary>
               </AuthGuard>
             </SidebarProvider>
           </AuthProvider>
