@@ -20,6 +20,11 @@ async function bootstrap() {
   app.enableCors({
     origin: appConfig.corsOrigins,
   });
+
+  app.use('/health', (_req: any, res: any) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   await app.listen(process.env.PORT ?? 3001);
 }
 

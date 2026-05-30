@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Mendaftarkan IP lokal agar fitur "Live Reload" tidak diblokir
+  output: 'standalone',
   allowedDevOrigins: ['192.168.56.1', 'localhost', 'standalone'],
 };
 
