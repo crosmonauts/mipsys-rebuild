@@ -18,6 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migrate:all": "drizzle-kit migrate",
     "db:drop": "npx ts-node src/database/scripts/drop-all.ts",
     "db:push": "npx drizzle-kit push",
     "db:seed": "npx ts-node src/database/seeds/seed.ts",
