@@ -66,12 +66,12 @@ export const PO_STATUS_LABEL: Record<PoStatus, string> = {
 };
 
 export const PO_STATUS_BADGE: Record<PoStatus, string> = {
-  DRAFT: 'bg-muted text-muted-foreground',
-  REQUESTED: 'bg-primary/10 text-primary',
+  DRAFT: 'bg-[var(--muted)] text-[var(--muted-foreground)]',
+  REQUESTED: 'bg-[var(--primary)]/10 text-[var(--primary)]',
   APPROVED: 'bg-indigo-500/10 text-indigo-400',
   ORDERED: 'bg-amber-500/10 text-amber-400',
   SHIPPED: 'bg-purple-500/10 text-purple-400',
   PARTIALLY_RECEIVED: 'bg-orange-500/10 text-orange-400',
-  RECEIVED: 'bg-accent/10 text-accent',
-  CANCELLED: 'bg-destructive/10 text-destructive',
+  RECEIVED: 'bg-[var(--accent)]/10 text-[var(--accent)]',
+  CANCELLED: 'bg-[var(--destructive)]/10 text-[var(--destructive)]',
 };

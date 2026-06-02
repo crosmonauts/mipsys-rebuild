@@ -48,7 +48,7 @@ export default function ExpensesPage() {
           <Button onClick={handleSyncPo} variant="outline" className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase">
             <RefreshCw size={14} aria-hidden="true" /> Sync PO
           </Button>
-          <Button onClick={() => { setEditExpense(null); setShowForm(true); }} className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase bg-primary hover:bg-primary/90 text-primary-foreground border-none">
+          <Button onClick={() => { setEditExpense(null); setShowForm(true); }} className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground border-none">
             <Plus size={14} aria-hidden="true" /> Tambah
           </Button>
         </div>
@@ -57,30 +57,30 @@ export default function ExpensesPage() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-none rounded-[2rem] shadow-sm">
           <CardContent className="p-6">
-            <Wallet className="text-destructive mb-3" size={24} />
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Pengeluaran</p>
-            <h3 className="text-2xl font-black text-foreground">Rp {totalExpenses.toLocaleString('id-ID')}</h3>
+            <Wallet className="text-[var(--destructive)] mb-3" size={24} />
+            <p className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">Total Pengeluaran</p>
+            <h3 className="text-2xl font-black text-[var(--foreground)]">Rp {totalExpenses.toLocaleString('id-ID')}</h3>
           </CardContent>
         </Card>
         <Card className="border-none rounded-[2rem] shadow-sm">
           <CardContent className="p-6">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Jumlah Transaksi</p>
-            <h3 className="text-2xl font-black text-foreground">{expenses.length}</h3>
+            <p className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">Jumlah Transaksi</p>
+            <h3 className="text-2xl font-black text-[var(--foreground)]">{expenses.length}</h3>
           </CardContent>
         </Card>
         <Card className="border-none rounded-[2rem] shadow-sm">
           <CardContent className="p-6">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Rata-rata</p>
-            <h3 className="text-2xl font-black text-foreground">
+            <p className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">Rata-rata</p>
+            <h3 className="text-2xl font-black text-[var(--foreground)]">
               Rp {expenses.length > 0 ? Math.round(totalExpenses / expenses.length).toLocaleString('id-ID') : 0}
             </h3>
           </CardContent>
         </Card>
       </section>
 
-      <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card">
+      <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-[var(--card)]">
         {isLoading ? (
-          <div className="p-8 text-center text-xs font-bold text-muted-foreground">Memuat data...</div>
+          <div className="p-8 text-center text-xs font-bold text-[var(--muted-foreground)]">Memuat data...</div>
         ) : (
           <ExpenseTable expenses={expenses} onEdit={(exp) => { setEditExpense(exp); setShowForm(true); }} onDelete={handleDelete} />
         )}
@@ -88,8 +88,8 @@ export default function ExpensesPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200" onClick={() => setShowForm(false)}>
-          <div className="bg-card rounded-[2.5rem] p-6 max-w-md w-full mx-4 shadow-2xl border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-black text-lg text-foreground mb-4">{editExpense ? 'Edit Expense' : 'Tambah Expense'}</h3>
+          <div className="bg-[var(--card)] rounded-[2.5rem] p-6 max-w-md w-full mx-4 shadow-2xl border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-black text-lg text-[var(--foreground)] mb-4">{editExpense ? 'Edit Expense' : 'Tambah Expense'}</h3>
             <ExpenseForm
               onSuccess={() => { setShowForm(false); setEditExpense(null); refetch(); }}
               onCancel={() => { setShowForm(false); setEditExpense(null); }}

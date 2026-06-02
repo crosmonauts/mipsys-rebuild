@@ -163,7 +163,7 @@ export function Sidebar({
                 logout();
                 router.push('/login');
               }}
-              className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted"
+              className="p-1.5 hover:text-[var(--destructive)] transition-colors text-sidebar-muted"
               aria-label="Logout"
             >
               <LogOut size={16} />

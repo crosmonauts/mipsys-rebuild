@@ -39,24 +39,24 @@ export function ExpenseForm({ onSuccess, onCancel, initial, editId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="text-xs font-bold block mb-1 text-foreground/80">Deskripsi</label>
+        <label className="text-xs font-bold block mb-1 text-[var(--foreground)]/80">Deskripsi</label>
         <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-foreground" required />
+          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-[var(--foreground)]" required />
       </div>
       <div>
-        <label className="text-xs font-bold block mb-1 text-foreground/80">Jumlah</label>
+        <label className="text-xs font-bold block mb-1 text-[var(--foreground)]/80">Jumlah</label>
         <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
-          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-foreground" required />
+          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-[var(--foreground)]" required />
       </div>
       <div>
-        <label className="text-xs font-bold block mb-1 text-foreground/80">Tanggal</label>
+        <label className="text-xs font-bold block mb-1 text-[var(--foreground)]/80">Tanggal</label>
         <input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)}
-          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-foreground" required />
+          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-[var(--foreground)]" required />
       </div>
       <div>
-        <label className="text-xs font-bold block mb-1 text-foreground/80">Kategori</label>
+        <label className="text-xs font-bold block mb-1 text-[var(--foreground)]/80">Kategori</label>
         <select value={category} onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-foreground">
+          className="w-full p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-[var(--foreground)]">
           <option value="UTILITY">Utility</option>
           <option value="RENT">Rent</option>
           <option value="SALARY">Salary</option>
@@ -66,11 +66,11 @@ export function ExpenseForm({ onSuccess, onCancel, initial, editId }: Props) {
       </div>
       <div className="flex gap-2">
         <button type="submit" disabled={submitting}
-          className="flex-1 bg-primary text-primary-foreground rounded-xl py-2.5 text-sm font-bold hover:bg-primary/90 disabled:opacity-50 transition-all motion-safe:active:scale-95">
+          className="flex-1 bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl py-2.5 text-sm font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 transition-all motion-safe:active:scale-95">
           {submitting ? 'Menyimpan…' : editId ? 'Update' : 'Tambah'}
         </button>
         <button type="button" onClick={onCancel}
-          className="px-4 py-2.5 border border-border rounded-xl text-sm font-bold hover:bg-muted/50 transition-all motion-safe:active:scale-95 text-foreground/80">
+          className="px-4 py-2.5 border border-border rounded-xl text-sm font-bold hover:bg-[var(--muted)]/50 transition-all motion-safe:active:scale-95 text-[var(--foreground)]/80">
           Batal
         </button>
       </div>

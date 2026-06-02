@@ -58,34 +58,34 @@ export const PartItemRow = React.memo(function PartItemRow({ index, onRemove }: 
   };
 
   return (
-    <div className="bg-card border border-border/50 rounded-[2.5rem] p-8 mb-6 transition-all hover:border-primary/30 shadow-sm">
+    <div className="bg-[var(--card)] border border-border/50 rounded-[2.5rem] p-8 mb-6 transition-all hover:border-primary/30 shadow-sm">
       <div className="grid grid-cols-12 gap-6 items-start">
         <div className="col-span-6 relative" ref={dropdownRef}>
-          <Label className="text-xs font-extrabold text-foreground/80 uppercase mb-3 block">
+          <Label className="text-xs font-extrabold text-[var(--foreground)]/80 uppercase mb-3 block">
             Nama Suku Cadang
           </Label>
           <Input
             {...register(`parts.${index}.partName`)}
-            className="h-14 bg-muted/30 rounded-2xl px-6 font-bold text-foreground border-none shadow-inner"
+            className="h-14 bg-[var(--muted)]/30 rounded-2xl px-6 font-bold text-[var(--foreground)] border-none shadow-inner"
             placeholder="Ketik nama part..."
           />
           {isOpen && results.length > 0 && (
-            <ul className="absolute z-[100] w-full mt-2 bg-card rounded-3xl shadow-2xl border border-border/50 overflow-hidden py-2 animate-in slide-in-from-top-2">
+            <ul className="absolute z-[100] w-full mt-2 bg-[var(--card)] rounded-3xl shadow-2xl border border-border/50 overflow-hidden py-2 animate-in slide-in-from-top-2">
               {results.map((part) => (
                 <li
                   key={part.id}
                   onClick={() => handleSelect(part)}
-                  className="px-6 py-4 cursor-pointer hover:bg-primary/10 flex justify-between items-center transition-colors"
+                  className="px-6 py-4 cursor-pointer hover:bg-[var(--primary)]/10 flex justify-between items-center transition-colors"
                 >
                   <div className="flex flex-col">
-                    <span className="font-extrabold text-foreground">
+                    <span className="font-extrabold text-[var(--foreground)]">
                       {part.partName}
                     </span>
-                    <span className="text-[10px] font-black text-primary">
+                    <span className="text-[10px] font-black text-[var(--primary)]">
                       Stok: {part.stock}
                     </span>
                   </div>
-                  <span className="font-black text-foreground/80">
+                  <span className="font-black text-[var(--foreground)]/80">
                     Rp{Number(part.price).toLocaleString('id-ID')}
                   </span>
                 </li>
@@ -96,7 +96,7 @@ export const PartItemRow = React.memo(function PartItemRow({ index, onRemove }: 
 
         <div className="col-span-2">
           <Label
-            className={`text-xs font-extrabold uppercase mb-3 block text-center ${isStockInsufficient ? 'text-destructive' : 'text-foreground/80'}`}
+            className={`text-xs font-extrabold uppercase mb-3 block text-center ${isStockInsufficient ? 'text-[var(--destructive)]' : 'text-[var(--foreground)]/80'}`}
           >
             {isStockInsufficient ? 'Kurang' : 'Jumlah'}
           </Label>
@@ -105,19 +105,19 @@ export const PartItemRow = React.memo(function PartItemRow({ index, onRemove }: 
             {...register(`parts.${index}.quantity`, { valueAsNumber: true })}
             className={`h-14 rounded-2xl text-center font-black text-lg transition-all ${
               isStockInsufficient
-                ? 'bg-destructive/10 text-destructive ring-2 ring-destructive'
-                : 'bg-muted/30'
+                ? 'bg-[var(--destructive)]/10 text-[var(--destructive)] ring-2 ring-destructive'
+                : 'bg-[var(--muted)]/30'
             }`}
           />
         </div>
 
         <div className="col-span-3">
-          <Label className="text-xs font-extrabold text-foreground/80 uppercase mb-3 block">
+          <Label className="text-xs font-extrabold text-[var(--foreground)]/80 uppercase mb-3 block">
             Harga Satuan
           </Label>
           <Input
             {...register(`parts.${index}.unitPrice`)}
-            className="h-14 bg-muted/30 rounded-2xl px-6 font-black text-primary text-lg border-none"
+            className="h-14 bg-[var(--muted)]/30 rounded-2xl px-6 font-black text-[var(--primary)] text-lg border-none"
           />
         </div>
 
@@ -126,7 +126,7 @@ export const PartItemRow = React.memo(function PartItemRow({ index, onRemove }: 
             type="button"
             variant="ghost"
             onClick={onRemove}
-            className="text-destructive/70 hover:text-destructive h-14 w-14"
+            className="text-[var(--destructive)]/70 hover:text-[var(--destructive)] h-14 w-14"
             aria-label="Hapus part"
           >
             <Trash2 size={24} aria-hidden="true" />

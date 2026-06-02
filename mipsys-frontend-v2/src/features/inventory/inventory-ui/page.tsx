@@ -94,7 +94,7 @@ export default function InventoryPage() {
     {
       header: 'Part Code',
       cell: (part) => (
-        <span className="font-mono text-xs font-black text-foreground select-all">
+        <span className="font-mono text-xs font-black text-[var(--foreground)] select-all">
           {part.partCode || 'N/A'}
         </span>
       ),
@@ -102,7 +102,7 @@ export default function InventoryPage() {
     {
       header: 'Nama Barang',
       cell: (part) => (
-        <span className="text-xs font-black text-foreground">
+        <span className="text-xs font-black text-[var(--foreground)]">
           {part.partName}
         </span>
       ),
@@ -110,7 +110,7 @@ export default function InventoryPage() {
     {
       header: 'Model Mesin',
       cell: (part) => (
-        <span className="text-xs font-bold text-muted-foreground">
+        <span className="text-xs font-bold text-[var(--muted-foreground)]">
           {part.modelName || 'N/A'}
         </span>
       ),
@@ -125,8 +125,8 @@ export default function InventoryPage() {
             <span
               className={`px-3 py-1.5 rounded-md text-xs font-black border inline-block min-w-18 text-center ${
                 isLowStock
-                  ? 'bg-destructive/10 text-destructive border-destructive/30'
-                  : 'bg-muted text-foreground border-border'
+                  ? 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-destructive/30'
+                  : 'bg-[var(--muted)] text-[var(--foreground)] border-border'
               }`}
             >
               {part.stock} Unit
@@ -138,7 +138,7 @@ export default function InventoryPage() {
     {
       header: 'Harga',
       cell: (part) => (
-        <span className="text-xs font-black text-foreground">
+        <span className="text-xs font-black text-[var(--foreground)]">
           IDR {Number(part.price || 0).toLocaleString('id-ID')}
         </span>
       ),
@@ -148,12 +148,12 @@ export default function InventoryPage() {
       cell: (part) => {
         const isLowStock = part.stock <= 3;
         return isLowStock ? (
-          <span className="flex items-center gap-1.5 text-xs font-black text-destructive bg-destructive/10 border border-destructive/30 px-3 py-1 rounded-md w-fit">
+          <span className="flex items-center gap-1.5 text-xs font-black text-[var(--destructive)] bg-[var(--destructive)]/10 border border-destructive/30 px-3 py-1 rounded-md w-fit">
             <AlertTriangle size={14} className="shrink-0" />
             RESTOCK
           </span>
         ) : (
-          <span className="flex items-center gap-1.5 text-xs font-black text-accent bg-accent/10 border border-accent/30 px-3 py-1 rounded-md w-fit">
+          <span className="flex items-center gap-1.5 text-xs font-black text-[var(--accent)] bg-[var(--accent)]/10 border border-accent/30 px-3 py-1 rounded-md w-fit">
             <CheckCircle2 size={14} className="shrink-0" />
             AMAN
           </span>
@@ -219,9 +219,9 @@ export default function InventoryPage() {
           isLoading={loading}
           footer={
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 w-full">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">
-                Halaman <span className="text-foreground">{currentPage}</span>{' '}
-                dari <span className="text-muted-foreground">{totalPages}</span>
+              <p className="text-xs font-black text-[var(--muted-foreground)] uppercase tracking-wider">
+                Halaman <span className="text-[var(--foreground)]">{currentPage}</span>{' '}
+                dari <span className="text-[var(--muted-foreground)]">{totalPages}</span>
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -260,12 +260,12 @@ export default function InventoryPage() {
         onStockAction={handleStockAction}
       />
 
-      <footer className="pt-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center md:text-left">
+      <footer className="pt-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest text-center md:text-left">
         <div className="flex items-center gap-2">
-          <Globe size={12} className="text-primary" aria-hidden="true" />
+          <Globe size={12} className="text-[var(--primary)]" aria-hidden="true" />
           Central Java, Indonesia
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-[var(--muted-foreground)]">
           &copy; 2026 PT Mitrainfoparama &mdash; V2.1.0-AAA
         </p>
       </footer>

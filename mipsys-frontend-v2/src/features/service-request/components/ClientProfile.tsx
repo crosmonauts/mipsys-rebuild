@@ -56,9 +56,9 @@ export function ClientProfile({
 
 function SectionHeader({ label, number }: { label: string; number: string }) {
   return (
-    <h2 className="micro-label text-primary flex items-center gap-6">
+    <h2 className="micro-label text-[var(--primary)] flex items-center gap-6">
       {number}. {label}{' '}
-      <span className="h-[1px] flex-1 bg-border/20"></span>
+      <span className="h-[1px] flex-1 bg-[var(--border)]/20"></span>
     </h2>
   );
 }
@@ -80,7 +80,7 @@ function EditableField({
 }) {
   return (
     <div className="group space-y-3">
-      <label className="micro-label text-muted-foreground flex items-center gap-2">
+      <label className="micro-label text-[var(--muted-foreground)] flex items-center gap-2">
         {icon} {label}
       </label>
       {isEditing ? (
@@ -98,9 +98,9 @@ function EditableField({
           />
         )
       ) : (
-        <p className="text-2xl font-black text-foreground tracking-tight leading-none pt-1">
+        <p className="text-2xl font-black text-[var(--foreground)] tracking-tight leading-none pt-1">
           {value || (
-            <span className="text-muted-foreground/40 font-normal italic">N/A</span>
+            <span className="text-[var(--muted-foreground)]/40 font-normal italic">N/A</span>
           )}
         </p>
       )}

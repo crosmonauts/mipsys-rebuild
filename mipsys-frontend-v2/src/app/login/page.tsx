@@ -33,13 +33,13 @@ export default function LoginPage() {
     <div className="min-h-screen planner-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <div className="inline-flex p-3 bg-primary rounded-2xl mb-4" aria-hidden="true">
-            <Printer className="text-primary-foreground w-8 h-8" />
+          <div className="inline-flex p-3 bg-[var(--primary)] rounded-2xl mb-4" aria-hidden="true">
+            <Printer className="text-[var(--primary)]-foreground w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-foreground tracking-tight">
+          <h1 className="text-4xl font-display font-bold text-[var(--foreground)] tracking-tight">
             MiPSys
           </h1>
-          <p className="text-muted-foreground mt-2 font-medium text-sm">
+          <p className="text-[var(--muted-foreground)] mt-2 font-medium text-sm">
             Manajemen Inventory & Service Printer
           </p>
         </div>
@@ -51,7 +51,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label
               htmlFor="username"
-              className="micro-label text-muted-foreground block"
+              className="micro-label text-[var(--muted-foreground)] block"
             >
               Username
             </label>
@@ -60,7 +60,7 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="h-12 w-full rounded-xl border border-border bg-background px-4 text-foreground text-sm outline-none focus:border-ring focus:ring-1 focus:ring-ring/50 transition-all"
+              className="h-12 w-full rounded-xl border border-border bg-background px-4 text-[var(--foreground)] text-sm outline-none focus:border-ring focus:ring-1 focus:ring-ring/50 transition-all"
               placeholder="admin"
               autoComplete="username"
               autoFocus
@@ -70,7 +70,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label
               htmlFor="password"
-              className="micro-label text-muted-foreground block"
+              className="micro-label text-[var(--muted-foreground)] block"
             >
               Password
             </label>
@@ -79,7 +79,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-12 w-full rounded-xl border border-border bg-background px-4 text-foreground text-sm outline-none focus:border-ring focus:ring-1 focus:ring-ring/50 transition-all"
+              className="h-12 w-full rounded-xl border border-border bg-background px-4 text-[var(--foreground)] text-sm outline-none focus:border-ring focus:ring-1 focus:ring-ring/50 transition-all"
               placeholder="admin123"
               autoComplete="current-password"
             />
@@ -88,7 +88,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading || !username || !password}
-            className="w-full h-12 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
+            className="w-full h-12 bg-[var(--primary)] text-[var(--primary)]-foreground font-bold text-sm rounded-xl hover:bg-[var(--primary)]/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 motion-safe:animate-spin" aria-hidden="true" />
@@ -98,7 +98,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-xs text-muted-foreground">
+        <p className="text-center mt-6 text-xs text-[var(--muted-foreground)]">
           Demo: admin / admin123
         </p>
       </div>

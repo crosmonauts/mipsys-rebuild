@@ -240,22 +240,22 @@ export default function MasterDataPage() {
       return [
         {
           header: 'Nama',
-          cell: (c: CustomerData) => <span className="font-bold text-foreground">{c.name}</span>,
+          cell: (c: CustomerData) => <span className="font-bold text-[var(--foreground)]">{c.name}</span>,
         },
         {
           header: 'Telepon',
-          cell: (c: CustomerData) => <span className="text-muted-foreground font-medium">{c.phone || '-'}</span>,
+          cell: (c: CustomerData) => <span className="text-[var(--muted-foreground)] font-medium">{c.phone || '-'}</span>,
         },
         {
           header: 'Alamat',
-          cell: (c: CustomerData) => <span className="text-sm text-muted-foreground">{c.address || '-'}</span>,
+          cell: (c: CustomerData) => <span className="text-sm text-[var(--muted-foreground)]">{c.address || '-'}</span>,
         },
         {
           header: 'Tipe',
           headerClassName: 'text-center',
           cell: (c: CustomerData) => (
             <div className="flex justify-center">
-              <Badge className={c.customerType === 'CORPORATE' ? 'bg-primary/10 text-primary border-none font-black text-[9px]' : 'bg-muted/50 text-muted-foreground border-none font-black text-[9px]'}>
+              <Badge className={c.customerType === 'CORPORATE' ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-none font-black text-[9px]' : 'bg-[var(--muted)]/50 text-[var(--muted-foreground)] border-none font-black text-[9px]'}>
                 {c.customerType || '-'}
               </Badge>
             </div>
@@ -266,10 +266,10 @@ export default function MasterDataPage() {
           headerClassName: 'text-center',
           cell: (c: CustomerData) => (
             <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(c)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(c)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(c.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(c.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
             </div>
@@ -281,12 +281,12 @@ export default function MasterDataPage() {
       return [
         {
           header: 'Nama',
-          cell: (s: StaffData) => <span className="font-bold text-foreground">{s.name}</span>,
+          cell: (s: StaffData) => <span className="font-bold text-[var(--foreground)]">{s.name}</span>,
         },
         {
           header: 'Role',
           cell: (s: StaffData) => (
-            <Badge className={s.role === 'ADMIN' ? 'bg-primary/10 text-primary border-none font-black text-[9px]' : 'bg-amber-100/20 text-amber-400 border-none font-black text-[9px]'}>
+            <Badge className={s.role === 'ADMIN' ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-none font-black text-[9px]' : 'bg-amber-100/20 text-amber-400 border-none font-black text-[9px]'}>
               {s.role === 'ADMIN' ? 'Admin' : 'Teknisi'}
             </Badge>
           ),
@@ -296,10 +296,10 @@ export default function MasterDataPage() {
           headerClassName: 'text-center',
           cell: (s: StaffData) => (
             <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(s)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(s)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(s.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(s.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
             </div>
@@ -311,21 +311,21 @@ export default function MasterDataPage() {
       return [
         {
           header: 'Nama Model',
-          cell: (p: ProductData) => <span className="font-bold text-foreground">{p.modelName}</span>,
+          cell: (p: ProductData) => <span className="font-bold text-[var(--foreground)]">{p.modelName}</span>,
         },
         {
           header: 'Serial Number',
-          cell: (p: ProductData) => <span className="text-muted-foreground font-medium">{p.serialNumber}</span>,
+          cell: (p: ProductData) => <span className="text-[var(--muted-foreground)] font-medium">{p.serialNumber}</span>,
         },
         {
           header: 'Aksi',
           headerClassName: 'text-center',
           cell: (p: ProductData) => (
             <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(p)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(p)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(p.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(p.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
             </div>
@@ -336,21 +336,21 @@ export default function MasterDataPage() {
     return [
       {
         header: 'Nama Model',
-        cell: (m: CategoryModelData) => <span className="font-bold text-foreground">{m.name}</span>,
+        cell: (m: CategoryModelData) => <span className="font-bold text-[var(--foreground)]">{m.name}</span>,
       },
       {
         header: 'Deskripsi',
-        cell: (m: CategoryModelData) => <span className="text-sm text-muted-foreground">{m.description || '-'}</span>,
+        cell: (m: CategoryModelData) => <span className="text-sm text-[var(--muted-foreground)]">{m.description || '-'}</span>,
       },
       {
         header: 'Aksi',
         headerClassName: 'text-center',
         cell: (m: CategoryModelData) => (
           <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(m)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(m)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(m.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted/50 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(m.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
           </div>
@@ -377,14 +377,14 @@ export default function MasterDataPage() {
         subtitle="Manajemen data master pelanggan, staff, produk, dan model."
       />
 
-      <div className="flex gap-2 bg-card p-2 rounded-2xl border border-border/20 overflow-x-auto">
+      <div className="flex gap-2 bg-[var(--card)] p-2 rounded-2xl border border-border/20 overflow-x-auto">
         {tabs.map((tab) => (
           <Button
             key={tab.id}
             variant={activeTab === tab.id ? 'default' : 'ghost'}
             onClick={() => { setActiveTab(tab.id); setSearchTerm(''); }}
             className={`flex items-center gap-2 px-5 py-6 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap ${
-              activeTab === tab.id ? 'bg-primary text-primary-foreground border-0' : ''
+              activeTab === tab.id ? 'bg-[var(--primary)] text-[var(--primary)]-foreground border-0' : ''
             }`}
           >
             {tab.icon}
@@ -399,7 +399,7 @@ export default function MasterDataPage() {
           onChange={setSearchTerm}
           placeholder={`Cari ${activeTab === 'customers' ? 'pelanggan' : activeTab === 'staff' ? 'staff' : activeTab === 'products' ? 'produk' : 'model'}...`}
         />
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-6 py-6 rounded-2xl shadow-lg flex gap-2 uppercase text-xs tracking-widest border-none shrink-0">
+        <Button onClick={openCreate} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground font-black px-6 py-6 rounded-2xl shadow-lg flex gap-2 uppercase text-xs tracking-widest border-none shrink-0">
           <Plus size={16} strokeWidth={3} aria-hidden="true" /> Tambah Data
         </Button>
       </div>
@@ -413,7 +413,7 @@ export default function MasterDataPage() {
           <>{tabs.find((t) => t.id === activeTab)?.icon} Data {tabs.find((t) => t.id === activeTab)?.label}</>
         }
         footer={
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">
+          <p className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest italic">
             Data master untuk referensi sistem
           </p>
         }
@@ -428,8 +428,8 @@ export default function MasterDataPage() {
 
       {modal.open && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
-          <div className="bg-card rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200">
-            <div className="bg-card text-foreground p-6 flex justify-between items-center border-b border-border/20">
+          <div className="bg-[var(--card)] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200">
+            <div className="bg-[var(--card)] text-[var(--foreground)] p-6 flex justify-between items-center border-b border-border/20">
               <h2 className="text-xs font-black uppercase tracking-widest">
                 {modal.mode === 'create' ? 'Tambah' : 'Edit'} {tabs.find((t) => t.id === activeTab)?.label}
               </h2>
@@ -443,7 +443,7 @@ export default function MasterDataPage() {
                 <Button onClick={closeModal} variant="outline" className="flex-1 h-12 rounded-2xl border-2 font-black text-xs uppercase tracking-widest">
                   Batal
                 </Button>
-                <Button onClick={handleSubmit} disabled={submitting} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black text-xs uppercase tracking-widest border-none disabled:opacity-50">
+                <Button onClick={handleSubmit} disabled={submitting} className="flex-1 h-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground rounded-2xl font-black text-xs uppercase tracking-widest border-none disabled:opacity-50">
                   {submitting ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Check size={16} aria-hidden="true" />} Simpan
                 </Button>
               </div>

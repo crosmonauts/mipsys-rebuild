@@ -25,11 +25,11 @@ interface DeviceSectionProps {
 
 export function DeviceSection({ form }: DeviceSectionProps) {
   return (
-    <section className="bg-card border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-primary/30">
+    <section className="bg-[var(--card)] border border-border/20 rounded-3xl shadow-sm overflow-hidden text-left transition-all hover:border-primary/30">
       <SectionHeader
         number="02"
         title="Detail Unit & Masalah"
-        icon={        <AlertCircle size={18} className="text-muted-foreground" />}
+        icon={        <AlertCircle size={18} className="text-[var(--muted-foreground)]" />}
       />
 
       <div className="p-8 space-y-6">
@@ -52,14 +52,14 @@ function SectionHeader({
 }) {
   return (
     <div
-      className="bg-muted/50 px-6 py-4 border-b border-border/20 flex items-center justify-between"
+      className="bg-[var(--muted)]/50 px-6 py-4 border-b border-border/20 flex items-center justify-between"
       aria-hidden="true"
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary)]-foreground">
           {number}
         </span>
-        <h2 className="text-foreground uppercase tracking-wider text-xs font-bold">
+        <h2 className="text-[var(--foreground)] uppercase tracking-wider text-xs font-bold">
           {title}
         </h2>
       </div>
@@ -84,12 +84,12 @@ function ModelField({ form }: { form: UseFormReturn<any> }) {
       name="modelName"
       render={({ field }) => (
         <FormItem>
-            <FormLabel className="micro-label text-muted-foreground">
+            <FormLabel className="micro-label text-[var(--muted-foreground)]">
             Model Mesin
           </FormLabel>
           <FormControl>
             <Input
-              className="h-12 bg-card border-border/30 rounded-xl uppercase font-bold"
+              className="h-12 bg-[var(--card)] border-border/30 rounded-xl uppercase font-bold"
               placeholder="L3110"
               {...field}
             />
@@ -108,12 +108,12 @@ function SerialField({ form }: { form: UseFormReturn<any> }) {
       name="serialNumber"
       render={({ field }) => (
         <FormItem>
-            <FormLabel className="micro-label text-muted-foreground">
+            <FormLabel className="micro-label text-[var(--muted-foreground)]">
             Serial Number (S/N)
           </FormLabel>
           <FormControl>
             <Input
-              className="h-12 bg-card border-border/30 rounded-xl uppercase font-mono"
+              className="h-12 bg-[var(--card)] border-border/30 rounded-xl uppercase font-mono"
               placeholder="X7YZ..."
               {...field}
             />
@@ -132,12 +132,12 @@ function ProblemField({ form }: { form: UseFormReturn<any> }) {
       name="problemDescription"
       render={({ field }) => (
         <FormItem>
-            <FormLabel className="micro-label text-muted-foreground">
+            <FormLabel className="micro-label text-[var(--muted-foreground)]">
             Keluhan Pelanggan
           </FormLabel>
           <FormControl>
             <Textarea
-              className="min-h-32 bg-card border-border/30 rounded-xl italic"
+              className="min-h-32 bg-[var(--card)] border-border/30 rounded-xl italic"
               placeholder="Contoh: Hasil print garis, mati total..."
               {...field}
             />
@@ -165,12 +165,12 @@ function ServiceTypeField({ form }: { form: UseFormReturn<any> }) {
       name="serviceType"
       render={({ field }) => (
         <FormItem>
-            <FormLabel className="micro-label text-muted-foreground">
+            <FormLabel className="micro-label text-[var(--muted-foreground)]">
             Tipe Service
           </FormLabel>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <FormControl>
-              <SelectTrigger className="h-12 bg-card border-border/30 rounded-xl">
+              <SelectTrigger className="h-12 bg-[var(--card)] border-border/30 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
             </FormControl>
@@ -193,12 +193,12 @@ function CustomerTypeField({ form }: { form: UseFormReturn<any> }) {
       name="customerType"
       render={({ field }) => (
         <FormItem>
-            <FormLabel className="micro-label text-muted-foreground">
+            <FormLabel className="micro-label text-[var(--muted-foreground)]">
             Tipe Pelanggan
           </FormLabel>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <FormControl>
-              <SelectTrigger className="h-12 bg-card border-border/30 rounded-xl">
+              <SelectTrigger className="h-12 bg-[var(--card)] border-border/30 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
             </FormControl>

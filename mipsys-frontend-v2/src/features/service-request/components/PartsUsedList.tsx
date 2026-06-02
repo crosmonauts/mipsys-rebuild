@@ -56,9 +56,9 @@ export function PartsUsedList({
 
 function SectionHeader() {
   return (
-    <h3 className="micro-label text-primary flex items-center gap-6">
+    <h3 className="micro-label text-[var(--primary)] flex items-center gap-6">
       <Package size={14} aria-hidden="true" /> Part Digunakan{' '}
-      <span className="h-[1px] flex-1 bg-border/20"></span>
+      <span className="h-[1px] flex-1 bg-[var(--border)]/20"></span>
     </h3>
   );
 }
@@ -75,25 +75,25 @@ function PartItem({
   const badge = statusBadge[part.status] || { label: part.status, variant: 'secondary' as const };
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/20 shadow-sm">
+    <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--card)] border border-border/20 shadow-sm">
       <div className="flex-1 min-w-0">
-        <p className="text-foreground text-sm truncate font-bold">
+        <p className="text-[var(--foreground)] text-sm truncate font-bold">
           {part.partName}
         </p>
-        <p className="micro-label text-muted-foreground">
+        <p className="micro-label text-[var(--muted-foreground)]">
           {part.partCode ?? 'Manual'} × {part.quantity}
         </p>
       </div>
 
       <div className="flex items-center gap-3">
-        <p className="font-bold text-foreground text-sm">
+        <p className="font-bold text-[var(--foreground)] text-sm">
           Rp {lineTotal.toLocaleString('id-ID')}
         </p>
         <Badge variant={badge.variant}>{badge.label}</Badge>
         {onRemove && (
           <button
             onClick={() => onRemove(part.id)}
-            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+            className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 rounded-lg transition-all"
             aria-label={`Hapus ${part.partName || 'part'}`}
           >
             <Trash2 size={14} aria-hidden="true" />
@@ -106,11 +106,11 @@ function PartItem({
 
 function TotalRow({ totalFee }: { totalFee: number }) {
   return (
-    <div className="flex justify-between items-center p-4 bg-primary/10 rounded-xl border border-primary/30">
-      <span className="text-[10px] font-black uppercase text-primary">
+    <div className="flex justify-between items-center p-4 bg-[var(--primary)]/10 rounded-xl border border-primary/30">
+      <span className="text-[10px] font-black uppercase text-[var(--primary)]">
         Total Biaya Part
       </span>
-      <span className="text-lg font-black text-primary">
+      <span className="text-lg font-black text-[var(--primary)]">
         Rp {totalFee.toLocaleString('id-ID')}
       </span>
     </div>
@@ -119,7 +119,7 @@ function TotalRow({ totalFee }: { totalFee: number }) {
 
 function LoadingState() {
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+    <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] py-4">
       <div className="w-4 h-4 border-2 border-border/30 border-t-primary rounded-full motion-safe:animate-spin" />
       Memuat part…
     </div>

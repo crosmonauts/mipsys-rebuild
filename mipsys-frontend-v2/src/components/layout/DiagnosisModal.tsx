@@ -180,7 +180,7 @@ export function DiagnosisModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
         <DialogOverlay />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-popover shadow-lg duration-200 sm:rounded-2xl p-0 overflow-hidden">
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-[var(--popover)] shadow-lg duration-200 sm:rounded-2xl p-0 overflow-hidden">
           <DialogDescription className="sr-only">
             Form diagnosis teknisi untuk service request
           </DialogDescription>
@@ -228,10 +228,10 @@ function ModalHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-primary text-primary-foreground">
+    <div className="p-8 bg-[var(--primary)] text-[var(--primary)]-foreground">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-card/20 rounded-2xl">
+          <div className="p-3 bg-[var(--card)]/20 rounded-2xl">
             <ClipboardCheck size={24} aria-hidden="true" />
           </div>
           <div>
@@ -265,7 +265,7 @@ function DiagnosisInput({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
+      <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1">
         Hasil Diagnosa *
       </label>
       <Textarea
@@ -281,15 +281,15 @@ function DiagnosisInput({
 function StatusInfo() {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
+      <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1">
         Perubahan Status
       </label>
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20">
-        <span className="text-sm font-bold text-muted-foreground">Menunggu Check</span>
-        <span className="text-primary font-bold">&rarr;</span>
-        <span className="text-sm font-black text-primary">Menunggu Persetujuan</span>
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-[var(--primary)]/10 border border-primary/20">
+        <span className="text-sm font-bold text-[var(--muted-foreground)]">Menunggu Check</span>
+        <span className="text-[var(--primary)] font-bold">&rarr;</span>
+        <span className="text-sm font-black text-[var(--primary)]">Menunggu Persetujuan</span>
       </div>
-      <p className="text-[10px] text-muted-foreground ml-1">
+      <p className="text-[10px] text-[var(--muted-foreground)] ml-1">
         Part yang ditambahkan akan dicatat sebagai usulan dan belum memotong stok.
       </p>
     </div>
@@ -319,13 +319,13 @@ function PartsSelector({
 }) {
   return (
     <div className="space-y-3" ref={dropdownRef}>
-      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-2">
+      <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1 flex items-center gap-2">
         <Package size={14} aria-hidden="true" /> Usulan Part
       </label>
 
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]"
           size={16}
           aria-hidden="true"
         />
@@ -338,7 +338,7 @@ function PartsSelector({
       </div>
 
       {searchResults.length > 0 && (
-        <div className="max-h-40 overflow-y-auto border border-border/30 rounded-xl bg-card">
+        <div className="max-h-40 overflow-y-auto border border-border/30 rounded-xl bg-[var(--card)]">
           {searchResults.map((part) => (
             <PartSearchResult
               key={part.id}
@@ -350,7 +350,7 @@ function PartsSelector({
       )}
 
       {isSearching && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
           <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> Mencari part…
         </div>
       )}
@@ -383,14 +383,14 @@ function PartSearchResult({
       variant="ghost"
       type="button"
       onClick={() => onSelect(part)}
-      className="w-full justify-between px-4 py-3 h-auto rounded-none border-b border-border/20 last:border-0 hover:bg-primary/10"
+      className="w-full justify-between px-4 py-3 h-auto rounded-none border-b border-border/20 last:border-0 hover:bg-[var(--primary)]/10"
     >
       <div className="text-left">
-        <p className="font-bold text-foreground text-sm">{part.partName}</p>
-        <p className="text-[10px] text-muted-foreground">{part.partCode}</p>
+        <p className="font-bold text-[var(--foreground)] text-sm">{part.partName}</p>
+        <p className="text-[10px] text-[var(--muted-foreground)]">{part.partCode}</p>
       </div>
       <div className="text-right">
-        <p className="font-black text-primary text-sm">
+        <p className="font-black text-[var(--primary)] text-sm">
           Rp {Number(part.price ?? 0).toLocaleString('id-ID')}
         </p>
       </div>
@@ -408,12 +408,12 @@ function SelectedPartRow({
   onRemove: (id: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-primary/30 bg-primary/10">
+    <div className="flex items-center gap-3 p-3 rounded-xl border border-primary/30 bg-[var(--primary)]/10">
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-foreground text-sm truncate">
+        <p className="font-bold text-[var(--foreground)] text-sm truncate">
           {part.partName}
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[10px] text-[var(--muted-foreground)]">
           Rp {part.price.toLocaleString('id-ID')} x {part.quantity} = Rp {(part.price * part.quantity).toLocaleString('id-ID')}
         </p>
       </div>
@@ -444,21 +444,21 @@ function ExistingPartsList({ parts }: { parts: OrderPart[] }) {
 
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
+      <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1">
         Part Sudah Terpasang
       </label>
       {parts.map((part) => (
         <div
           key={part.id}
-          className="flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/30"
+          className="flex items-center justify-between p-3 rounded-xl bg-[var(--primary)]/10 border border-primary/30"
         >
           <div>
-            <p className="font-bold text-foreground text-sm">{part.partName}</p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="font-bold text-[var(--foreground)] text-sm">{part.partName}</p>
+            <p className="text-[10px] text-[var(--muted-foreground)]">
               {part.partCode} x {part.quantity}
             </p>
           </div>
-          <p className="font-black text-primary text-sm">
+          <p className="font-black text-[var(--primary)] text-sm">
             Rp {Number(part.priceAtAction ?? 0).toLocaleString('id-ID')}
           </p>
         </div>
@@ -477,13 +477,13 @@ function ModalFooter({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-muted/50 border-t flex flex-col gap-4">
+    <div className="p-8 bg-[var(--muted)]/50 border-t flex flex-col gap-4">
       {totalPartCost > 0 && (
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-black uppercase text-muted-foreground">
+          <span className="text-[10px] font-black uppercase text-[var(--muted-foreground)]">
             Estimasi Biaya Part
           </span>
-          <span className="text-lg font-black text-primary">
+          <span className="text-lg font-black text-[var(--primary)]">
             Rp {totalPartCost.toLocaleString('id-ID')}
           </span>
         </div>

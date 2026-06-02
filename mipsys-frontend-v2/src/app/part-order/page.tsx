@@ -73,19 +73,19 @@ export default function PartOrderPage() {
     {
       header: 'No. PO',
       cell: (order) => (
-        <span className="font-bold text-foreground">{order.poNumber}</span>
+        <span className="font-bold text-[var(--foreground)]">{order.poNumber}</span>
       ),
     },
     {
       header: 'Supplier',
       cell: (order) => (
-        <span className="font-bold text-muted-foreground">{order.supplierName}</span>
+        <span className="font-bold text-[var(--muted-foreground)]">{order.supplierName}</span>
       ),
     },
     {
       header: 'Item',
       cell: (order) => (
-        <span className="text-sm text-muted-foreground font-medium max-w-[200px] truncate block">
+        <span className="text-sm text-[var(--muted-foreground)] font-medium max-w-[200px] truncate block">
           {order.items
             ? order.items
                 .map((i) => `${i.partName || `#${i.sparePartId}`} (x${i.quantity})`)
@@ -97,7 +97,7 @@ export default function PartOrderPage() {
     {
       header: 'Model',
       cell: (order) => (
-        <span className="text-sm text-muted-foreground font-medium max-w-[150px] truncate block">
+        <span className="text-sm text-[var(--muted-foreground)] font-medium max-w-[150px] truncate block">
           {order.items
             ? [...new Set(order.items.map((i) => i.modelName).filter(Boolean))].join(', ') || '-'
             : '-'}
@@ -121,7 +121,7 @@ export default function PartOrderPage() {
       header: 'Total Estimasi',
       headerClassName: 'text-right',
       cell: (order) => (
-        <span className="font-bold text-primary tracking-tight block text-right">
+        <span className="font-bold text-[var(--primary)] tracking-tight block text-right">
           Rp {parseFloat(order.totalAmount || '0').toLocaleString('id-ID')}
         </span>
       ),
@@ -136,7 +136,7 @@ export default function PartOrderPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-xl hover:bg-primary hover:text-primary-foreground transition-all"
+                className="h-10 w-10 rounded-xl hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground transition-all"
                 aria-label="Edit pesanan"
               >
                 <Pencil size={18} aria-hidden="true" />
@@ -147,7 +147,7 @@ export default function PartOrderPage() {
             variant="ghost"
             size="icon"
             onClick={() => setSelectedPoId(order.id)}
-            className="h-10 w-10 rounded-xl hover:bg-muted hover:text-foreground"
+            className="h-10 w-10 rounded-xl hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
             aria-label="Lihat detail pesanan"
           >
             <Eye size={18} aria-hidden="true" />
@@ -177,7 +177,7 @@ export default function PartOrderPage() {
             />
           </Button>
           <Link href="/part-order/new">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-6 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none">
+            <Button className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground font-black px-6 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none">
               <Plus size={18} strokeWidth={3} /> Buat Order Baru
             </Button>
           </Link>
@@ -186,23 +186,23 @@ export default function PartOrderPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { title: 'Total Order', value: String(stats.total), icon: <ShoppingBag size={16} className="text-primary" />, subtitle: 'Semua pesanan' },
+          { title: 'Total Order', value: String(stats.total), icon: <ShoppingBag size={16} className="text-[var(--primary)]" />, subtitle: 'Semua pesanan' },
           { title: 'Pending', value: String(stats.pending).padStart(2, '0'), icon: <Clock size={16} className="text-amber-500" />, subtitle: 'Menunggu Proses' },
           { title: 'Selesai', value: String(stats.completed).padStart(2, '0'), icon: <CheckCircle2 size={16} className="text-emerald-500" />, subtitle: 'Barang Diterima' },
         ].map(({ title, value, icon, subtitle }) => (
-          <Card key={title} className="border-none rounded-[2rem] shadow-sm hover:shadow-md transition-all group overflow-hidden bg-card">
+          <Card key={title} className="border-none rounded-[2rem] shadow-sm hover:shadow-md transition-all group overflow-hidden bg-[var(--card)]">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
-                <div className="p-2 bg-muted/50 rounded-2xl group-hover:bg-primary/10 transition-colors text-foreground" aria-hidden="true">
+                <div className="p-2 bg-[var(--muted)]/50 rounded-2xl group-hover:bg-[var(--primary)]/10 transition-colors text-[var(--foreground)]" aria-hidden="true">
                   {icon}
                 </div>
-                <ArrowUpRight size={14} className="text-muted-foreground" aria-hidden="true" />
+                <ArrowUpRight size={14} className="text-[var(--muted-foreground)]" aria-hidden="true" />
               </div>
               <div className="mt-2 space-y-0.5">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{title}</p>
+                <p className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">{title}</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-2xl font-bold text-foreground">{value}</h3>
-                  <span className="text-[10px] font-bold text-muted-foreground">{subtitle}</span>
+                  <h3 className="text-2xl font-bold text-[var(--foreground)]">{value}</h3>
+                  <span className="text-[10px] font-bold text-[var(--muted-foreground)]">{subtitle}</span>
                 </div>
               </div>
             </CardContent>
@@ -210,14 +210,14 @@ export default function PartOrderPage() {
         ))}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 bg-card p-3 rounded-[2rem] border border-border/15 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-[var(--card)] p-3 rounded-[2rem] border border-border/15 shadow-sm">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} aria-hidden="true" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" size={18} aria-hidden="true" />
           <Input
             placeholder="Cari nomor PO atau nama supplier..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 h-12 border-none bg-muted/50 rounded-2xl font-bold focus-visible:ring-1 focus-visible:ring-primary text-foreground"
+            className="pl-12 h-12 border-none bg-[var(--muted)]/50 rounded-2xl font-bold focus-visible:ring-1 focus-visible:ring-primary text-[var(--foreground)]"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -242,7 +242,7 @@ export default function PartOrderPage() {
         isLoading={isLoading}
         headerTitle={<><ShoppingBag size={16} aria-hidden="true" /> Daftar Pesanan Suku Cadang</>}
         footer={
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">
+          <p className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest italic">
             Menampilkan {filteredOrders.length} dari {orders.length} pesanan
           </p>
         }

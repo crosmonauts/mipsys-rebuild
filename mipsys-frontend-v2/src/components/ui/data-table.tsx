@@ -50,9 +50,9 @@ export function DataTable<T>({
   onRowClick,
 }: DataTableProps<T>) {
   return (
-    <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card">
+    <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-[var(--card)]">
       {headerTitle && (
-        <CardHeader className="bg-card text-foreground p-6 border-b border-border/20">
+        <CardHeader className="bg-[var(--card)] text-[var(--foreground)] p-6 border-b border-border/20">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
             {headerTitle}
           </CardTitle>
@@ -62,13 +62,13 @@ export function DataTable<T>({
         {isLoading ? (
           loadingContent || (
             <div className="flex justify-center py-16">
-              <Loader2 size={32} className="motion-safe:animate-spin text-muted-foreground" />
+              <Loader2 size={32} className="motion-safe:animate-spin text-[var(--muted-foreground)]" />
             </div>
           )
         ) : isEmpty && data.length === 0 ? (
           emptyContent || (
             <div className="p-12 text-center">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+              <p className="text-xs font-black text-[var(--muted-foreground)] uppercase tracking-widest">
                 Tidak ada data.
               </p>
             </div>
@@ -81,7 +81,7 @@ export function DataTable<T>({
                   {columns.map((col, i) => (
                     <TableHead
                       key={i}
-                      className={`micro-label text-muted-foreground ${col.headerClassName || ''} ${i === 0 ? 'pl-8' : ''} ${i === columns.length - 1 ? 'pr-8' : ''}`}
+                      className={`micro-label text-[var(--muted-foreground)] ${col.headerClassName || ''} ${i === 0 ? 'pl-8' : ''} ${i === columns.length - 1 ? 'pr-8' : ''}`}
                     >
                       {col.header}
                     </TableHead>
@@ -110,7 +110,7 @@ export function DataTable<T>({
           </div>
         )}
         {footer && (
-          <div className="p-6 text-center bg-muted/30 border-t border-border/10">
+          <div className="p-6 text-center bg-[var(--muted)]/30 border-t border-border/10">
             {footer}
           </div>
         )}

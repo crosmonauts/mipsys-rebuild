@@ -46,25 +46,25 @@ const columns = [
   {
     header: 'No. SR',
     cell: (sr: ServiceRequest) => (
-      <span className="font-bold text-foreground font-mono text-sm">{sr.ticketNumber}</span>
+      <span className="font-bold text-[var(--foreground)] font-mono text-sm">{sr.ticketNumber}</span>
     ),
   },
   {
     header: 'Pelanggan',
     cell: (sr: ServiceRequest) => (
-      <span className="font-medium text-foreground/80">{sr.customerName}</span>
+      <span className="font-medium text-[var(--foreground)]/80">{sr.customerName}</span>
     ),
   },
   {
     header: 'Model',
     cell: (sr: ServiceRequest) => (
-      <span className="text-muted-foreground">{sr.modelName}</span>
+      <span className="text-[var(--muted-foreground)]">{sr.modelName}</span>
     ),
   },
   {
     header: 'Serial',
     cell: (sr: ServiceRequest) => (
-      <Badge variant="outline" className="font-mono text-[9px] font-black bg-primary/10 text-primary border-none">
+      <Badge variant="outline" className="font-mono text-[9px] font-black bg-[var(--primary)]/10 text-[var(--primary)] border-none">
         {sr.serialNumber || '-'}
       </Badge>
     ),
@@ -84,7 +84,7 @@ const columns = [
   {
     header: 'Tanggal',
     cell: (sr: ServiceRequest) => (
-      <span className="text-xs text-muted-foreground font-mono">{formatDate(sr.incomingDate)}</span>
+      <span className="text-xs text-[var(--muted-foreground)] font-mono">{formatDate(sr.incomingDate)}</span>
     ),
   },
   {
@@ -161,8 +161,8 @@ export function SrDashboard() {
         loadingContent={
           <div className="flex justify-center py-32">
             <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-10 w-10 motion-safe:animate-spin text-primary/40" aria-hidden="true" />
-              <p className="micro-label text-muted-foreground animate-pulse">Memuat data…</p>
+              <Loader2 className="h-10 w-10 motion-safe:animate-spin text-[var(--primary)]/40" aria-hidden="true" />
+              <p className="micro-label text-[var(--muted-foreground)] animate-pulse">Memuat data…</p>
             </div>
           </div>
         }
@@ -178,8 +178,8 @@ export function SrDashboard() {
         }
         footer={
           <div className="flex items-center justify-between px-2 w-full">
-            <p className="micro-label text-muted-foreground">
-              Menampilkan <span className="text-foreground">{data.length}</span> catatan
+            <p className="micro-label text-[var(--muted-foreground)]">
+              Menampilkan <span className="text-[var(--foreground)]">{data.length}</span> catatan
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -191,7 +191,7 @@ export function SrDashboard() {
               >
                 <ArrowLeft size={14} aria-hidden="true" /> Kembali
               </Button>
-              <div className="h-9 w-9 flex items-center justify-center bg-primary text-primary-foreground rounded-xl text-xs font-black shadow-lg">
+              <div className="h-9 w-9 flex items-center justify-center bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl text-xs font-black shadow-lg">
                 {page}
               </div>
               <Button

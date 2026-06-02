@@ -18,7 +18,7 @@ export function LoadingSkeleton({ className, variant = 'text' }: LoadingSkeleton
     <div
       aria-hidden="true"
       role="presentation"
-      className={cn('animate-pulse bg-muted', variants[variant], className)}
+      className={cn('animate-pulse bg-[var(--muted)]', variants[variant], className)}
     />
   );
 }

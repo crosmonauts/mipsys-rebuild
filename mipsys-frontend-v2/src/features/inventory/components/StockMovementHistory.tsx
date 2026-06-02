@@ -71,10 +71,10 @@ export function StockMovementHistory({ partId }: StockMovementHistoryProps) {
     <div className="space-y-2">
       {[55, 45, 60].map((w, i) => (
         <div key={i} className="flex items-center gap-3 p-3">
-          <div className="w-8 h-8 rounded-lg bg-muted motion-safe:animate-pulse" />
+          <div className="w-8 h-8 rounded-lg bg-[var(--muted)] motion-safe:animate-pulse" />
           <div className="flex-1 space-y-1.5">
-            <div className="h-3 bg-muted rounded motion-safe:animate-pulse" style={{ width: `${w}%` }} />
-            <div className="h-2.5 bg-muted/50 rounded motion-safe:animate-pulse" style={{ width: `${w * 0.5}%` }} />
+            <div className="h-3 bg-[var(--muted)] rounded motion-safe:animate-pulse" style={{ width: `${w}%` }} />
+            <div className="h-2.5 bg-[var(--muted)]/50 rounded motion-safe:animate-pulse" style={{ width: `${w * 0.5}%` }} />
           </div>
         </div>
       ))}
@@ -83,10 +83,10 @@ export function StockMovementHistory({ partId }: StockMovementHistoryProps) {
 
   if (movements.length === 0) return (
     <div className="flex flex-col items-center justify-center py-10 text-center">
-      <div className="p-3 bg-muted/50 rounded-full mb-3">
-        <Package size={20} className="text-muted-foreground" aria-hidden="true" />
+      <div className="p-3 bg-[var(--muted)]/50 rounded-full mb-3">
+        <Package size={20} className="text-[var(--muted-foreground)]" aria-hidden="true" />
       </div>
-      <p className="text-sm font-semibold text-foreground">Belum ada pergerakan stok</p>
+      <p className="text-sm font-semibold text-[var(--foreground)]">Belum ada pergerakan stok</p>
     </div>
   );
 
@@ -99,34 +99,34 @@ export function StockMovementHistory({ partId }: StockMovementHistoryProps) {
             key={m.id}
             className="flex items-start gap-3 py-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-2 motion-safe:duration-300"
           >
-            <div className={`p-1.5 rounded-lg shrink-0 ${config?.className || 'bg-muted text-muted-foreground'}`}>
+            <div className={`p-1.5 rounded-lg shrink-0 ${config?.className || 'bg-[var(--muted)] text-[var(--muted-foreground)]'}`}>
               {config?.icon}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold text-foreground">{config?.label || m.movementType}</span>
+                <span className="text-xs font-bold text-[var(--foreground)]">{config?.label || m.movementType}</span>
                 <div className="flex items-center gap-1">
-                  <span className={`text-xs font-black font-mono ${m.quantity > 0 ? 'text-green-400' : 'text-destructive'}`}>
+                  <span className={`text-xs font-black font-mono ${m.quantity > 0 ? 'text-green-400' : 'text-[var(--destructive)]'}`}>
                     {m.quantity > 0 ? '+' : ''}{m.quantity}
                   </span>
                   {m.quantity > 0 ? (
                     <ArrowDown size={10} className="text-green-400" aria-hidden="true" />
                   ) : (
-                    <ArrowUp size={10} className="text-destructive" aria-hidden="true" />
+                    <ArrowUp size={10} className="text-[var(--destructive)]" aria-hidden="true" />
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] text-muted-foreground/60">{formatRelativeTime(m.createdAt)}</span>
+                <span className="text-[10px] text-[var(--muted-foreground)]/60">{formatRelativeTime(m.createdAt)}</span>
                 {m.referenceId && (
                   <>
-                    <span className="text-[10px] text-muted-foreground/30">•</span>
-                    <span className="text-[10px] font-mono text-muted-foreground/60">{m.referenceId}</span>
+                    <span className="text-[10px] text-[var(--muted-foreground)]/30">•</span>
+                    <span className="text-[10px] font-mono text-[var(--muted-foreground)]/60">{m.referenceId}</span>
                   </>
                 )}
               </div>
               {m.notes && (
-                <p className="text-[10px] text-muted-foreground/70 mt-0.5 line-clamp-1">{m.notes}</p>
+                <p className="text-[10px] text-[var(--muted-foreground)]/70 mt-0.5 line-clamp-1">{m.notes}</p>
               )}
             </div>
           </div>

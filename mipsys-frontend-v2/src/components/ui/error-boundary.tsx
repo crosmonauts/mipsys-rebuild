@@ -34,11 +34,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
       return (
         <div className="flex flex-col items-center justify-center min-h-60 p-8 text-center">
-          <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center mb-4">
-            <AlertTriangle size={32} className="text-destructive" />
+          <div className="w-16 h-16 bg-[var(--destructive)]/10 rounded-2xl flex items-center justify-center mb-4">
+            <AlertTriangle size={32} className="text-[var(--destructive)]" />
           </div>
-          <h3 className="font-black text-foreground text-lg mb-2">Terjadi Kesalahan</h3>
-          <p className="text-muted-foreground font-bold text-sm mb-6 max-w-md">
+          <h3 className="font-black text-[var(--foreground)] text-lg mb-2">Terjadi Kesalahan</h3>
+          <p className="text-[var(--muted-foreground)] font-bold text-sm mb-6 max-w-md">
             {this.state.error?.message || 'Something went wrong'}
           </p>
           <Button

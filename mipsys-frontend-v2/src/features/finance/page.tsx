@@ -24,10 +24,10 @@ import { ConfirmDialog } from '@/src/components/ui/confirm-dialog';
 import { toast } from 'react-hot-toast';
 
 const statusStyles: Record<string, string> = {
-  PAID: 'bg-accent/15 text-accent border-accent/30',
+  PAID: 'bg-[var(--accent)]/15 text-[var(--accent)] border-accent/30',
   UNPAID: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  OVERDUE: 'bg-destructive/10 text-destructive border-destructive/30',
-  VOID: 'bg-muted text-muted-foreground border-border',
+  OVERDUE: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-destructive/30',
+  VOID: 'bg-[var(--muted)] text-[var(--muted-foreground)] border-border',
 };
 
 export default function FinancePage() {
@@ -84,7 +84,7 @@ export default function FinancePage() {
     {
       header: 'No. Invoice',
       cell: (inv) => (
-        <span className="font-mono text-xs font-black text-foreground">
+        <span className="font-mono text-xs font-black text-[var(--foreground)]">
           {inv.invoiceNumber}
         </span>
       ),
@@ -92,7 +92,7 @@ export default function FinancePage() {
     {
       header: 'Klien',
       cell: (inv) => (
-        <span className="text-xs font-black text-foreground">
+        <span className="text-xs font-black text-[var(--foreground)]">
           {inv.clientName}
         </span>
       ),
@@ -100,7 +100,7 @@ export default function FinancePage() {
     {
       header: 'Tiket',
       cell: (inv) => (
-        <span className="text-xs font-bold text-muted-foreground">
+        <span className="text-xs font-bold text-[var(--muted-foreground)]">
           {inv.ticketNumber}
         </span>
       ),
@@ -109,7 +109,7 @@ export default function FinancePage() {
       header: 'Total',
       headerClassName: 'text-right',
       cell: (inv) => (
-        <span className="text-xs font-black text-foreground block text-right">
+        <span className="text-xs font-black text-[var(--foreground)] block text-right">
           Rp {parseFloat(inv.total || '0').toLocaleString('id-ID')}
         </span>
       ),
@@ -136,7 +136,7 @@ export default function FinancePage() {
             variant="ghost"
             size="icon"
             onClick={() => handleView(inv)}
-            className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10"
+            className="h-8 w-8 rounded-lg text-[var(--primary)] hover:bg-[var(--primary)]/10"
             aria-label="Lihat detail invoice"
           >
             <Eye size={16} aria-hidden="true" />
@@ -147,7 +147,7 @@ export default function FinancePage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => handlePay(inv)}
-                className="h-8 w-8 rounded-lg text-accent hover:bg-accent/10"
+                className="h-8 w-8 rounded-lg text-[var(--accent)] hover:bg-[var(--accent)]/10"
                 aria-label="Catat pembayaran"
               >
                 <CheckCircle size={16} aria-hidden="true" />
@@ -159,7 +159,7 @@ export default function FinancePage() {
                   setVoidTarget(inv);
                   setShowVoidConfirm(true);
                 }}
-                className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+                className="h-8 w-8 rounded-lg text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
                 aria-label="Void invoice"
               >
                 <Ban size={16} aria-hidden="true" />
@@ -171,7 +171,7 @@ export default function FinancePage() {
               variant="ghost"
               size="icon"
               disabled
-              className="h-8 w-8 rounded-lg text-muted-foreground/30 cursor-not-allowed"
+              className="h-8 w-8 rounded-lg text-[var(--muted-foreground)]/30 cursor-not-allowed"
               aria-label="Sudah dibayar"
             >
               <CheckCircle size={16} aria-hidden="true" />
@@ -192,37 +192,37 @@ export default function FinancePage() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <Card className="border-none rounded-[2rem] shadow-sm">
           <CardContent className="p-4">
-            <div className="p-2 bg-primary/10 text-primary rounded-xl w-fit mb-2">
+            <div className="p-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-xl w-fit mb-2">
               <TrendingUp size={16} />
             </div>
-            <p className="micro-label text-muted-foreground">
+            <p className="micro-label text-[var(--muted-foreground)]">
               Total Pendapatan
             </p>
-            <h3 className="text-2xl font-black text-foreground tracking-tighter">
+            <h3 className="text-2xl font-black text-[var(--foreground)] tracking-tighter">
               Rp {stats.totalRevenue.toLocaleString('id-ID')}
             </h3>
           </CardContent>
         </Card>
         <Card className="border-none rounded-[2rem] shadow-sm">
           <CardContent className="p-4">
-            <div className="p-2 bg-accent/10 text-accent rounded-xl w-fit mb-2">
+            <div className="p-2 bg-[var(--accent)]/10 text-[var(--accent)] rounded-xl w-fit mb-2">
               <CreditCard size={16} />
             </div>
-            <p className="micro-label text-muted-foreground">
+            <p className="micro-label text-[var(--muted-foreground)]">
               Menunggu Pembayaran
             </p>
-            <h3 className="text-2xl font-black text-foreground tracking-tighter">
+            <h3 className="text-2xl font-black text-[var(--foreground)] tracking-tighter">
               Rp {stats.outstanding.toLocaleString('id-ID')}
             </h3>
           </CardContent>
         </Card>
         <Card className="border-none rounded-[2rem] shadow-sm">
           <CardContent className="p-4">
-            <div className="p-2 bg-destructive/10 text-destructive rounded-xl w-fit mb-2">
+            <div className="p-2 bg-[var(--destructive)]/10 text-[var(--destructive)] rounded-xl w-fit mb-2">
               <AlertCircle size={16} />
             </div>
-            <p className="micro-label text-muted-foreground">Tagihan Overdue</p>
-            <h3 className="text-2xl font-black text-foreground tracking-tighter">
+            <p className="micro-label text-[var(--muted-foreground)]">Tagihan Overdue</p>
+            <h3 className="text-2xl font-black text-[var(--foreground)] tracking-tighter">
               {stats.overdueCount}
             </h3>
           </CardContent>
@@ -264,10 +264,10 @@ export default function FinancePage() {
           onClick={() => setShowPayInvoiceId(null)}
         >
           <div
-            className="bg-card rounded-[2.5rem] p-6 max-w-md w-full mx-4 shadow-2xl border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200"
+            className="bg-[var(--card)] rounded-[2.5rem] p-6 max-w-md w-full mx-4 shadow-2xl border border-border/30 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-black text-lg text-foreground mb-4">
+            <h3 className="font-black text-lg text-[var(--foreground)] mb-4">
               Catat Pembayaran
             </h3>
             <PaymentForm

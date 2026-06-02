@@ -45,9 +45,9 @@ export function RepairTimeline({
 
   return (
     <div className="space-y-4">
-      <h3 className="micro-label text-primary flex items-center gap-6">
+      <h3 className="micro-label text-[var(--primary)] flex items-center gap-6">
         Repair Progress{' '}
-        <span className="h-[1px] flex-1 bg-border/20"></span>
+        <span className="h-[1px] flex-1 bg-[var(--border)]/20"></span>
       </h3>
 
       <div className="space-y-0">
@@ -92,7 +92,7 @@ function TimelineStep({
           {step.label}
         </p>
         {step.date && (
-          <p className="micro-label text-muted-foreground mt-0.5">
+          <p className="micro-label text-[var(--muted-foreground)] mt-0.5">
             {step.date}
           </p>
         )}
@@ -175,32 +175,32 @@ function getStepStatus(
 function getStatusRing(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'bg-accent/20 text-accent';
+      return 'bg-[var(--accent)]/20 text-[var(--accent)]';
     case 'current':
-      return 'bg-primary/20 text-primary ring-2 ring-primary/40';
+      return 'bg-[var(--primary)]/20 text-[var(--primary)] ring-2 ring-primary/40';
     default:
-      return 'bg-muted text-muted-foreground';
+      return 'bg-[var(--muted)] text-[var(--muted-foreground)]';
   }
 }
 
 function getLineColor(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'bg-accent/30';
+      return 'bg-[var(--accent)]/30';
     case 'current':
-      return 'bg-primary/30';
+      return 'bg-[var(--primary)]/30';
     default:
-      return 'bg-border/30';
+      return 'bg-[var(--border)]/30';
   }
 }
 
 function getTextColor(status: ServiceStep['status']): string {
   switch (status) {
     case 'completed':
-      return 'text-accent';
+      return 'text-[var(--accent)]';
     case 'current':
-      return 'text-primary';
+      return 'text-[var(--primary)]';
     default:
-      return 'text-muted-foreground';
+      return 'text-[var(--muted-foreground)]';
   }
 }

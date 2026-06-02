@@ -37,8 +37,8 @@ export function ConfirmDialog({
       <DialogContent className="sm:max-w-sm rounded-2xl">
         <DialogHeader>
           {variant === 'destructive' && (
-            <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-2xl flex items-center justify-center mb-2">
-              <AlertTriangle size={24} className="text-destructive" />
+            <div className="mx-auto w-12 h-12 bg-[var(--destructive)]/10 rounded-2xl flex items-center justify-center mb-2">
+              <AlertTriangle size={24} className="text-[var(--destructive)]" />
             </div>
           )}
           <DialogTitle className="text-center font-black text-base">{title}</DialogTitle>

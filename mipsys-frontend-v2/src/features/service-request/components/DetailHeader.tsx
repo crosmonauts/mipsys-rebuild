@@ -66,7 +66,7 @@ function TicketInfo({
     <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
+        className="flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all text-[10px] font-bold uppercase tracking-[0.4em]"
       >
         <ArrowLeft size={14} aria-hidden="true" /> Back to Dashboard
       </button>
@@ -75,7 +75,7 @@ function TicketInfo({
           <TypeBadge serviceType={serviceType} />
           <EntryDate incomingDate={incomingDate} />
         </div>
-        <h1 className="text-6xl md:text-4xl font-black text-foreground tracking-tighter leading-none">
+        <h1 className="text-6xl md:text-4xl font-black text-[var(--foreground)] tracking-tighter leading-none">
           {ticketNumber}
         </h1>
       </div>
@@ -85,7 +85,7 @@ function TicketInfo({
 
 function TypeBadge({ serviceType }: { serviceType: string }) {
   return (
-    <span className="px-2 py-0.5 bg-primary/15 text-primary text-[9px] font-black rounded uppercase tracking-widest">
+    <span className="px-2 py-0.5 bg-[var(--primary)]/15 text-[var(--primary)] text-[9px] font-black rounded uppercase tracking-widest">
       {serviceType || 'NON_WARRANTY'}
     </span>
   );
@@ -95,7 +95,7 @@ function EntryDate({ incomingDate }: { incomingDate?: string }) {
   if (!incomingDate) return null;
 
   return (
-    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+    <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
       ENTRY: {incomingDate.split('T')[0]}
     </span>
   );
@@ -151,9 +151,9 @@ function ActionButton({
   onClick: () => void;
 }) {
   const colorClasses = {
-    blue: 'bg-primary text-primary-foreground hover:bg-primary/90',
-    emerald: 'bg-accent text-accent-foreground hover:bg-accent/90',
-    slate: 'bg-card text-foreground hover:bg-accent/20 border border-border/30',
+    blue: 'bg-[var(--primary)] text-[var(--primary)]-foreground hover:bg-[var(--primary)]/90',
+    emerald: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]/90',
+    slate: 'bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)]/20 border border-border/30',
   };
 
   return (
@@ -178,8 +178,8 @@ function EditToggle({
       onClick={onClick}
       className={`group flex items-center gap-3 px-6 py-4 rounded-full text-xs font-black tracking-widest transition-all ${
         isEditing
-          ? 'bg-muted text-muted-foreground hover:bg-muted/80'
-          : 'bg-card text-foreground hover:bg-primary/20 border border-border/30 shadow-lg'
+          ? 'bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]/80'
+          : 'bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--primary)]/20 border border-border/30 shadow-lg'
       }`}
     >
       {isEditing ? <X size={16} aria-hidden="true" /> : <Edit3 size={16} aria-hidden="true" />}

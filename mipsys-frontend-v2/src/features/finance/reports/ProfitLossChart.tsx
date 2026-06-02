@@ -14,11 +14,11 @@ export function ProfitLossChart() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-center text-xs font-bold text-muted-foreground">Memuat grafik...</div>;
+  if (loading) return <div className="p-8 text-center text-xs font-bold text-[var(--muted-foreground)]">Memuat grafik...</div>;
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-      <h3 className="font-black text-sm mb-4 text-foreground">Revenue vs Expense (12 Bulan Terakhir)</h3>
+    <div className="bg-[var(--card)] border border-border rounded-2xl p-6 shadow-sm">
+      <h3 className="font-black text-sm mb-4 text-[var(--foreground)]">Revenue vs Expense (12 Bulan Terakhir)</h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />

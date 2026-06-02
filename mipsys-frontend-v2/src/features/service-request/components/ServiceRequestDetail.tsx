@@ -280,26 +280,26 @@ const ServiceRequestDetail = () => {
   const badgeCfg = statusToBadge[data.statusService] || { label: data.statusService, variant: 'secondary' as const };
 
   return (
-    <main className="min-h-screen planner-bg text-foreground font-sans selection:bg-primary/20">
+    <main className="min-h-screen planner-bg text-[var(--foreground)] font-sans selection:bg-[var(--primary)]/20">
       <div className="max-w-7xl mx-auto p-8 md:p-10 lg:p-10">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-5 gap-10">
           <div className="space-y-6">
             <Link
               href="/service-request"
-              className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
             >
               <ArrowLeft size={14} aria-hidden="true" /> Back to Dashboard
             </Link>
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                <Badge variant="outline" className="bg-[var(--primary)]/15 text-[var(--primary-foreground)] border-[var(--primary)]/30">
                   {data.serviceType || 'NON_WARRANTY'}
                 </Badge>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
                   ENTRY: {new Date(data.incomingDate).toLocaleDateString('id-ID')}
                 </span>
               </div>
-              <h1 className="text-4xl md:text-4xl font-black text-foreground tracking-tighter leading-none break-all text-balance">
+              <h1 className="text-4xl md:text-4xl font-black text-[var(--foreground)] tracking-tighter leading-none break-all text-balance">
                 {ticketNumber}
               </h1>
             </div>
@@ -337,13 +337,13 @@ const ServiceRequestDetail = () => {
             <aside className="sticky top-10 space-y-6">
               <Card className="!p-6 space-y-6">
                 <CardContent className="space-y-6 !p-0">
-                  <p className="micro-label text-muted-foreground">Live Progress</p>
+                  <p className="micro-label text-[var(--muted-foreground)]">Live Progress</p>
                   <div className="flex items-center gap-5">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                    <div className="h-14 w-14 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary-foreground)]">
                       <ShieldCheck size={28} strokeWidth={2} aria-hidden="true" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Status</p>
+                      <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-1">Status</p>
                       <Badge variant={badgeCfg.variant} className="text-lg font-black uppercase tracking-tighter italic px-4 py-1.5 h-auto">
                         {badgeCfg.label}
                       </Badge>
@@ -382,29 +382,29 @@ const ServiceRequestDetail = () => {
                       {!hasSavedQuote ? (
                         <Button
                           variant="default"
-                          className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                          className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
                           onClick={() => dispatch({ type: 'showQuote', payload: true })}
                         >
                           <FileText size={16} aria-hidden="true" /> BUAT PENAWARAN
                         </Button>
                       ) : (
                         <>
-                          <div className="p-3 rounded-xl bg-primary/10 border-2 border-primary/30">
-                            <p className="text-[10px] font-black text-primary text-center">
+                          <div className="p-3 rounded-xl bg-[var(--primary)]/10 border-2 border-[var(--primary)]/30">
+                            <p className="text-[10px] font-black text-[var(--primary-foreground)] text-center">
                               Penawaran sudah dibuat
                             </p>
                           </div>
 
                           <Button
                             variant="outline"
-                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 border-[var(--primary)]/50 text-[var(--primary-foreground)] hover:bg-[var(--primary)]/10"
                             onClick={() => dispatch({ type: 'showPrintQuote', payload: true })}
                           >
                             <FileText size={16} aria-hidden="true" /> CETAK PENAWARAN
                           </Button>
 
                           <Button
-                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
                             onClick={() => dispatch({ type: 'showApproveConfirm', payload: true })}
                             disabled={state.isApproving}
                           >
@@ -428,7 +428,7 @@ const ServiceRequestDetail = () => {
 
                   {data.statusService === 'SERVICE' && (
                     <Button
-                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
                       onClick={handleMarkDone}
                       disabled={state.isDoneProcessing}
                     >
@@ -455,7 +455,7 @@ const ServiceRequestDetail = () => {
 
                   {data.statusService === 'DONE' && !state.hasInvoice && (
                     <Button
-                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-primary hover:bg-primary/90"
+                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
                       onClick={handleCreateInvoice}
                       disabled={state.isCreatingInvoice}
                     >
@@ -476,15 +476,15 @@ const ServiceRequestDetail = () => {
                 <div className="border-t border-border/10 !mx-0" />
 
                 <CardContent className="space-y-8 !p-0">
-                  <p className="micro-label text-muted-foreground">03. Unit Specification</p>
+                  <p className="micro-label text-[var(--muted-foreground)]">03. Unit Specification</p>
                   <div className="space-y-6">
                     <div className="flex justify-between items-end border-b border-border/10 pb-4">
-                      <span className="micro-label text-muted-foreground">Model</span>
-                      <span className="text-lg font-bold text-foreground">{data.modelName || '-'}</span>
+                      <span className="micro-label text-[var(--muted-foreground)]">Model</span>
+                      <span className="text-lg font-bold text-[var(--foreground)]">{data.modelName || '-'}</span>
                     </div>
                     <div className="flex justify-between items-end border-b border-border/10 pb-4">
-                      <span className="micro-label text-muted-foreground">S/N</span>
-                      <span className="text-lg font-bold text-foreground">{data.serialNumber || '-'}</span>
+                      <span className="micro-label text-[var(--muted-foreground)]">S/N</span>
+                      <span className="text-lg font-bold text-[var(--foreground)]">{data.serialNumber || '-'}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -502,7 +502,7 @@ const ServiceRequestDetail = () => {
                 )}
               </Card>
 
-              <div className="px-10 flex items-center gap-3 text-muted-foreground">
+              <div className="px-10 flex items-center gap-3 text-[var(--muted-foreground)]">
                 <Activity size={14} aria-hidden="true" />
                 <p className="text-[9px] font-bold uppercase tracking-luxury">MIPSYS Enterprise AAA Standard</p>
               </div>
@@ -570,7 +570,7 @@ const ServiceRequestDetail = () => {
 };
 
 const LoadingState = () => (
-  <div className="min-h-screen planner-bg flex flex-col items-center justify-center gap-6 text-primary">
+  <div className="min-h-screen planner-bg flex flex-col items-center justify-center gap-6 text-[var(--primary-foreground)]">
     <Loader2 className="motion-safe:animate-spin" size={40} strokeWidth={1} aria-hidden="true" />
     <p className="text-[10px] font-black uppercase tracking-[0.6em]">Synchronizing…</p>
   </div>

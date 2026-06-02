@@ -18,7 +18,7 @@ export function SRTableRow({ sr }: SRTableRowProps) {
   const config = getStatusConfig(sr.statusService, sr.statusSystem ?? '');
 
   return (
-    <TableRow className="hover:bg-muted/30 transition-colors group border-border/30">
+    <TableRow className="hover:bg-[var(--muted)]/30 transition-colors group border-border/30">
       <TicketCell ticketNumber={sr.ticketNumber} />
       <CustomerCell name={sr.customerName} />
       <ModelCell modelName={sr.modelName} />
@@ -33,7 +33,7 @@ export function SRTableRow({ sr }: SRTableRowProps) {
 
 function TicketCell({ ticketNumber }: { ticketNumber: string }) {
   return (
-    <TableCell className="font-black text-foreground pl-8">
+    <TableCell className="font-black text-[var(--foreground)] pl-8">
       {ticketNumber}
     </TableCell>
   );
@@ -41,20 +41,20 @@ function TicketCell({ ticketNumber }: { ticketNumber: string }) {
 
 function CustomerCell({ name }: { name: string }) {
   return (
-    <TableCell className="font-bold text-foreground/80">{name}</TableCell>
+    <TableCell className="font-bold text-[var(--foreground)]/80">{name}</TableCell>
   );
 }
 
 function ModelCell({ modelName }: { modelName: string }) {
   return (
-    <TableCell className="text-muted-foreground font-medium">{modelName}</TableCell>
+    <TableCell className="text-[var(--muted-foreground)] font-medium">{modelName}</TableCell>
   );
 }
 
 function SerialCell({ serialNumber }: { serialNumber: string }) {
   return (
     <TableCell>
-      <code className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-md border border-primary/30 font-bold shadow-sm">
+      <code className="text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] px-2.5 py-1 rounded-md border border-primary/30 font-bold shadow-sm">
         {serialNumber || '-'}
       </code>
     </TableCell>
@@ -63,7 +63,7 @@ function SerialCell({ serialNumber }: { serialNumber: string }) {
 
 function TypeCell({ serviceType }: { serviceType: string }) {
   return (
-    <TableCell className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">
+    <TableCell className="text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-tighter">
       {serviceType}
     </TableCell>
   );
@@ -83,7 +83,7 @@ function StatusCell({ config }: { config: ReturnType<typeof getStatusConfig> }) 
 
 function DateCell({ incomingDate }: { incomingDate: string | undefined }) {
   return (
-    <TableCell className="text-muted-foreground text-xs font-bold">
+    <TableCell className="text-[var(--muted-foreground)] text-xs font-bold">
       {incomingDate ? formatServiceDate(incomingDate) : '-'}
     </TableCell>
   );
@@ -96,7 +96,7 @@ function ActionCell({ ticketNumber }: { ticketNumber: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className="rounded-xl font-bold text-xs hover:bg-primary hover:text-primary-foreground transition-all gap-2"
+          className="rounded-xl font-bold text-xs hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground transition-all gap-2"
         >
           Detail <ExternalLink size={14} aria-hidden="true" />
         </Button>

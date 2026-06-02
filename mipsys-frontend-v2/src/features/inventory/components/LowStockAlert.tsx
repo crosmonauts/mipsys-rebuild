@@ -25,25 +25,25 @@ export function LowStockAlert() {
 
   return (
     <div
-      className="bg-destructive/10 border border-destructive/30 border-l-4 border-l-destructive rounded-lg p-4 mb-5 flex items-center gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300"
+      className="bg-[var(--destructive)]/10 border border-destructive/30 border-l-4 border-l-destructive rounded-lg p-4 mb-5 flex items-center gap-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300"
       role="alert"
     >
-      <div className="p-1.5 bg-destructive/10 rounded-lg">
-        <AlertTriangle size={20} className="text-destructive" aria-hidden="true" />
+      <div className="p-1.5 bg-[var(--destructive)]/10 rounded-lg">
+        <AlertTriangle size={20} className="text-[var(--destructive)]" aria-hidden="true" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-bold text-destructive">
+        <div className="text-sm font-bold text-[var(--destructive)]">
           {alerts.length} part membutuhkan pemesanan
         </div>
         {emptyParts.length > 0 && (
-          <div className="text-xs text-destructive/80 mt-0.5 truncate">
+          <div className="text-xs text-[var(--destructive)]/80 mt-0.5 truncate">
             {emptyParts.map((p) => p.partName).join(', ')} — stok habis
           </div>
         )}
       </div>
       <Link
         href="/part-order/new"
-        className="shrink-0 px-4 py-2 bg-destructive text-destructive-foreground border-none rounded-md text-sm font-semibold hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 transition-all"
+        className="shrink-0 px-4 py-2 bg-[var(--destructive)] text-[var(--destructive)]-foreground border-none rounded-md text-sm font-semibold hover:bg-[var(--destructive)]/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 transition-all"
       >
         Buat PO Sekarang
       </Link>

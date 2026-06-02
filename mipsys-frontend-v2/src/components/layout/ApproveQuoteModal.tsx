@@ -188,7 +188,7 @@ export function ApproveQuoteModal({
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogPortal>
           <DialogOverlay />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-popover shadow-lg duration-200 sm:rounded-[2rem] p-0 overflow-hidden">
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-[var(--popover)] shadow-lg duration-200 sm:rounded-[2rem] p-0 overflow-hidden">
             <DialogDescription className="sr-only">
               {step === 'form'
                 ? 'Form pembuatan penawaran biaya service'
@@ -329,7 +329,7 @@ function FormHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-accent text-accent-foreground">
+    <div className="p-8 bg-[var(--accent)] text-[var(--accent-foreground)]">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-background/20 rounded-2xl backdrop-blur-md">
@@ -369,17 +369,17 @@ function FeeInputs({
 }) {
   return (
     <div className="space-y-4">
-      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-2">
+      <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1 flex items-center gap-2">
         Biaya Tambahan
       </label>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-xs font-bold text-muted-foreground ml-1">
+          <label className="text-xs font-bold text-[var(--muted-foreground)] ml-1">
             Biaya Jasa (Service Fee) *
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">Rp</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] font-bold text-sm">Rp</span>
             <Input
               type="number"
               min={0}
@@ -391,11 +391,11 @@ function FeeInputs({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-muted-foreground ml-1">
+          <label className="text-xs font-bold text-[var(--muted-foreground)] ml-1">
             Biaya Kirim (Shipping)
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">Rp</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] font-bold text-sm">Rp</span>
             <Input
               type="number"
               min={0}
@@ -419,7 +419,7 @@ function PartsList({
 }) {
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+      <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] py-4">
         <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> Memuat part…
       </div>
     );
@@ -429,7 +429,7 @@ function PartsList({
 
   return (
     <div className="space-y-3">
-      <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 flex items-center gap-2">
+      <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1 flex items-center gap-2">
         <Package size={14} aria-hidden="true" /> Part Diusulkan
       </label>
 
@@ -440,8 +440,8 @@ function PartsList({
             className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30"
           >
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-foreground text-sm truncate">{part.partName}</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="font-bold text-[var(--foreground)] text-sm truncate">{part.partName}</p>
+              <p className="text-[10px] text-[var(--muted-foreground)]">
                 {part.partCode ?? 'Manual'} x {part.quantity}
               </p>
             </div>
@@ -452,9 +452,9 @@ function PartsList({
         ))}
       </div>
 
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
-        <AlertTriangle size={14} className="text-primary shrink-0" aria-hidden="true" />
-        <p className="text-[10px] text-primary font-bold">
+      <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--primary)]/10 border border-primary/20">
+        <AlertTriangle size={14} className="text-[var(--primary)] shrink-0" aria-hidden="true" />
+        <p className="text-[10px] text-[var(--primary)] font-bold">
           Setelah disimpan, penawaran bisa dicetak untuk diberikan ke pelanggan.
         </p>
       </div>
@@ -474,23 +474,23 @@ function SummaryRow({
   const grandTotal = totalPartCost + serviceFee + shippingFee;
 
   return (
-    <div className="space-y-3 p-4 rounded-xl bg-muted/50 border border-border/30">
+    <div className="space-y-3 p-4 rounded-xl bg-[var(--muted)]/50 border border-border/30">
       <div className="flex justify-between items-center text-sm">
-        <span className="font-bold text-muted-foreground">Biaya Part</span>
-        <span className="font-black text-foreground">Rp {totalPartCost.toLocaleString('id-ID')}</span>
+        <span className="font-bold text-[var(--muted-foreground)]">Biaya Part</span>
+        <span className="font-black text-[var(--foreground)]">Rp {totalPartCost.toLocaleString('id-ID')}</span>
       </div>
       <div className="flex justify-between items-center text-sm">
-        <span className="font-bold text-muted-foreground">Biaya Jasa</span>
-        <span className="font-black text-foreground">Rp {serviceFee.toLocaleString('id-ID')}</span>
+        <span className="font-bold text-[var(--muted-foreground)]">Biaya Jasa</span>
+        <span className="font-black text-[var(--foreground)]">Rp {serviceFee.toLocaleString('id-ID')}</span>
       </div>
       <div className="flex justify-between items-center text-sm">
-        <span className="font-bold text-muted-foreground">Biaya Kirim</span>
-        <span className="font-black text-foreground">Rp {shippingFee.toLocaleString('id-ID')}</span>
+        <span className="font-bold text-[var(--muted-foreground)]">Biaya Kirim</span>
+        <span className="font-black text-[var(--foreground)]">Rp {shippingFee.toLocaleString('id-ID')}</span>
       </div>
       <hr className="border-border/30" />
       <div className="flex justify-between items-center">
-        <span className="text-sm font-black text-foreground/70">Grand Total</span>
-        <span className="text-xl font-black text-accent">Rp {grandTotal.toLocaleString('id-ID')}</span>
+        <span className="text-sm font-black text-[var(--foreground)]/70">Grand Total</span>
+        <span className="text-xl font-black text-[var(--accent)]">Rp {grandTotal.toLocaleString('id-ID')}</span>
       </div>
     </div>
   );
@@ -506,7 +506,7 @@ function FormFooter({
   onSave: () => void;
 }) {
   return (
-    <div className="p-8 bg-muted/50 border-t flex gap-3">
+    <div className="p-8 bg-[var(--muted)]/50 border-t flex gap-3">
       <Button
         type="button"
         variant="outline"
@@ -519,7 +519,7 @@ function FormFooter({
         type="button"
         onClick={onSave}
         disabled={isSubmitting}
-        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase gap-2 bg-accent hover:bg-accent/90"
+        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase gap-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90"
       >
         {isSubmitting ? (
           <Loader2 className="motion-safe:animate-spin" size={18} aria-hidden="true" />
@@ -542,7 +542,7 @@ function PreviewHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-accent text-accent-foreground no-print">
+    <div className="p-8 bg-[var(--accent)] text-[var(--accent-foreground)] no-print">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-background/20 rounded-2xl backdrop-blur-md">
@@ -577,7 +577,7 @@ function PreviewFooter({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-muted/50 border-t flex gap-3 no-print">
+    <div className="p-8 bg-[var(--muted)]/50 border-t flex gap-3 no-print">
       <Button
         type="button"
         variant="outline"
@@ -589,7 +589,7 @@ function PreviewFooter({
       <Button
         type="button"
         onClick={onPrint}
-        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase gap-2 bg-accent hover:bg-accent/90"
+        className="flex-1 h-14 rounded-2xl text-xs font-black uppercase gap-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90"
       >
         <Printer size={18} aria-hidden="true" />
         Cetak

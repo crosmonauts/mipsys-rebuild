@@ -71,10 +71,10 @@ export function AddStockModal({
   if (!part) return null;
 
   const theme = {
-    ADD: { bg: 'bg-primary', fg: 'text-primary-foreground', border: 'border-primary/30' },
-    SUBTRACT: { bg: 'bg-destructive', fg: 'text-destructive-foreground', border: 'border-destructive/30' },
-    RESET: { bg: 'bg-amber-500', fg: 'text-primary-foreground', border: 'border-amber-500/30' },
-  }[currentType] ?? { bg: 'bg-primary', fg: 'text-primary-foreground', border: 'border-primary/30' };
+    ADD: { bg: 'bg-[var(--primary)]', fg: 'text-[var(--primary)]-foreground', border: 'border-primary/30' },
+    SUBTRACT: { bg: 'bg-[var(--destructive)]', fg: 'text-[var(--destructive)]-foreground', border: 'border-destructive/30' },
+    RESET: { bg: 'bg-amber-500', fg: 'text-[var(--primary)]-foreground', border: 'border-amber-500/30' },
+  }[currentType] ?? { bg: 'bg-[var(--primary)]', fg: 'text-[var(--primary)]-foreground', border: 'border-primary/30' };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -82,7 +82,7 @@ export function AddStockModal({
         <DialogOverlay className="backdrop-blur-sm" />
         <DialogPrimitive.Content
           className={cn(
-            'fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card shadow-lg duration-200 sm:max-w-md p-0 overflow-hidden rounded-[2rem] border-border/20 outline-none',
+            'fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-[var(--card)] shadow-lg duration-200 sm:max-w-md p-0 overflow-hidden rounded-[2rem] border-border/20 outline-none',
             'motion-safe:animate-in motion-safe:fade-in data-[state=closed]:motion-safe:animate-out data-[state=closed]:motion-safe:fade-out-0 data-[state=open]:motion-safe:zoom-in-95 data-[state=closed]:motion-safe:zoom-out-95 data-[state=open]:motion-safe:slide-in-from-left-1/2 data-[state=open]:motion-safe:slide-in-from-top-1/2 data-[state=closed]:motion-safe:slide-out-to-left-1/2 data-[state=closed]:motion-safe:slide-out-to-top-1/2',
           )}
         >
@@ -118,7 +118,7 @@ export function AddStockModal({
 
             <div className="p-8 space-y-6">
               {/* TYPE SELECTOR */}
-              <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-2xl">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-[var(--muted)] rounded-2xl">
                 {(['ADD', 'SUBTRACT'] as const).map((t) => (
                   <button
                     key={t}
@@ -127,8 +127,8 @@ export function AddStockModal({
                     className={cn(
                       'py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all',
                       currentType === t
-                        ? 'bg-card shadow-sm text-foreground scale-100'
-                        : 'text-muted-foreground hover:text-foreground scale-95',
+                        ? 'bg-[var(--card)] shadow-sm text-[var(--foreground)] scale-100'
+                        : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] scale-95',
                     )}
                   >
                     {t === 'ADD' ? 'Tambah' : 'Kurangi'}
@@ -137,43 +137,43 @@ export function AddStockModal({
               </div>
 
               {/* ITEM INFO */}
-              <div className={cn('p-5 border-2 rounded-2xl space-y-1 transition-colors bg-muted/30', theme.border)}>
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+              <div className={cn('p-5 border-2 rounded-2xl space-y-1 transition-colors bg-[var(--muted)]/30', theme.border)}>
+                <p className="text-[10px] font-black uppercase text-[var(--muted-foreground)] tracking-widest">
                   Informasi Item
                 </p>
-                <p className="text-sm font-black text-foreground">{part.partName}</p>
+                <p className="text-sm font-black text-[var(--foreground)]">{part.partName}</p>
                 <div className="flex justify-between items-center pt-2 border-t border-border mt-2">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase">Stok Saat Ini</span>
-                  <span className="text-xs font-black text-foreground">{part.stock} Unit</span>
+                  <span className="text-[10px] font-black text-[var(--muted-foreground)] uppercase">Stok Saat Ini</span>
+                  <span className="text-xs font-black text-[var(--foreground)]">{part.stock} Unit</span>
                 </div>
               </div>
 
               {/* INPUT */}
               <div className="space-y-3">
-                <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">
+                <label className="text-xs font-black uppercase text-[var(--muted-foreground)] tracking-widest ml-1">
                   Jumlah yang di {currentType === 'ADD' ? 'tambahkan' : 'kurangi'}
                 </label>
                 <div className="relative">
                   <input
                     type="number"
                     {...register('quantity')}
-                    className="w-full h-14 pl-5 pr-14 border-2 border-border rounded-2xl text-lg font-black text-foreground bg-input focus:border-ring focus:ring-[3px] focus:ring-ring/50 outline-none transition-all"
+                    className="w-full h-14 pl-5 pr-14 border-2 border-border rounded-2xl text-lg font-black text-[var(--foreground)] bg-[var(--input)] focus:border-ring focus:ring-[3px] focus:ring-ring/50 outline-none transition-all"
                     placeholder="0"
                   />
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-xs uppercase">Unit</div>
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-[var(--muted-foreground)] text-xs uppercase">Unit</div>
                 </div>
                 {errors.quantity && (
-                  <p className="text-[10px] font-bold text-destructive ml-1">{errors.quantity.message}</p>
+                  <p className="text-[10px] font-bold text-[var(--destructive)] ml-1">{errors.quantity.message}</p>
                 )}
               </div>
             </div>
 
             {/* FOOTER */}
-            <div className="p-8 bg-muted/30 border-t border-border flex gap-3">
+            <div className="p-8 bg-[var(--muted)]/30 border-t border-border flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 h-14 bg-card hover:bg-muted text-muted-foreground font-black text-xs uppercase rounded-2xl border border-border transition-all"
+                className="flex-1 h-14 bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--muted-foreground)] font-black text-xs uppercase rounded-2xl border border-border transition-all"
               >
                 Batal
               </button>

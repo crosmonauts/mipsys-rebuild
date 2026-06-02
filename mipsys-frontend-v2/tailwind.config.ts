@@ -11,8 +11,9 @@ const config: Config = {
     extend: {
       colors: {
         fontFamily: {
-          sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
-          serif: ['"Instrument Serif"', 'serif'],
+          sans: ['var(--font-body)', '"IBM Plex Sans"', 'sans-serif'],
+          serif: ['var(--font-display)', '"Fraunces"', 'serif'],
+          mono: ['var(--font-mono)', '"IBM Plex Mono"', 'monospace'],
         },
         letterSpacing: {
           luxury: '0.4em',

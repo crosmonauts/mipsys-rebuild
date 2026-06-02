@@ -9,16 +9,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default: "bg-[var(--primary)] text-[var(--primary)]-foreground [a]:hover:bg-[var(--primary)]/80",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-background hover:bg-[var(--muted)] hover:text-[var(--foreground)] aria-expanded:bg-[var(--muted)] aria-expanded:text-[var(--foreground)] dark:border-input dark:bg-[var(--input)]/30 dark:hover:bg-[var(--input)]/50",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--secondary)]/80 aria-expanded:bg-[var(--secondary)] aria-expanded:text-[var(--secondary-foreground)]",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:bg-[var(--muted)] hover:text-[var(--foreground)] aria-expanded:bg-[var(--muted)] aria-expanded:text-[var(--foreground)] dark:hover:bg-[var(--muted)]/50",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-[var(--destructive)]/10 text-[var(--destructive)] hover:bg-[var(--destructive)]/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-[var(--destructive)]/20 dark:hover:bg-[var(--destructive)]/30 dark:focus-visible:ring-destructive/40",
+        link: "text-[var(--primary)] underline-offset-4 hover:underline",
       },
       size: {
         default:
