@@ -38,6 +38,7 @@ cd mipsys-frontend-v2 && npm install && npm run dev
 | frontend | `npm run dev`      | Next dev server                         |
 | frontend | `npm run build`    | Next build (type-check + bundle)        |
 | frontend | `npm run lint`     | ESLint with `eslint-config-next`        |
+| frontend | `vercel deploy`   | Deploy ke Vercel (dari `mipsys-frontend-v2/`) |
 
 ## Database schema changes
 

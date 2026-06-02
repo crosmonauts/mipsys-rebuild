@@ -6,6 +6,16 @@ import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/src/lib/auth-context';
 import { IBM_Plex_Sans, IBM_Plex_Mono, Fraunces } from 'next/font/google';
 import { ErrorBoundary } from '@/src/components/ui/error-boundary';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Mipsys',
+    default: 'Mipsys — Service Center Management',
+  },
+  description:
+    'Sistem manajemen service center Epson — kelola service request, inventory, finance, dan spare part dalam satu platform.',
+};
 
 const ibmPlexSans = IBM_Plex_Sans({
   weight: ['400', '500', '600', '700'],
