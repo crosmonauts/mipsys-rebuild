@@ -7,13 +7,13 @@ import 'dotenv/config';
 async function runSeeder() {
   console.log('⏳ [Seeder]: Menyiapkan data tes untuk Service Center Epson...');
 
-  const pool = new Pool({
-    host: process.env.DB_HOST || '127.0.0.1',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASS || 'postgres',
-    database: process.env.DB_NAME || 'db_mipsys',
-    port: Number(process.env.DB_PORT) || 5432,
-  });
+   const pool = new Pool({
+     host: process.env.DB_HOST || '127.0.0.1',
+     user: process.env.DB_USER,
+     password: process.env.DB_PASS,
+     database: process.env.DB_NAME || 'db_mipsys',
+     port: Number(process.env.DB_PORT) || 5433,
+   });
 
   const db = drizzle(pool, { schema });
 
