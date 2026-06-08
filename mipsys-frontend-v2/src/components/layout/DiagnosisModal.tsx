@@ -180,7 +180,7 @@ export function DiagnosisModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
         <DialogOverlay />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-[var(--popover)] shadow-lg duration-200 sm:rounded-2xl p-0 overflow-hidden">
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-60 grid w-full max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/20 bg-[var(--popover)] shadow-lg duration-200 sm:rounded-2xl p-0 overflow-hidden">
           <DialogDescription className="sr-only">
             Form diagnosis teknisi untuk service request
           </DialogDescription>
@@ -228,7 +228,7 @@ function ModalHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="p-8 bg-[var(--primary)] text-[var(--primary)]-foreground">
+    <div className="p-8 bg-[var(--primary)] text-[var(--primary-foreground)]">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-[var(--card)]/20 rounded-2xl">

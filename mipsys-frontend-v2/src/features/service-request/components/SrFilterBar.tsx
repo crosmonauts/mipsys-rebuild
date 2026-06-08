@@ -46,7 +46,7 @@ export const SrFilterBar = React.memo(function SrFilterBar({
         <Link href="/service-request/new">
           <Button
             type="button"
-            className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 h-12 px-6 rounded-2xl text-xs font-black tracking-widest text-[var(--primary)]-foreground flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] border-0"
+            className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 h-12 px-6 rounded-2xl text-xs font-black tracking-widest text-[var(--primary-foreground)] flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] border-0"
           >
             <Plus size={18} strokeWidth={3} aria-hidden="true" />
             BUAT SR BARU
@@ -62,7 +62,7 @@ export const SrFilterBar = React.memo(function SrFilterBar({
             size="sm"
             onClick={() => onFilterChange(value)}
             className={`rounded-full text-xs font-black tracking-wider ${
-              activeFilter === value ? 'bg-[var(--primary)] hover:bg-[var(--primary)]/80 text-[var(--primary)]-foreground border-0' : ''
+              activeFilter === value ? 'bg-[var(--primary)] hover:bg-[var(--primary)]/80 text-[var(--primary-foreground)] border-0' : ''
             }`}
           >
             {label}

@@ -48,7 +48,7 @@ export function SettingsForm() {
           <div className="flex gap-2">
             <input type="number" step="0.25" min="0" max="100" value={ppnRate} onChange={(e) => setPpnRate(e.target.value)}
               className="flex-1 p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-[var(--foreground)]" />
-            <button onClick={handleSavePpn} className="px-4 py-2 bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl text-xs font-bold hover:bg-[var(--primary)]/90 transition-all motion-safe:active:scale-95">Simpan</button>
+            <button onClick={handleSavePpn} className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl text-xs font-bold hover:bg-[var(--primary)]/90 transition-all motion-safe:active:scale-95">Simpan</button>
           </div>
         </div>
         <div>
@@ -56,7 +56,7 @@ export function SettingsForm() {
           <div className="flex gap-2">
             <input type="text" value={invoicePrefix} onChange={(e) => setInvoicePrefix(e.target.value)}
               className="flex-1 p-2.5 border border-border rounded-xl text-sm font-bold focus:border-primary focus:ring-2 focus:ring-ring outline-none bg-background text-[var(--foreground)]" />
-            <button onClick={handleSavePrefix} className="px-4 py-2 bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl text-xs font-bold hover:bg-[var(--primary)]/90 transition-all motion-safe:active:scale-95">Simpan</button>
+            <button onClick={handleSavePrefix} className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl text-xs font-bold hover:bg-[var(--primary)]/90 transition-all motion-safe:active:scale-95">Simpan</button>
           </div>
         </div>
       </div>

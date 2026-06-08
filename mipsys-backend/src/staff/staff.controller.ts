@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { StaffService } from './staff.service';
 import { CreateStaffDto } from './dto/create-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
@@ -10,6 +10,11 @@ export class StaffController {
   @Get()
   async findAll() {
     return this.service.findAll();
+  }
+
+  @Get('count')
+  async count(@Query('role') role?: string) {
+    return this.service.count(role);
   }
 
   @Get(':id')

@@ -24,15 +24,22 @@ interface ServiceRequest {
   serviceType?: string;
 }
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost' }> = {
-  WAITING_CHECK: { label: 'Pending', variant: 'secondary' },
-  WAITING_APPROVE: { label: 'Menunggu Approve', variant: 'outline' },
-  SERVICE: { label: 'In Service', variant: 'default' },
-  AWAITING_PARTS: { label: 'Menunggu Part', variant: 'outline' },
-  DONE: { label: 'Ready', variant: 'default' },
-  CLOSED: { label: 'Closed', variant: 'secondary' },
-  CANCEL: { label: 'Cancelled', variant: 'destructive' },
-  CANCELLED: { label: 'Cancelled', variant: 'destructive' },
+interface StatusConfig {
+  label: string;
+  variant: 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
+  className: string;
+}
+
+const statusConfig: Record<string, StatusConfig> = {
+  WAITING_CHECK:   { label: 'Pending',          variant: 'outline', className: 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30' },
+  CHECK:           { label: 'Check',            variant: 'outline', className: 'bg-violet-500/10 text-violet-400 border-violet-500/30' },
+  WAITING_APPROVE: { label: 'Menunggu Approve', variant: 'outline', className: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/30' },
+  SERVICE:         { label: 'In Service',       variant: 'outline', className: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' },
+  AWAITING_PARTS:  { label: 'Menunggu Part',    variant: 'outline', className: 'bg-orange-500/10 text-orange-400 border-orange-500/30' },
+  DONE:            { label: 'Ready',            variant: 'outline', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+  CLOSED:          { label: 'Closed',           variant: 'outline', className: 'bg-slate-500/10 text-slate-400 border-slate-500/30' },
+  CANCEL:          { label: 'Cancelled',        variant: 'outline', className: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30' },
+  CANCELLED:       { label: 'Cancelled',        variant: 'outline', className: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30' },
 };
 
 function formatDate(dateStr: string) {
@@ -73,10 +80,17 @@ const columns = [
     header: 'Status',
     headerClassName: 'text-center',
     cell: (sr: ServiceRequest) => {
-      const cfg = statusConfig[sr.statusService] || { label: sr.statusService, variant: 'secondary' as const };
+      const cfg = statusConfig[sr.statusService];
+      if (!cfg) {
+        return (
+          <div className="flex justify-center">
+            <Badge variant="secondary">{sr.statusService}</Badge>
+          </div>
+        );
+      }
       return (
         <div className="flex justify-center">
-          <Badge variant={cfg.variant}>{cfg.label}</Badge>
+          <Badge variant={cfg.variant} className={cfg.className}>{cfg.label}</Badge>
         </div>
       );
     },
@@ -191,7 +205,7 @@ export function SrDashboard() {
               >
                 <ArrowLeft size={14} aria-hidden="true" /> Kembali
               </Button>
-              <div className="h-9 w-9 flex items-center justify-center bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl text-xs font-black shadow-lg">
+              <div className="h-9 w-9 flex items-center justify-center bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl text-xs font-black shadow-lg">
                 {page}
               </div>
               <Button

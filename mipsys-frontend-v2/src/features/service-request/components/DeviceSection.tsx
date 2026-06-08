@@ -56,7 +56,7 @@ function SectionHeader({
       aria-hidden="true"
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary)]-foreground">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary-foreground)]">
           {number}
         </span>
         <h2 className="text-[var(--foreground)] uppercase tracking-wider text-xs font-bold">

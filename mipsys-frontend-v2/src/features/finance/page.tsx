@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   TrendingUp,
   CreditCard,
@@ -31,9 +32,11 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function FinancePage() {
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const { data: invoices, isLoading, refetch } = useInvoices(search);
-  const { stats } = useFinanceStats();
+  const { stats, refetch: refetchStats } = useFinanceStats();
   const [selectedInvoice, setSelectedInvoice] = useState<
     (Invoice & { payments?: PaymentHistory[] }) | null
   >(null);
@@ -71,6 +74,7 @@ export default function FinancePage() {
       await financeApi.voidInvoice(voidTarget.id);
       toast.success('Invoice berhasil di-void');
       refetch();
+      refetchStats();
     } catch {
       toast.error('Gagal void invoice');
     } finally {
@@ -232,7 +236,10 @@ export default function FinancePage() {
       <div className="flex flex-col md:flex-row gap-4">
         <SearchBar
           value={search}
-          onChange={setSearch}
+          onChange={(v) => {
+            setSearch(v);
+            router.replace(v ? `/finance?search=${encodeURIComponent(v)}` : '/finance');
+          }}
           placeholder="Cari No. Invoice atau Nama Klien..."
         />
         <Button
@@ -276,6 +283,7 @@ export default function FinancePage() {
               onSuccess={() => {
                 setShowPayInvoiceId(null);
                 refetch();
+                refetchStats();
               }}
               onCancel={() => setShowPayInvoiceId(null)}
             />

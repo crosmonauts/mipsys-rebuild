@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { eq, like, or } from 'drizzle-orm';
+import { eq, like, or, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { customers } from '../database/schema';
@@ -52,5 +52,12 @@ export class CustomersService {
     await this.findOne(id);
     await this.db.delete(customers).where(eq(customers.id, id));
     return { success: true, id };
+  }
+
+  async count() {
+    const [row] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(customers);
+    return { count: Number(row?.count ?? 0) };
   }
 }

@@ -34,7 +34,6 @@ interface ApproveQuoteModalProps {
   onSuccess: () => void;
   initialServiceFee?: string;
   initialPartFee?: string;
-  initialShippingFee?: string;
 }
 
 interface ProposedPart extends OrderPart {
@@ -49,17 +48,14 @@ export function ApproveQuoteModal({
   onSuccess,
   initialServiceFee,
   initialPartFee,
-  initialShippingFee,
 }: ApproveQuoteModalProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'form' | 'preview'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [parts, setParts] = useState<ProposedPart[]>([]);
   const [isLoadingParts, setIsLoadingParts] = useState(false);
-  const [serviceFee, setServiceFee] = useState<number>(0);
-  const [shippingFee, setShippingFee] = useState<number>(0);
+  const [serviceFee, setServiceFee] = useState<string>('0');
   const [savedServiceFee, setSavedServiceFee] = useState<number>(0);
-  const [savedShippingFee, setSavedShippingFee] = useState<number>(0);
   const [savedPartFee, setSavedPartFee] = useState<number>(0);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -70,20 +66,17 @@ export function ApproveQuoteModal({
   useEffect(() => {
     if (isOpen && serviceRequestId) {
       if (hasSavedQuote) {
-        setServiceFee(parseFloat(initialServiceFee || '0'));
-        setShippingFee(parseFloat(initialShippingFee || '0'));
+        setServiceFee(initialServiceFee ?? '0');
         setSavedServiceFee(parseFloat(initialServiceFee || '0'));
-        setSavedShippingFee(parseFloat(initialShippingFee || '0'));
         setSavedPartFee(parseFloat(initialPartFee || '0'));
         setStep('preview');
       } else {
-        setServiceFee(0);
-        setShippingFee(0);
+        setServiceFee('0');
         setStep('form');
       }
       fetchProposedParts();
     }
-  }, [isOpen, serviceRequestId, initialServiceFee, initialPartFee, initialShippingFee, hasSavedQuote]);
+  }, [isOpen, serviceRequestId, initialServiceFee, initialPartFee, hasSavedQuote]);
 
   async function fetchProposedParts() {
     if (!serviceRequestId) return;
@@ -107,10 +100,15 @@ export function ApproveQuoteModal({
   }
 
   const totalPartCost = parts.reduce((sum, p) => sum + Number(p.priceAtAction ?? 0) * p.quantity, 0);
+  const serviceFeeNum = parseInt(serviceFee) || 0;
+  const grandTotal = totalPartCost + serviceFeeNum;
+  const PPN_RATE = 0.11;
+  const ppn = Math.round(grandTotal * PPN_RATE);
+  const totalAfterPpn = grandTotal + ppn;
 
   async function handleSave() {
     if (!ticketNumber) return;
-    if (!serviceFee && serviceFee !== 0) {
+    if (serviceFee === '' || serviceFee === '0') {
       toast.error('Biaya jasa wajib diisi');
       return;
     }
@@ -122,13 +120,11 @@ export function ApproveQuoteModal({
     setIsSubmitting(true);
     try {
       const result = await srApi.saveQuote(ticketNumber, {
-        serviceFee,
-        shippingFee: shippingFee || 0,
+        serviceFee: parseInt(serviceFee) || 0,
         performedBy: user?.staffId,
       });
 
       setSavedServiceFee(result.serviceFee);
-      setSavedShippingFee(result.shippingFee);
       setSavedPartFee(result.partFee);
       setStep('preview');
       toast.success('Penawaran berhasil disimpan');
@@ -173,15 +169,33 @@ export function ApproveQuoteModal({
             position: absolute;
             left: 0;
             top: 0;
-            width: 210mm;
-            padding: 20mm;
+            right: 0;
+            padding: 0;
           }
           .print-area .no-print {
             display: none !important;
           }
           @page {
-            margin: 15mm;
+            margin: 0;
+            size: A4;
           }
+        }
+
+        .print-table th,
+        .print-table td {
+          border: 1px solid #d1d5db !important;
+          padding: 8px 12px !important;
+          font-size: 12px !important;
+        }
+        .print-table th {
+          background-color: #f3f4f6 !important;
+          font-weight: 800 !important;
+          text-transform: uppercase !important;
+          font-size: 10px !important;
+          color: #6b7280 !important;
+        }
+        .print-table td {
+          color: #111827 !important;
         }
       `}</style>
 
@@ -203,14 +217,12 @@ export function ApproveQuoteModal({
                   <div className="p-8 space-y-6 overflow-y-auto">
                     <FeeInputs
                       serviceFee={serviceFee}
-                      shippingFee={shippingFee}
                       onServiceFeeChange={setServiceFee}
-                      onShippingFeeChange={setShippingFee}
                     />
 
                     <PartsList parts={parts} isLoading={isLoadingParts} />
 
-                    <SummaryRow totalPartCost={totalPartCost} serviceFee={serviceFee} shippingFee={shippingFee} />
+                    <SummaryRow totalPartCost={totalPartCost} serviceFee={serviceFeeNum} />
                   </div>
 
                   <FormFooter
@@ -225,84 +237,145 @@ export function ApproveQuoteModal({
 
                   <div className="flex-1 overflow-y-auto">
                     <div ref={printRef} className="print-area">
-                      <div className="p-8 !bg-white !text-black">
+                      <div className="p-[15mm] !bg-white !text-black" style={{ minHeight: '297mm', boxSizing: 'border-box' }}>
                         {/* Kop Surat */}
-                        <div className="text-center mb-8 pb-6 border-b-2 border-stone-200">
-                          <h1 className="text-2xl font-black text-stone-900 uppercase tracking-tight">
-                            {crmData.companyName}
-                          </h1>
-                          <p className="text-xs text-stone-500 mt-1">{crmData.companyAddress}</p>
-                          <p className="text-xs text-stone-500">{crmData.companyPhone}</p>
-                          <h2 className="text-lg font-black text-emerald-700 uppercase tracking-widest mt-4">
-                            Surat Penawaran
-                          </h2>
+                        <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-stone-300">
+                          <div>
+                            <h1 className="text-3xl font-black text-stone-900 uppercase tracking-tight">
+                              {crmData.companyName}
+                            </h1>
+                            <p className="text-xs text-stone-500 mt-1">{crmData.companyAddress}</p>
+                            <p className="text-xs text-stone-500">{crmData.companyPhone}</p>
+                          </div>
+                          <div className="text-right">
+                            <h2 className="text-lg font-black text-emerald-700 uppercase tracking-widest">
+                              SURAT PENAWARAN
+                            </h2>
+                            <p className="text-[10px] text-stone-400 mt-1">No. {crmData.ticketNumber}</p>
+                          </div>
                         </div>
 
                         {/* Info Tiket */}
-                        <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                        <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
                           <div>
-                            <p className="text-[10px] font-bold text-stone-400 uppercase">No. Tiket</p>
-                            <p className="font-black text-stone-900">{crmData.ticketNumber}</p>
+                            <p className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">Kepada</p>
+                            <p className="font-bold text-stone-900">Yth. Pelanggan</p>
+                            <p className="text-xs text-stone-600">di Tempat</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-[10px] font-bold text-stone-400 uppercase">Tanggal</p>
-                            <p className="font-black text-stone-900">{crmData.date}</p>
+                          <div className="text-right space-y-1">
+                            <div>
+                              <p className="text-[10px] font-bold text-stone-400 uppercase">Tanggal</p>
+                              <p className="text-sm text-stone-900">{crmData.date}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-stone-400 uppercase">No. Tiket</p>
+                              <p className="text-sm font-bold text-stone-900">{crmData.ticketNumber}</p>
+                            </div>
                           </div>
                         </div>
 
+                        {/* Pembukaan */}
+                        <p className="text-xs text-stone-700 mb-6 leading-relaxed">
+                          Dengan hormat, bersama ini kami sampaikan penawaran biaya perbaikan/service untuk unit
+                          Bapak/Ibu sebagai berikut:
+                        </p>
+
                         {/* Rincian Biaya */}
-                        <table className="w-full mb-6">
+                        <table className="print-table w-full mb-6" style={{ borderCollapse: 'collapse' }}>
                           <thead>
-                            <tr className="border-b-2 border-stone-200">
-                              <th className="text-left py-2 text-[10px] font-black text-stone-400 uppercase">Item</th>
-                              <th className="text-center py-2 text-[10px] font-black text-stone-400 uppercase">Qty</th>
-                              <th className="text-right py-2 text-[10px] font-black text-stone-400 uppercase">Harga</th>
-                              <th className="text-right py-2 text-[10px] font-black text-stone-400 uppercase">Subtotal</th>
+                            <tr>
+                              <th className="w-8 text-center">No</th>
+                              <th className="text-left">Item Pekerjaan / Sparepart</th>
+                              <th className="w-16 text-center">Qty</th>
+                              <th className="w-32 text-right">Harga Satuan</th>
+                              <th className="w-32 text-right">Jumlah</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {parts.map((part) => (
-                              <tr key={part.id} className="border-b border-stone-100">
-                                <td className="py-2 font-bold text-stone-900 text-sm">{part.partName}</td>
-                                <td className="py-2 text-center text-stone-700">{part.quantity}</td>
-                                <td className="py-2 text-right text-stone-700">
+                            {parts.map((part, idx) => (
+                              <tr key={part.id}>
+                                <td className="text-center text-stone-500">{idx + 1}</td>
+                                <td className="font-semibold">{part.partName}</td>
+                                <td className="text-center">{part.quantity}</td>
+                                <td className="text-right">
                                   Rp {Number(part.priceAtAction ?? 0).toLocaleString('id-ID')}
                                 </td>
-                                <td className="py-2 text-right font-bold text-stone-900">
+                                <td className="text-right font-semibold">
                                   Rp {(Number(part.priceAtAction ?? 0) * part.quantity).toLocaleString('id-ID')}
                                 </td>
                               </tr>
                             ))}
+                            <tr>
+                              <td className="text-center text-stone-500">{parts.length + 1}</td>
+                              <td className="font-semibold">Biaya Jasa (Service Fee)</td>
+                              <td className="text-center">1</td>
+                              <td className="text-right">
+                                Rp {savedServiceFee.toLocaleString('id-ID')}
+                              </td>
+                              <td className="text-right font-semibold">
+                                Rp {savedServiceFee.toLocaleString('id-ID')}
+                              </td>
+                            </tr>
                           </tbody>
                         </table>
 
-                        {/* Total */}
-                        <div className="space-y-2 ml-auto w-72">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-stone-500">Biaya Part</span>
-                            <span className="font-bold">Rp {savedPartFee.toLocaleString('id-ID')}</span>
+                        {/* Ringkasan Total */}
+                        <div className="ml-auto w-80 space-y-1.5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-stone-500">Total Biaya Part</span>
+                            <span className="font-semibold text-stone-900">Rp {savedPartFee.toLocaleString('id-ID')}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-stone-500">Biaya Jasa</span>
-                            <span className="font-bold">Rp {savedServiceFee.toLocaleString('id-ID')}</span>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-stone-500">Total Biaya Jasa</span>
+                            <span className="font-semibold text-stone-900">Rp {savedServiceFee.toLocaleString('id-ID')}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-stone-500">Biaya Kirim</span>
-                            <span className="font-bold">Rp {savedShippingFee.toLocaleString('id-ID')}</span>
+                          <div className="flex justify-between text-xs border-t border-stone-200 pt-1.5">
+                            <span className="font-bold text-stone-700">Subtotal</span>
+                            <span className="font-bold text-stone-900">Rp {(savedPartFee + savedServiceFee).toLocaleString('id-ID')}</span>
                           </div>
-                          <hr className="border-stone-300" />
+                          <div className="flex justify-between text-xs">
+                            <span className="text-stone-500">PPN 11%</span>
+                            <span className="font-semibold text-stone-900">Rp {Math.round((savedPartFee + savedServiceFee) * 0.11).toLocaleString('id-ID')}</span>
+                          </div>
+                          <hr className="border-stone-300 border-t-2" />
                           <div className="flex justify-between">
-                            <span className="font-black text-stone-700">Grand Total</span>
+                            <span className="font-black text-stone-700 uppercase text-sm">Grand Total</span>
                             <span className="text-xl font-black text-emerald-700">
-                              Rp {(savedPartFee + savedServiceFee + savedShippingFee).toLocaleString('id-ID')}
+                              Rp {(Math.round((savedPartFee + savedServiceFee) * 1.11)).toLocaleString('id-ID')}
                             </span>
                           </div>
                         </div>
 
+                        {/* Terbilang */}
+                        <p className="text-[11px] text-stone-500 mt-2 text-right italic">
+                          # {numberToWords(Math.round((savedPartFee + savedServiceFee) * 1.11))}
+                        </p>
+
+                        {/* Catatan & Syarat */}
+                        <div className="mt-10 pt-6 border-t border-stone-200">
+                          <div className="grid grid-cols-2 gap-8">
+                            <div>
+                              <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Ketentuan:</p>
+                              <ul className="text-[10px] text-stone-500 space-y-1 list-disc list-inside leading-relaxed">
+                                <li>Penawaran berlaku 7 hari sejak tanggal diterbitkan</li>
+                                <li>Harga sudah termasuk PPN 11%</li>
+                                <li>Pembayaran dilakukan di kasir sebelum unit diambil</li>
+                                <li>Garansi pekerjaan sesuai ketentuan yang berlaku</li>
+                              </ul>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] font-bold text-stone-400 uppercase mb-8">Hormat Kami,</p>
+                              <div className="h-12" />
+                              <p className="text-xs font-bold text-stone-900">(________________________)</p>
+                              <p className="text-[10px] text-stone-400">Manajemen {crmData.companyName}</p>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Footer */}
-                        <div className="mt-10 pt-6 border-t border-stone-200 text-center text-[10px] text-stone-400">
-                          <p>Penawaran berlaku 7 hari sejak tanggal diterbitkan</p>
-                          <p className="mt-1">MiPSys — Enterprise Service Management</p>
+                        <div className="mt-6 pt-4 border-t border-stone-200 text-center text-[9px] text-stone-400">
+                          <p>{crmData.companyName} — {crmData.companyAddress} | Telp: {crmData.companyPhone}</p>
+                          <p className="mt-0.5">Dokumen ini dibuat secara otomatis dan tidak memerlukan tanda tangan basah</p>
                         </div>
                       </div>
                     </div>
@@ -358,14 +431,10 @@ function FormHeader({
 
 function FeeInputs({
   serviceFee,
-  shippingFee,
   onServiceFeeChange,
-  onShippingFeeChange,
 }: {
-  serviceFee: number;
-  shippingFee: number;
-  onServiceFeeChange: (v: number) => void;
-  onShippingFeeChange: (v: number) => void;
+  serviceFee: string;
+  onServiceFeeChange: (v: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -373,7 +442,7 @@ function FeeInputs({
         Biaya Tambahan
       </label>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="max-w-xs">
         <div className="space-y-2">
           <label className="text-xs font-bold text-[var(--muted-foreground)] ml-1">
             Biaya Jasa (Service Fee) *
@@ -381,26 +450,10 @@ function FeeInputs({
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] font-bold text-sm">Rp</span>
             <Input
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
               value={serviceFee}
-              onChange={(e) => onServiceFeeChange(parseInt(e.target.value) || 0)}
-              className="pl-10 h-11 border-2 border-border/30 rounded-xl font-bold"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-[var(--muted-foreground)] ml-1">
-            Biaya Kirim (Shipping)
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] font-bold text-sm">Rp</span>
-            <Input
-              type="number"
-              min={0}
-              value={shippingFee}
-              onChange={(e) => onShippingFeeChange(parseInt(e.target.value) || 0)}
+              onChange={(e) => onServiceFeeChange(e.target.value)}
               className="pl-10 h-11 border-2 border-border/30 rounded-xl font-bold"
             />
           </div>
@@ -465,13 +518,13 @@ function PartsList({
 function SummaryRow({
   totalPartCost,
   serviceFee,
-  shippingFee,
 }: {
   totalPartCost: number;
   serviceFee: number;
-  shippingFee: number;
 }) {
-  const grandTotal = totalPartCost + serviceFee + shippingFee;
+  const subtotal = totalPartCost + serviceFee;
+  const ppn = Math.round(subtotal * 0.11);
+  const grandTotal = subtotal + ppn;
 
   return (
     <div className="space-y-3 p-4 rounded-xl bg-[var(--muted)]/50 border border-border/30">
@@ -483,9 +536,10 @@ function SummaryRow({
         <span className="font-bold text-[var(--muted-foreground)]">Biaya Jasa</span>
         <span className="font-black text-[var(--foreground)]">Rp {serviceFee.toLocaleString('id-ID')}</span>
       </div>
+      <hr className="border-border/30" />
       <div className="flex justify-between items-center text-sm">
-        <span className="font-bold text-[var(--muted-foreground)]">Biaya Kirim</span>
-        <span className="font-black text-[var(--foreground)]">Rp {shippingFee.toLocaleString('id-ID')}</span>
+        <span className="font-bold text-[var(--muted-foreground)]">PPN 11%</span>
+        <span className="font-black text-[var(--foreground)]">Rp {ppn.toLocaleString('id-ID')}</span>
       </div>
       <hr className="border-border/30" />
       <div className="flex justify-between items-center">
@@ -596,4 +650,30 @@ function PreviewFooter({
       </Button>
     </div>
   );
+}
+
+function numberToWords(num: number): string {
+  if (num === 0) return 'Nol Rupiah';
+  const units = ['', 'Ribu', 'Juta', 'Miliar', 'Triliun'];
+  const ones = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas', 'Duabelas', 'Tigabelas', 'Empatbelas', 'Limabelas', 'Enambelas', 'Tujuhbelas', 'Delapanbelas', 'Sembilanbelas'];
+  const tens = ['', '', 'Dua Puluh', 'Tiga Puluh', 'Empat Puluh', 'Lima Puluh', 'Enam Puluh', 'Tujuh Puluh', 'Delapan Puluh', 'Sembilan Puluh'];
+
+  function convert(n: number): string {
+    if (n < 0) return 'Minus ' + convert(-n);
+    if (n < 12) return ones[n] || '';
+    if (n < 20) return ones[n] || '';
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+    if (n < 200) return 'Seratus ' + convert(n - 100);
+    if (n < 1000) return ones[Math.floor(n / 100)] + ' Ratus ' + convert(n % 100);
+    for (let i = 1; i < units.length; i++) {
+      const divisor = Math.pow(1000, i);
+      if (n < divisor * 1000) {
+        const prefix = n < divisor * 10 && i === 1 ? 'Se' : convert(Math.floor(n / divisor)) + ' ';
+        return prefix + units[i] + (n % divisor ? ' ' + convert(n % divisor) : '');
+      }
+    }
+    return '';
+  }
+
+  return convert(Math.round(num)) + ' Rupiah';
 }

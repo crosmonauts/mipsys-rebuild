@@ -48,7 +48,7 @@ export default function ExpensesPage() {
           <Button onClick={handleSyncPo} variant="outline" className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase">
             <RefreshCw size={14} aria-hidden="true" /> Sync PO
           </Button>
-          <Button onClick={() => { setEditExpense(null); setShowForm(true); }} className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground border-none">
+          <Button onClick={() => { setEditExpense(null); setShowForm(true); }} className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] border-none">
             <Plus size={14} aria-hidden="true" /> Tambah
           </Button>
         </div>

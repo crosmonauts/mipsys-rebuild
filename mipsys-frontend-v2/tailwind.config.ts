@@ -12,7 +12,7 @@ const config: Config = {
       colors: {
         fontFamily: {
           sans: ['var(--font-body)', '"IBM Plex Sans"', 'sans-serif'],
-          serif: ['var(--font-display)', '"Fraunces"', 'serif'],
+          serif: ['var(--font-body)', '"IBM Plex Sans"', 'sans-serif'],
           mono: ['var(--font-mono)', '"IBM Plex Mono"', 'monospace'],
         },
         letterSpacing: {

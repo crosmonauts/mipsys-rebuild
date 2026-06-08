@@ -108,6 +108,15 @@ export class ServiceRequestsController {
     return this.serviceRequestService.retryAwaitingParts(ticketNumber, dto);
   }
 
+  @Post(':ticketNumber/close')
+  @HttpCode(HttpStatus.OK)
+  async closeTicket(
+    @Param('ticketNumber') ticketNumber: string,
+    @Body() dto: { performedBy?: number },
+  ) {
+    return this.serviceRequestService.closeTicket(ticketNumber, dto);
+  }
+
   @Post(':ticketNumber/approve-quote')
   @HttpCode(HttpStatus.OK)
   async approveQuote(

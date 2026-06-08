@@ -216,7 +216,7 @@ export default function NewPartOrderPage({
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground font-black px-10 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all gap-2 uppercase text-xs tracking-widest border-none"
+            className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-black px-10 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all gap-2 uppercase text-xs tracking-widest border-none"
           >
             {isLoading ? (
               <SpinnerIcon data-icon="inline-start" className="motion-safe:animate-spin" />
@@ -406,7 +406,7 @@ export default function NewPartOrderPage({
                               onClick={() => removeItem(item.id)}
                               variant="ghost"
                               size="icon"
-                              className="rounded-xl text-[var(--muted-foreground)] hover:text-[var(--destructive)]-foreground hover:bg-[var(--destructive)]"
+                              className="rounded-xl text-[var(--muted-foreground)] hover:text-[var(--destructive-foreground)] hover:bg-[var(--destructive)]"
                               title="Hapus Baris"
                               aria-label="Hapus baris"
                             >

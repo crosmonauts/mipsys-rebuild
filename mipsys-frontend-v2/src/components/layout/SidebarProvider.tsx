@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/src/components/layout/Sidebar';
-import { Menu } from 'lucide-react';
+import { List } from '@phosphor-icons/react';
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,7 +28,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label={isSidebarOpen ? 'Tutup menu' : 'Buka menu'}
       >
-        <Menu size={20} />
+        <List size={20} />
       </button>
 
       <Sidebar

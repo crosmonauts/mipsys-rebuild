@@ -90,7 +90,7 @@ export function CreateSRForm() {
         </button>
         <h1 className="text-5xl font-display font-bold text-[var(--foreground)] tracking-tight flex items-center gap-3">
           <div className="p-2 bg-[var(--primary)] rounded-xl" aria-hidden="true">
-            <Printer className="text-[var(--primary)]-foreground w-8 h-8" />
+            <Printer className="text-[var(--primary-foreground)] w-8 h-8" />
           </div>
           Service Requests Entry
         </h1>
@@ -111,7 +111,7 @@ export function CreateSRForm() {
               aria-hidden="true"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary)]-foreground">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary-foreground)]">
                   01
                 </span>
                 <h2 className="font-bold text-[var(--foreground)] uppercase tracking-wider text-xs">
@@ -205,7 +205,7 @@ export function CreateSRForm() {
               aria-hidden="true"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary)]-foreground">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-black text-[var(--primary-foreground)]">
                   02
                 </span>
                 <h2 className="font-bold text-[var(--foreground)] uppercase tracking-wider text-xs">

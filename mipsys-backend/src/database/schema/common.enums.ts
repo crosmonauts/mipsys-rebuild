@@ -6,6 +6,7 @@ export const StatusService = {
   SERVICE: 'SERVICE',
   DONE: 'DONE',
   CANCEL: 'CANCEL',
+  CLOSED: 'CLOSED',
 } as const;
 
 export type StatusServiceType =

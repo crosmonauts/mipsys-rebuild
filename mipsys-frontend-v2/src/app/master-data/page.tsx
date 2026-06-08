@@ -266,10 +266,10 @@ export default function MasterDataPage() {
           headerClassName: 'text-center',
           cell: (c: CustomerData) => (
             <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(c)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(c)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(c.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(c.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
             </div>
@@ -296,10 +296,10 @@ export default function MasterDataPage() {
           headerClassName: 'text-center',
           cell: (s: StaffData) => (
             <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(s)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(s)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(s.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(s.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
             </div>
@@ -322,10 +322,10 @@ export default function MasterDataPage() {
           headerClassName: 'text-center',
           cell: (p: ProductData) => (
             <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(p)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(p)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(p.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(p.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
             </div>
@@ -347,10 +347,10 @@ export default function MasterDataPage() {
         headerClassName: 'text-center',
         cell: (m: CategoryModelData) => (
           <div className="flex items-center justify-center gap-2">
-              <Button onClick={() => openEdit(m)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground" aria-label="Edit data">
+              <Button onClick={() => openEdit(m)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]" aria-label="Edit data">
                 <Pencil size={16} aria-hidden="true" />
               </Button>
-              <Button onClick={() => handleDelete(m.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive)]-foreground" aria-label="Hapus data">
+              <Button onClick={() => handleDelete(m.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]" aria-label="Hapus data">
                 <Trash2 size={16} aria-hidden="true" />
               </Button>
           </div>
@@ -384,7 +384,7 @@ export default function MasterDataPage() {
             variant={activeTab === tab.id ? 'default' : 'ghost'}
             onClick={() => { setActiveTab(tab.id); setSearchTerm(''); }}
             className={`flex items-center gap-2 px-5 py-6 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap ${
-              activeTab === tab.id ? 'bg-[var(--primary)] text-[var(--primary)]-foreground border-0' : ''
+              activeTab === tab.id ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-0' : ''
             }`}
           >
             {tab.icon}
@@ -399,7 +399,7 @@ export default function MasterDataPage() {
           onChange={setSearchTerm}
           placeholder={`Cari ${activeTab === 'customers' ? 'pelanggan' : activeTab === 'staff' ? 'staff' : activeTab === 'products' ? 'produk' : 'model'}...`}
         />
-        <Button onClick={openCreate} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground font-black px-6 py-6 rounded-2xl shadow-lg flex gap-2 uppercase text-xs tracking-widest border-none shrink-0">
+        <Button onClick={openCreate} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-black px-6 py-6 rounded-2xl shadow-lg flex gap-2 uppercase text-xs tracking-widest border-none shrink-0">
           <Plus size={16} strokeWidth={3} aria-hidden="true" /> Tambah Data
         </Button>
       </div>
@@ -443,7 +443,7 @@ export default function MasterDataPage() {
                 <Button onClick={closeModal} variant="outline" className="flex-1 h-12 rounded-2xl border-2 font-black text-xs uppercase tracking-widest">
                   Batal
                 </Button>
-                <Button onClick={handleSubmit} disabled={submitting} className="flex-1 h-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground rounded-2xl font-black text-xs uppercase tracking-widest border-none disabled:opacity-50">
+                <Button onClick={handleSubmit} disabled={submitting} className="flex-1 h-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] rounded-2xl font-black text-xs uppercase tracking-widest border-none disabled:opacity-50">
                   {submitting ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Check size={16} aria-hidden="true" />} Simpan
                 </Button>
               </div>

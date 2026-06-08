@@ -37,7 +37,7 @@ export const orderPartsApi = {
   },
 
   getTotal: async (serviceRequestId: number) => {
-    const response = await apiClient.get(`/order-parts/sr/${serviceRequestId}/total`);
+    const response = await apiClient.get(`/order-parts/sr/${serviceRequestId}/total-cost`);
     return response.data;
   },
 };

@@ -141,7 +141,7 @@ export function PODetailModal({ poId, onClose, onRefresh }: PODetailModalProps) 
                 <button
                   onClick={primaryAction.handler}
                   disabled={statusLoading}
-                  className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground text-sm font-bold rounded-xl transition-all disabled:opacity-50 motion-safe:active:scale-95"
+                  className="px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-sm font-bold rounded-xl transition-all disabled:opacity-50 motion-safe:active:scale-95"
                 >
                   {primaryAction.label}
                 </button>

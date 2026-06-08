@@ -151,7 +151,7 @@ function ActionButton({
   onClick: () => void;
 }) {
   const colorClasses = {
-    blue: 'bg-[var(--primary)] text-[var(--primary)]-foreground hover:bg-[var(--primary)]/90',
+    blue: 'bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90',
     emerald: 'bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]/90',
     slate: 'bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)]/20 border border-border/30',
   };

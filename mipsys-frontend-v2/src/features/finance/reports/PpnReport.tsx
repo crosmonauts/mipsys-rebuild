@@ -40,7 +40,7 @@ export function PpnReportView() {
           ))}
         </select>
         <button onClick={handleSearch} disabled={loading}
-          className="px-4 py-2 bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl text-xs font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 transition-all motion-safe:active:scale-95">
+          className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl text-xs font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 transition-all motion-safe:active:scale-95">
           {loading ? 'Memuat…' : 'Cari'}
         </button>
       </div>

@@ -7,7 +7,8 @@ export type SrStatusType =
   | 'AWAITING_PARTS'
   | 'SERVICE'
   | 'DONE'
-  | 'CANCEL';
+  | 'CANCEL'
+  | 'CLOSED';
 
 export const VALID_SR_TRANSITIONS: Record<SrStatusType, SrStatusType[]> = {
   WAITING_CHECK: ['CHECK', 'WAITING_APPROVE', 'CANCEL'],
@@ -15,8 +16,9 @@ export const VALID_SR_TRANSITIONS: Record<SrStatusType, SrStatusType[]> = {
   WAITING_APPROVE: ['SERVICE', 'AWAITING_PARTS', 'CANCEL'],
   AWAITING_PARTS: ['SERVICE', 'CANCEL'],
   SERVICE: ['DONE', 'CANCEL'],
-  DONE: [],
-  CANCEL: [],
+  DONE: ['CLOSED'],
+  CANCEL: ['CLOSED'],
+  CLOSED: [],
 };
 
 export function validateSrTransition(

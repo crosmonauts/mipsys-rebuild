@@ -13,6 +13,11 @@ export interface ServiceRequestDetail {
   statusService: string;
   serviceType: string;
   incomingDate: string;
+  checkDate?: string;
+  spDate?: string;
+  approveDate?: string;
+  readyDate?: string;
+  closeDate?: string;
   serviceFee: string;
   partFee: string;
   shippingFee: string;
@@ -40,6 +45,11 @@ export const useServiceRequest = (ticketNumber: string) => {
         statusService: res.statusService || res.status_service || '',
         serviceType: res.serviceType || 'NON_WARRANTY',
         incomingDate: res.incomingDate || '',
+        checkDate: res.checkDate || undefined,
+        spDate: res.spDate || undefined,
+        approveDate: res.approveDate || undefined,
+        readyDate: res.readyDate || undefined,
+        closeDate: res.closeDate || undefined,
         serviceFee: res.serviceFee || '0',
         partFee: res.partFee || '0',
         shippingFee: res.shippingFee || '0',

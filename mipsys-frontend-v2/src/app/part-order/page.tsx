@@ -40,10 +40,10 @@ export default function PartOrderPage() {
     let result = orders;
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (o) =>
-          o.poNumber.toLowerCase().includes(q) ||
-          o.supplierName.toLowerCase().includes(q),
+      result = result.filter((o) =>
+        o.poNumber.toLowerCase().includes(q) ||
+        o.supplierName.toLowerCase().includes(q) ||
+        o.items?.some((i) => i.partName?.toLowerCase().includes(q)),
       );
     }
     if (statusFilter !== 'ALL') {
@@ -136,7 +136,7 @@ export default function PartOrderPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-xl hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground transition-all"
+                className="h-10 w-10 rounded-xl hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all"
                 aria-label="Edit pesanan"
               >
                 <Pencil size={18} aria-hidden="true" />
@@ -177,7 +177,7 @@ export default function PartOrderPage() {
             />
           </Button>
           <Link href="/part-order/new">
-            <Button className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground font-black px-6 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none">
+            <Button className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-black px-6 py-6 rounded-2xl shadow-xl shadow-primary/20 transition-all flex gap-2 uppercase text-xs tracking-widest border-none">
               <Plus size={18} strokeWidth={3} /> Buat Order Baru
             </Button>
           </Link>
@@ -214,7 +214,7 @@ export default function PartOrderPage() {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" size={18} aria-hidden="true" />
           <Input
-            placeholder="Cari nomor PO atau nama supplier..."
+            placeholder="Cari nama item..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-12 h-12 border-none bg-[var(--muted)]/50 rounded-2xl font-bold focus-visible:ring-1 focus-visible:ring-primary text-[var(--foreground)]"

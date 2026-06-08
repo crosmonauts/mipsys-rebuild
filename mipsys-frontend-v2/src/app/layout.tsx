@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/src/lib/auth-context';
-import { IBM_Plex_Sans, IBM_Plex_Mono, Fraunces } from 'next/font/google';
+import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 import { ErrorBoundary } from '@/src/components/ui/error-boundary';
 import type { Metadata } from 'next';
 
@@ -29,12 +29,6 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: '--font-mono',
 });
 
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
 export default function RootLayout({
   children,
 }: {
@@ -42,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${fraunces.variable}`}>
+      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <AuthProvider>
             <Toaster

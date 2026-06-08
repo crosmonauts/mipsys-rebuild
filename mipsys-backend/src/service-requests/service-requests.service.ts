@@ -123,6 +123,11 @@ export class ServiceRequestService {
           serviceFee: serviceRequests.serviceFee,
           partFee: serviceRequests.partFee,
           shippingFee: serviceRequests.shippingFee,
+          checkDate: serviceRequests.checkDate,
+          spDate: serviceRequests.spDate,
+          approveDate: serviceRequests.approveDate,
+          readyDate: serviceRequests.readyDate,
+          closeDate: serviceRequests.closeDate,
           hasInvoice: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number)`,
         })
         .from(serviceRequests)
@@ -331,9 +336,9 @@ export class ServiceRequestService {
           await this.financeService.generateFromServiceRequest(ticketNumber);
         (result as any).invoice = invoice;
       } catch (error) {
-        this.logger.warn(
-          `Auto-billing gagal untuk ${ticketNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        this.logger.warn(`Auto-billing gagal untuk ${ticketNumber}: ${msg}`);
+        (result as any).invoiceWarning = `Invoice gagal dibuat: ${msg}. Buat invoice manual dari tombol BUAT INVOICE.`;
       }
     }
 
@@ -661,6 +666,50 @@ export class ServiceRequestService {
         available: true,
         partsProcessed: outOfStockParts.length,
       };
+    });
+  }
+
+  async closeTicket(ticketNumber: string, dto: { performedBy?: number }) {
+    return this.db.transaction(async (tx) => {
+      const sr = await tx.query.serviceRequests.findFirst({
+        where: eq(serviceRequests.ticketNumber, ticketNumber),
+      });
+      if (!sr)
+        throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
+
+      if (sr.statusService !== 'DONE' && sr.statusService !== 'CANCEL') {
+        throw new BadRequestException(
+          `Penutupan hanya bisa dilakukan pada status DONE atau CANCEL. Status saat ini: ${sr.statusService}`,
+        );
+      }
+
+      this.stateMachine.validate(
+        sr.statusService as SrStatusType,
+        'CLOSED' as SrStatusType,
+      );
+
+      const today = new Date().toISOString().split('T')[0];
+
+      await tx
+        .update(serviceRequests)
+        .set({
+          statusService: 'CLOSED' as any,
+          statusSystem: 'CLOSED',
+          closeDate: today,
+          pickUpDate: today,
+          updatedAt: new Date(),
+        })
+        .where(eq(serviceRequests.id, sr.id));
+
+      await this.activityService.addActivity(
+        tx,
+        sr.id,
+        'SR_CLOSE',
+        `Tiket ditutup. Status: ${sr.statusService} → CLOSED`,
+        dto.performedBy ?? null,
+      );
+
+      return { success: true, ticketNumber, newStatus: 'CLOSED' };
     });
   }
 }

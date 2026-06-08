@@ -66,7 +66,7 @@ export function ExpenseForm({ onSuccess, onCancel, initial, editId }: Props) {
       </div>
       <div className="flex gap-2">
         <button type="submit" disabled={submitting}
-          className="flex-1 bg-[var(--primary)] text-[var(--primary)]-foreground rounded-xl py-2.5 text-sm font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 transition-all motion-safe:active:scale-95">
+          className="flex-1 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl py-2.5 text-sm font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 transition-all motion-safe:active:scale-95">
           {submitting ? 'Menyimpan…' : editId ? 'Update' : 'Tambah'}
         </button>
         <button type="button" onClick={onCancel}

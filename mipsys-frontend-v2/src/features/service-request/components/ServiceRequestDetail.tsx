@@ -15,6 +15,7 @@ import {
   X,
   Loader2,
   Activity,
+  DoorClosed,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useServiceRequest, type ServiceRequestDetail } from '../hooks/useServiceRequest';
@@ -29,6 +30,9 @@ import { Card, CardContent } from '@/src/components/ui/card';
 import { ConfirmDialog } from '@/src/components/ui/confirm-dialog';
 import { ClientProfile } from './ClientProfile';
 import { ProblemDescription } from './ProblemDescription';
+import { RepairTimeline } from './RepairTimeline';
+import { PartsUsedList } from './PartsUsedList';
+import { useOrderParts } from '../hooks/useOrderParts';
 
 const statusToBadge: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   WAITING_CHECK: { label: 'Pending', variant: 'secondary' },
@@ -38,6 +42,7 @@ const statusToBadge: Record<string, { label: string; variant: 'default' | 'secon
   AWAITING_PARTS: { label: 'Menunggu Part', variant: 'outline' },
   DONE: { label: 'Ready', variant: 'default' },
   CANCEL: { label: 'Cancelled', variant: 'destructive' },
+  CLOSED: { label: 'Closed', variant: 'secondary' },
 };
 
 type DetailState = {
@@ -48,8 +53,10 @@ type DetailState = {
   showPrintQuote: boolean;
   isApproving: boolean;
   showCancelConfirm: boolean;
+  showCloseConfirm: boolean;
   showApproveConfirm: boolean;
   isCancelling: boolean;
+  isClosing: boolean;
   isRetryingStock: boolean;
   isDoneProcessing: boolean;
   hasInvoice: boolean;
@@ -66,8 +73,10 @@ type DetailAction =
   | { type: 'showPrintQuote'; payload: boolean }
   | { type: 'isApproving'; payload: boolean }
   | { type: 'showCancelConfirm'; payload: boolean }
+  | { type: 'showCloseConfirm'; payload: boolean }
   | { type: 'showApproveConfirm'; payload: boolean }
   | { type: 'isCancelling'; payload: boolean }
+  | { type: 'isClosing'; payload: boolean }
   | { type: 'isRetryingStock'; payload: boolean }
   | { type: 'isDoneProcessing'; payload: boolean }
   | { type: 'isCreatingInvoice'; payload: boolean }
@@ -94,8 +103,10 @@ const INITIAL_STATE: DetailState = {
   showPrintQuote: false,
   isApproving: false,
   showCancelConfirm: false,
+  showCloseConfirm: false,
   showApproveConfirm: false,
   isCancelling: false,
+  isClosing: false,
   isRetryingStock: false,
   isDoneProcessing: false,
   hasInvoice: false,
@@ -109,6 +120,7 @@ const ServiceRequestDetail = () => {
   const { data, setData, isLoading, refetch } = useServiceRequest(ticketNumber);
   const { user } = useAuth();
   const [state, dispatch] = useReducer(detailReducer, INITIAL_STATE);
+  const { parts, totalFee, isLoading: partsLoading } = useOrderParts(data?.id ?? null);
 
   const hasUnsavedChanges = state.isEditing;
 
@@ -181,6 +193,7 @@ const ServiceRequestDetail = () => {
       toast.error(message);
     } finally {
       dispatch({ type: 'isApproving', payload: false });
+      dispatch({ type: 'showApproveConfirm', payload: false });
     }
   }
 
@@ -197,6 +210,22 @@ const ServiceRequestDetail = () => {
     } finally {
       dispatch({ type: 'isCancelling', payload: false });
       dispatch({ type: 'showCancelConfirm', payload: false });
+    }
+  }
+
+  async function handleCloseTicket() {
+    if (!ticketNumber) return;
+    dispatch({ type: 'isClosing', payload: true });
+    try {
+      await srApi.closeTicket(ticketNumber, { performedBy: user?.staffId });
+      toast.success('Tiket ditutup.');
+      await refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Gagal menutup tiket';
+      toast.error(message);
+    } finally {
+      dispatch({ type: 'isClosing', payload: false });
+      dispatch({ type: 'showCloseConfirm', payload: false });
     }
   }
 
@@ -241,6 +270,8 @@ const ServiceRequestDetail = () => {
           </div>,
           { duration: 5000 }
         );
+      } else if (res.invoiceWarning) {
+        toast.error(res.invoiceWarning, { duration: 8000 });
       }
       await refetch();
     } catch (error) {
@@ -281,27 +312,25 @@ const ServiceRequestDetail = () => {
 
   return (
     <main className="min-h-screen planner-bg text-[var(--foreground)] font-sans selection:bg-[var(--primary)]/20">
-      <div className="max-w-7xl mx-auto p-8 md:p-10 lg:p-10">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-5 gap-10">
-          <div className="space-y-6">
+      <div className="max-w-7xl mx-auto p-6 md:p-8">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="space-y-2">
             <Link
               href="/service-request"
-              className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
             >
-              <ArrowLeft size={14} aria-hidden="true" /> Back to Dashboard
+              <ArrowLeft size={12} aria-hidden="true" /> Back to Dashboard
             </Link>
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="bg-[var(--primary)]/15 text-[var(--primary-foreground)] border-[var(--primary)]/30">
-                  {data.serviceType || 'NON_WARRANTY'}
-                </Badge>
-                <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
-                  ENTRY: {new Date(data.incomingDate).toLocaleDateString('id-ID')}
-                </span>
-              </div>
-              <h1 className="text-4xl md:text-4xl font-black text-[var(--foreground)] tracking-tighter leading-none break-all text-balance">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-xl md:text-2xl font-black text-[var(--foreground)] tracking-tighter leading-none">
                 {ticketNumber}
               </h1>
+              <Badge variant="outline" className="bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30 text-[10px] px-2.5 py-0.5">
+                {data.serviceType || 'NON_WARRANTY'}
+              </Badge>
+              <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest">
+                ENTRY: {new Date(data.incomingDate).toLocaleDateString('id-ID')}
+              </span>
             </div>
           </div>
 
@@ -309,15 +338,15 @@ const ServiceRequestDetail = () => {
             variant={state.isEditing ? 'secondary' : 'outline'}
             size="lg"
             onClick={handleEditToggle}
-            className="gap-3 px-10 h-14 rounded-2xl text-xs font-black tracking-widest"
+            className="gap-2 px-6 h-11 rounded-xl text-[10px] font-black tracking-widest shrink-0"
           >
-            {state.isEditing ? <X size={16} aria-hidden="true" /> : <Edit3 size={16} aria-hidden="true" />}
+            {state.isEditing ? <X size={14} aria-hidden="true" /> : <Edit3 size={14} aria-hidden="true" />}
             {state.isEditing ? 'CANCEL' : 'EDIT TICKET'}
           </Button>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-7 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-8 space-y-6">
             <ClientProfile
               customerName={data.customerName}
               phone={data.phone}
@@ -331,41 +360,62 @@ const ServiceRequestDetail = () => {
               isEditing={state.isEditing}
               onChange={(v) => handleFieldChange('problemDescription', v)}
             />
+
+            <div className="bg-[var(--card)] rounded-2xl border border-border/10 p-6">
+              <RepairTimeline
+                statusService={data.statusService}
+                incomingDate={data.incomingDate}
+                checkDate={data.checkDate}
+                spDate={data.spDate}
+                approveDate={data.approveDate}
+                readyDate={data.readyDate}
+                closeDate={data.closeDate}
+              />
+            </div>
+
+            <div className="bg-[var(--card)] rounded-2xl border border-border/10 p-6">
+              <PartsUsedList
+                parts={parts}
+                totalFee={totalFee}
+                isLoading={partsLoading}
+              />
+            </div>
           </div>
 
-          <div className="lg:col-span-5">
-            <aside className="sticky top-10 space-y-6">
-              <Card className="!p-6 space-y-6">
-                <CardContent className="space-y-6 !p-0">
-                  <p className="micro-label text-[var(--muted-foreground)]">Live Progress</p>
-                  <div className="flex items-center gap-5">
-                    <div className="h-14 w-14 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary-foreground)]">
-                      <ShieldCheck size={28} strokeWidth={2} aria-hidden="true" />
+          <div className="lg:col-span-4">
+            <aside className="sticky top-10 space-y-4">
+              <Card className="!p-5">
+                <CardContent className="space-y-4 !p-0">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0">
+                      <ShieldCheck size={24} strokeWidth={2} aria-hidden="true" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-1">Status</p>
-                      <Badge variant={badgeCfg.variant} className="text-lg font-black uppercase tracking-tighter italic px-4 py-1.5 h-auto">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest mb-0.5">Status</p>
+                      <Badge variant={badgeCfg.variant} className="text-sm font-black uppercase tracking-tighter italic px-3 py-1 h-auto">
                         {badgeCfg.label}
                       </Badge>
                     </div>
                   </div>
                 </CardContent>
 
+                <div className="border-t border-border/10 !mx-0 my-4" />
+
                 <CardContent className="space-y-3 !p-0">
                   {(data.statusService === 'WAITING_CHECK' || data.statusService === 'CHECK') && (
                     <>
                       <Button
-                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest"
+                        className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                         onClick={() => dispatch({ type: 'showDiagnosis', payload: true })}
                       >
                         DIAGNOSA & UPDATE STATUS
                       </Button>
                       <Button
                         variant="destructive"
-                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
+                        className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2"
                         onClick={() => dispatch({ type: 'showCancelConfirm', payload: true })}
                       >
-                        <Ban size={16} aria-hidden="true" /> BATALKAN
+                        <Ban size={14} aria-hidden="true" /> BATALKAN
                       </Button>
                     </>
                   )}
@@ -373,52 +423,47 @@ const ServiceRequestDetail = () => {
                   {data.statusService === 'WAITING_APPROVE' && (
                     <>
                       <Button
-                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest"
+                        className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                         onClick={() => dispatch({ type: 'showDiagnosis', payload: true })}
                       >
                         DIAGNOSA
                       </Button>
 
                       {!hasSavedQuote ? (
-                        <Button
-                          variant="default"
-                          className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
-                          onClick={() => dispatch({ type: 'showQuote', payload: true })}
-                        >
-                          <FileText size={16} aria-hidden="true" /> BUAT PENAWARAN
-                        </Button>
+                          <Button
+                            variant="default"
+                            className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
+                            onClick={() => dispatch({ type: 'showQuote', payload: true })}
+                          >
+                            <FileText size={14} aria-hidden="true" /> BUAT PENAWARAN
+                          </Button>
                       ) : (
                         <>
-                          <div className="p-3 rounded-xl bg-[var(--primary)]/10 border-2 border-[var(--primary)]/30">
-                            <p className="text-[10px] font-black text-[var(--primary-foreground)] text-center">
-                              Penawaran sudah dibuat
-                            </p>
+                          <div className="p-2.5 rounded-xl bg-[var(--primary)]/10 border-2 border-[var(--primary)]/30">
+                            <p className="text-[10px] font-black text-[var(--primary)] text-center">Penawaran sudah dibuat</p>
                           </div>
-
                           <Button
                             variant="outline"
-                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 border-[var(--primary)]/50 text-[var(--primary-foreground)] hover:bg-[var(--primary)]/10"
+                            className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 border-[var(--primary)]/50 text-[var(--primary)] hover:bg-[var(--primary)]/10"
                             onClick={() => dispatch({ type: 'showPrintQuote', payload: true })}
                           >
-                            <FileText size={16} aria-hidden="true" /> CETAK PENAWARAN
+                            <FileText size={14} aria-hidden="true" /> CETAK PENAWARAN
                           </Button>
-
                           <Button
-                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
+                            className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                             onClick={() => dispatch({ type: 'showApproveConfirm', payload: true })}
                             disabled={state.isApproving}
                           >
-                            {state.isApproving ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
+                            {state.isApproving ? <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />}
                             SETUJUI
                           </Button>
-
                           <Button
                             variant="destructive"
-                            className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
+                            className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2"
                             onClick={() => dispatch({ type: 'showCancelConfirm', payload: true })}
                             disabled={state.isCancelling}
                           >
-                            {state.isCancelling ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <Ban size={16} aria-hidden="true" />}
+                            {state.isCancelling ? <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> : <Ban size={14} aria-hidden="true" />}
                             BATALKAN
                           </Button>
                         </>
@@ -428,26 +473,26 @@ const ServiceRequestDetail = () => {
 
                   {data.statusService === 'SERVICE' && (
                     <Button
-                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
+                      className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                       onClick={handleMarkDone}
                       disabled={state.isDoneProcessing}
                     >
-                      {state.isDoneProcessing ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <CheckCircle2 size={16} aria-hidden="true" />}
+                      {state.isDoneProcessing ? <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />}
                       SELESAIKAN
                     </Button>
                   )}
 
                   {data.statusService === 'AWAITING_PARTS' && (
                     <div className="space-y-3">
-                      <div className="p-4 rounded-xl bg-amber-500/10 border-2 border-amber-500/30 text-center motion-safe:animate-in motion-safe:fade-in">
-                        <p className="text-xs font-bold text-amber-400">Menunggu Part — PO sedang diproses</p>
+                      <div className="p-3 rounded-xl bg-amber-500/10 border-2 border-amber-500/30 text-center">
+                        <p className="text-[10px] font-bold text-amber-400">Menunggu Part — PO sedang diproses</p>
                       </div>
                       <Button
-                        className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2"
+                        className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                         onClick={handleRetryStock}
                         disabled={state.isRetryingStock}
                       >
-                        {state.isRetryingStock ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <RefreshCw size={16} aria-hidden="true" />}
+                        {state.isRetryingStock ? <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> : <RefreshCw size={14} aria-hidden="true" />}
                         CEK ULANG STOK
                       </Button>
                     </div>
@@ -455,44 +500,87 @@ const ServiceRequestDetail = () => {
 
                   {data.statusService === 'DONE' && !state.hasInvoice && (
                     <Button
-                      className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90"
+                      className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                       onClick={handleCreateInvoice}
                       disabled={state.isCreatingInvoice}
                     >
-                      {state.isCreatingInvoice ? <Loader2 className="motion-safe:animate-spin" size={16} aria-hidden="true" /> : <FileDown size={16} aria-hidden="true" />}
+                      {state.isCreatingInvoice ? <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> : <FileDown size={14} aria-hidden="true" />}
                       BUAT INVOICE
                     </Button>
                   )}
 
                   {data.statusService === 'DONE' && state.hasInvoice && (
                     <Link href="/finance">
-                      <Button className="w-full h-14 rounded-2xl text-xs font-black tracking-widest gap-2">
-                        <FileText size={16} aria-hidden="true" /> LIHAT INVOICE
+                      <Button className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25">
+                        <FileText size={14} aria-hidden="true" /> LIHAT INVOICE
                       </Button>
                     </Link>
                   )}
+
+                  {(data.statusService === 'DONE' || data.statusService === 'CANCEL') && (
+                    <Button
+                      className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
+                      onClick={() => dispatch({ type: 'showCloseConfirm', payload: true })}
+                      disabled={state.isClosing}
+                    >
+                      {state.isClosing ? <Loader2 className="motion-safe:animate-spin" size={14} aria-hidden="true" /> : <DoorClosed size={14} aria-hidden="true" />}
+                      TUTUP TIKET
+                    </Button>
+                  )}
                 </CardContent>
 
-                <div className="border-t border-border/10 !mx-0" />
+                <div className="border-t border-border/10 !mx-0 my-4" />
 
-                <CardContent className="space-y-8 !p-0">
-                  <p className="micro-label text-[var(--muted-foreground)]">03. Unit Specification</p>
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-end border-b border-border/10 pb-4">
-                      <span className="micro-label text-[var(--muted-foreground)]">Model</span>
-                      <span className="text-lg font-bold text-[var(--foreground)]">{data.modelName || '-'}</span>
+                <CardContent className="!p-0 space-y-3">
+                  <p className="micro-label text-[var(--muted-foreground)]">💰 Fee Summary</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-xs text-[var(--muted-foreground)]">Service Fee</span>
+                      <span className="text-sm font-bold text-[var(--foreground)]">
+                        Rp {parseFloat(data.serviceFee || '0').toLocaleString('id-ID')}
+                      </span>
                     </div>
-                    <div className="flex justify-between items-end border-b border-border/10 pb-4">
-                      <span className="micro-label text-[var(--muted-foreground)]">S/N</span>
-                      <span className="text-lg font-bold text-[var(--foreground)]">{data.serialNumber || '-'}</span>
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-xs text-[var(--muted-foreground)]">Parts Fee</span>
+                      <span className="text-sm font-bold text-[var(--foreground)]">
+                        Rp {parseFloat(data.partFee || '0').toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-xs text-[var(--muted-foreground)]">Shipping</span>
+                      <span className="text-sm font-bold text-[var(--foreground)]">
+                        Rp {parseFloat(data.shippingFee || '0').toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="border-t border-border/10 pt-2 flex justify-between items-center">
+                      <span className="text-xs font-bold text-[var(--primary)]">Total</span>
+                      <span className="text-base font-black text-[var(--primary)]">
+                        Rp {(parseFloat(data.serviceFee || '0') + parseFloat(data.partFee || '0') + parseFloat(data.shippingFee || '0')).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+
+                <div className="border-t border-border/10 !mx-0 my-4" />
+
+                <CardContent className="!p-0 space-y-3">
+                  <p className="micro-label text-[var(--muted-foreground)]">📋 Unit Specification</p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-1.5 border-b border-border/10">
+                      <span className="text-xs text-[var(--muted-foreground)]">Model</span>
+                      <span className="text-sm font-bold text-[var(--foreground)]">{data.modelName || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-xs text-[var(--muted-foreground)]">S/N</span>
+                      <span className="text-sm font-bold text-[var(--foreground)]">{data.serialNumber || '-'}</span>
                     </div>
                   </div>
                 </CardContent>
 
                 {state.isEditing && (
-                  <CardContent className="!p-0">
+                  <CardContent className="!p-0 pt-2">
                     <Button
-                      className="w-full h-14 rounded-2xl text-[10px] font-black tracking-[0.3em]"
+                      className="w-full h-12 rounded-xl text-[10px] font-black tracking-[0.3em] bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                       onClick={handleSaveChanges}
                       disabled={state.isSaving}
                     >
@@ -502,9 +590,9 @@ const ServiceRequestDetail = () => {
                 )}
               </Card>
 
-              <div className="px-10 flex items-center gap-3 text-[var(--muted-foreground)]">
-                <Activity size={14} aria-hidden="true" />
-                <p className="text-[9px] font-bold uppercase tracking-luxury">MIPSYS Enterprise AAA Standard</p>
+              <div className="flex items-center gap-2 text-[var(--muted-foreground)] px-2">
+                <Activity size={12} aria-hidden="true" />
+                <p className="text-[8px] font-bold uppercase tracking-luxury">MIPSYS Enterprise AAA Standard</p>
               </div>
             </aside>
           </div>
@@ -554,6 +642,16 @@ const ServiceRequestDetail = () => {
         variant="default"
         loading={state.isApproving}
         onConfirm={handleApproveQuote}
+      />
+      <ConfirmDialog
+        open={state.showCloseConfirm}
+        onOpenChange={(v) => dispatch({ type: 'showCloseConfirm', payload: v })}
+        title="Tutup Tiket?"
+        description="Yakin ingin menutup tiket ini? Tindakan ini menandai bahwa unit sudah diambil oleh pelanggan."
+        confirmLabel="Ya, Tutup"
+        variant="default"
+        loading={state.isClosing}
+        onConfirm={handleCloseTicket}
       />
       <ConfirmDialog
         open={state.showCancelConfirm}

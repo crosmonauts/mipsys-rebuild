@@ -5,16 +5,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/lib/auth-context';
 import {
-  LayoutDashboard,
-  ClipboardList,
+  Layout,
+  ClipboardText,
   Package,
   Wallet,
   Users,
-  Printer,
-  LogOut,
-  X,
   ShoppingBag,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
+import { Printer, SignOut, X } from '@phosphor-icons/react';
 
 export function Sidebar({
   isOpen,
@@ -28,21 +26,18 @@ export function Sidebar({
   const { user, logout } = useAuth();
 
   const menuItems = [
-    { title: 'Dashboard', icon: <LayoutDashboard size={20} />, link: '/' },
+    { title: 'Dashboard', icon: <Layout size={20} />, link: '/' },
     {
       title: 'Service Request',
-      icon: <ClipboardList size={20} />,
+      icon: <ClipboardText size={20} />,
       link: '/service-request',
-      count: '24',
     },
     {
       title: 'Inventory & Parts',
       icon: <Package size={20} />,
       link: '/inventory',
-      count: '5',
     },
     {
-      // --- MENU BARU ---
       title: 'Part Order',
       icon: <ShoppingBag size={20} />,
       link: '/part-order',
@@ -61,7 +56,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
@@ -77,7 +71,6 @@ export function Sidebar({
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
       >
-        {/* Logo Section */}
         <div className="p-5 flex items-center justify-between border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-sidebar-active rounded-lg flex items-center justify-center shadow-lg">
@@ -97,13 +90,11 @@ export function Sidebar({
           </button>
         </div>
 
-        {/* Navigation Section */}
         <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
           <p className="px-3 text-[10px] font-black uppercase tracking-widest text-sidebar-muted mb-4">
             Modul Sistem
           </p>
           {menuItems.map((item) => {
-            // Gunakan startsWith agar menu tetap aktif saat berada di halaman detail
             const isActive =
               item.link === '/'
                 ? pathname === '/'
@@ -134,17 +125,11 @@ export function Sidebar({
                     {item.title}
                   </span>
                 </div>
-                {item.count && (
-                  <span className="bg-sidebar-accent text-sidebar-foreground px-1.5 py-0.5 rounded-md text-[10px] font-bold border border-white/5">
-                    {item.count}
-                  </span>
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Profile Section */}
         <div className="p-4 bg-black/20">
           <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5">
             <div className="h-8 w-8 rounded-full bg-sidebar-active flex items-center justify-center font-bold text-xs text-sidebar-bg">
@@ -163,10 +148,10 @@ export function Sidebar({
                 logout();
                 router.push('/login');
               }}
-              className="p-1.5 hover:text-[var(--destructive)] transition-colors text-sidebar-muted"
+              className="p-1.5 hover:text-destructive transition-colors text-sidebar-muted"
               aria-label="Logout"
             >
-              <LogOut size={16} />
+              <SignOut size={16} />
             </button>
           </div>
         </div>

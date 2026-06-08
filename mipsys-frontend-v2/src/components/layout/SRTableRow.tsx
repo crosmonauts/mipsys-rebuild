@@ -96,7 +96,7 @@ function ActionCell({ ticketNumber }: { ticketNumber: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className="rounded-xl font-bold text-xs hover:bg-[var(--primary)] hover:text-[var(--primary)]-foreground transition-all gap-2"
+          className="rounded-xl font-bold text-xs hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all gap-2"
         >
           Detail <ExternalLink size={14} aria-hidden="true" />
         </Button>

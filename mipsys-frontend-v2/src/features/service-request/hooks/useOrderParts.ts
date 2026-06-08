@@ -16,7 +16,7 @@ export const useOrderParts = (serviceRequestId: number | null) => {
         orderPartsApi.getTotal(serviceRequestId),
       ]);
       setParts(Array.isArray(partsData) ? partsData : []);
-      setTotalFee(totalData?.totalPartFee ?? 0);
+      setTotalFee(totalData?.totalPartsCost ?? 0);
     } catch (error) {
       toast.error('Gagal memuat data part yang digunakan');
     } finally {

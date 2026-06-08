@@ -80,7 +80,7 @@ export function POReceivingModal({ poId, items, onClose, onSuccess }: POReceivin
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 h-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary)]-foreground font-bold text-sm uppercase rounded-xl shadow-lg transition-all disabled:opacity-50 motion-safe:active:scale-98"
+            className="flex-1 h-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-bold text-sm uppercase rounded-xl shadow-lg transition-all disabled:opacity-50 motion-safe:active:scale-98"
           >
             {isSubmitting ? 'Memproses...' : 'Konfirmasi Penerimaan'}
           </button>

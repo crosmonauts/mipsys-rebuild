@@ -191,7 +191,7 @@ export default function InventoryPage() {
               fetchParts();
             }}
             variant="outline"
-            className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase tracking-wider"
+            className="h-12 px-6 rounded-2xl gap-2 text-xs font-black uppercase tracking-wider border-[var(--primary)]/50 text-[var(--foreground)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]"
           >
             <RefreshCcw
               size={16}

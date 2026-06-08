@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { eq, like, or, desc, and, sql, lt, gt } from 'drizzle-orm';
+import { eq, like, ilike, or, desc, and, sql, lt, gt } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { spareParts, categoryModels } from '../database/schema';
@@ -24,8 +24,8 @@ export class InventoryReadService {
     const pattern = `%${query}%`;
     return this.db.query.spareParts.findMany({
       where: or(
-        like(spareParts.partName, pattern),
-        like(spareParts.partCode, pattern),
+        ilike(spareParts.partName, pattern),
+        ilike(spareParts.partCode, pattern),
       ),
       orderBy: [desc(spareParts.stock)],
       limit: 50,

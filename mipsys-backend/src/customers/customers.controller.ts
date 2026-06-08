@@ -12,6 +12,11 @@ export class CustomersController {
     return this.service.findAll(search);
   }
 
+  @Get('count')
+  async count() {
+    return this.service.count();
+  }
+
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);

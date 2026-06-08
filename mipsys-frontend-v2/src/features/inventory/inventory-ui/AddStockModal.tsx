@@ -71,10 +71,10 @@ export function AddStockModal({
   if (!part) return null;
 
   const theme = {
-    ADD: { bg: 'bg-[var(--primary)]', fg: 'text-[var(--primary)]-foreground', border: 'border-primary/30' },
-    SUBTRACT: { bg: 'bg-[var(--destructive)]', fg: 'text-[var(--destructive)]-foreground', border: 'border-destructive/30' },
-    RESET: { bg: 'bg-amber-500', fg: 'text-[var(--primary)]-foreground', border: 'border-amber-500/30' },
-  }[currentType] ?? { bg: 'bg-[var(--primary)]', fg: 'text-[var(--primary)]-foreground', border: 'border-primary/30' };
+    ADD: { bg: 'bg-[var(--primary)]', fg: 'text-[var(--primary-foreground)]', border: 'border-primary/30' },
+    SUBTRACT: { bg: 'bg-[var(--destructive)]', fg: 'text-[var(--destructive-foreground)]', border: 'border-destructive/30' },
+    RESET: { bg: 'bg-amber-500', fg: 'text-[var(--primary-foreground)]', border: 'border-amber-500/30' },
+  }[currentType] ?? { bg: 'bg-[var(--primary)]', fg: 'text-[var(--primary-foreground)]', border: 'border-primary/30' };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

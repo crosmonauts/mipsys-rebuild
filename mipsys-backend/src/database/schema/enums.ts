@@ -1,7 +1,7 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
 export const serviceStatusEnum = pgEnum('service_status', [
-  'WAITING_CHECK', 'CHECK', 'WAITING_APPROVE', 'AWAITING_PARTS', 'SERVICE', 'DONE', 'CANCEL',
+  'WAITING_CHECK', 'CHECK', 'WAITING_APPROVE', 'AWAITING_PARTS', 'SERVICE', 'DONE', 'CANCEL', 'CLOSED',
 ]);
 
 export const poStatusEnum = pgEnum('po_status', [

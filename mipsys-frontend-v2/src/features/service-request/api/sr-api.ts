@@ -62,6 +62,9 @@ export const srApi = {
   }) =>
     apiClient.post(`/service-request/${ticketNumber}/save-quote`, data).then((r) => r.data),
 
+  closeTicket: (ticketNumber: string, data: { performedBy?: number }) =>
+    apiClient.post(`/service-request/${ticketNumber}/close`, data).then((r) => r.data),
+
   cancelQuote: (ticketNumber: string, data: {
     performedBy?: number;
   }) =>
