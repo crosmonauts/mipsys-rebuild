@@ -396,19 +396,14 @@ const ServiceRequestDetail = () => {
             </div>
           </div>
 
-          {isAdmin && (
+          {isAdmin && !state.isEditing && (
             <Button
-              variant={state.isEditing ? 'secondary' : 'outline'}
+              variant="outline"
               size="lg"
               onClick={handleEditToggle}
               className="gap-2 px-6 h-11 rounded-xl text-[10px] font-black tracking-widest shrink-0"
             >
-              {state.isEditing ? (
-                <X size={14} aria-hidden="true" />
-              ) : (
-                <Edit3 size={14} aria-hidden="true" />
-              )}
-              {state.isEditing ? 'CANCEL' : 'EDIT TICKET'}
+              <Edit3 size={14} aria-hidden="true" /> EDIT TICKET
             </Button>
           )}
         </header>
@@ -782,9 +777,16 @@ const ServiceRequestDetail = () => {
                 </CardContent>
 
                 {isAdmin && state.isEditing && (
-                  <CardContent className="!p-0 pt-2">
+                  <CardContent className="!p-0 pt-2 flex gap-3">
                     <Button
-                      className="w-full h-12 rounded-xl text-[10px] font-black tracking-[0.3em] bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
+                      variant="secondary"
+                      className="flex-1 h-12 rounded-xl text-[10px] font-black tracking-[0.3em] border-2"
+                      onClick={handleEditToggle}
+                    >
+                      <X size={14} aria-hidden="true" /> CANCEL
+                    </Button>
+                    <Button
+                      className="flex-1 h-12 rounded-xl text-[10px] font-black tracking-[0.3em] bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                       onClick={handleSaveChanges}
                       disabled={state.isSaving}
                     >
