@@ -13,6 +13,7 @@ import {
 import type { Response } from 'express';
 import { ServiceRequestService } from './service-requests.service';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { UpdateServiceRequestDto } from './dto/update-service-request.dto';
 import { DiagnoseSrDto } from './dto/diagnose-sr.dto';
 import { ApproveQuoteDto } from './dto/approve-quote.dto';
 import { SaveQuoteDto } from './dto/save-quote.dto';
@@ -87,11 +88,11 @@ export class ServiceRequestsController {
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('ticketNumber') ticketNumber: string,
-    @Body() updateDto: CreateServiceRequestDto
+    @Body() updateDto: UpdateServiceRequestDto
   ) {
     return await this.serviceRequestService.updateEntry(
       ticketNumber,
-      updateDto
+      updateDto as any
     );
   }
 

@@ -197,10 +197,14 @@ const ServiceRequestDetail = () => {
       });
       toast.success('Perubahan berhasil disimpan');
       dispatch({ type: 'TOGGLE_EDIT', payload: { editing: false } });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Gagal menyimpan perubahan';
+      refetch();
+    } catch (error: any) {
+      const respMsg = error?.response?.data?.message;
+      const message = Array.isArray(respMsg)
+        ? respMsg.join(', ')
+        : respMsg || error?.message || 'Gagal menyimpan perubahan';
       toast.error(message);
+      if (state.originalData) setData(state.originalData);
     } finally {
       dispatch({ type: 'isSaving', payload: false });
     }

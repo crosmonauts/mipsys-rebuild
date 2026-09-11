@@ -389,7 +389,7 @@ export class ServiceRequestService {
     });
   }
 
-  async updateEntry(ticketNumber: string, dto: CreateServiceRequestDto) {
+  async updateEntry(ticketNumber: string, dto: any) {
     return await this.db.transaction(async (tx) => {
       try {
         const existingSR = await tx.query.serviceRequests.findFirst({
@@ -398,25 +398,34 @@ export class ServiceRequestService {
         if (!existingSR)
           throw new NotFoundException(`Tiket ${ticketNumber} tidak ditemukan.`);
 
-        await this.customerResolver.updateCustomer(tx, existingSR.customerId!, {
-          name: dto.customerName,
-          address: dto.address,
-          phone: dto.phone,
-          customerType: dto.customerType,
-        });
+        if (
+          dto.customerName !== undefined ||
+          dto.address !== undefined ||
+          dto.phone !== undefined ||
+          dto.customerType !== undefined
+        ) {
+          await this.customerResolver.updateCustomer(tx, existingSR.customerId!, {
+            name: dto.customerName,
+            address: dto.address,
+            phone: dto.phone,
+            customerType: dto.customerType,
+          });
+        }
 
-        await this.productResolver.updateProduct(tx, existingSR.productId!, {
-          modelName: dto.modelName,
-          serialNumber: dto.serialNumber,
-        });
+        if (dto.modelName !== undefined || dto.serialNumber !== undefined) {
+          await this.productResolver.updateProduct(tx, existingSR.productId!, {
+            modelName: dto.modelName,
+            serialNumber: dto.serialNumber,
+          });
+        }
 
+        const srUpdate: Record<string, any> = { updatedAt: new Date() };
+        if (dto.serviceType !== undefined) srUpdate.serviceType = dto.serviceType;
+        if (dto.problemDescription !== undefined)
+          srUpdate.problemDescription = dto.problemDescription?.trim();
         await tx
           .update(serviceRequests)
-          .set({
-            serviceType: dto.serviceType,
-            problemDescription: dto.problemDescription?.trim(),
-            updatedAt: new Date(),
-          })
+          .set(srUpdate)
           .where(eq(serviceRequests.id, existingSR.id));
 
         return {
