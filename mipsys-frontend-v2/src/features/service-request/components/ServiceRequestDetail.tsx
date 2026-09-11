@@ -406,6 +406,26 @@ const ServiceRequestDetail = () => {
               <Edit3 size={14} aria-hidden="true" /> EDIT TICKET
             </Button>
           )}
+          {isAdmin && state.isEditing && (
+            <div className="flex gap-3 shrink-0">
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={handleEditToggle}
+                className="gap-2 px-6 h-11 rounded-xl text-[10px] font-black tracking-widest border-2"
+              >
+                <X size={14} aria-hidden="true" /> CANCEL
+              </Button>
+              <Button
+                size="lg"
+                onClick={handleSaveChanges}
+                disabled={state.isSaving}
+                className="gap-2 px-6 h-11 rounded-xl text-[10px] font-black tracking-widest bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90"
+              >
+                {state.isSaving ? 'MENYIMPAN…' : 'SAVE'}
+              </Button>
+            </div>
+          )}
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -776,24 +796,7 @@ const ServiceRequestDetail = () => {
                   </div>
                 </CardContent>
 
-                {isAdmin && state.isEditing && (
-                  <CardContent className="!p-0 pt-2 flex gap-3">
-                    <Button
-                      variant="secondary"
-                      className="flex-1 h-12 rounded-xl text-[10px] font-black tracking-[0.3em] border-2"
-                      onClick={handleEditToggle}
-                    >
-                      <X size={14} aria-hidden="true" /> CANCEL
-                    </Button>
-                    <Button
-                      className="flex-1 h-12 rounded-xl text-[10px] font-black tracking-[0.3em] bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
-                      onClick={handleSaveChanges}
-                      disabled={state.isSaving}
-                    >
-                      {state.isSaving ? 'MENYIMPAN…' : 'CONFIRM CHANGES'}
-                    </Button>
-                  </CardContent>
-                )}
+
               </Card>
 
               <div className="flex items-center gap-2 text-[var(--muted-foreground)] px-2">
