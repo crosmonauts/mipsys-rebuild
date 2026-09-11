@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Ban,
   Eye,
+  DoorClosed,
 } from 'lucide-react';
 import { PageHeader } from '@/src/components/ui/page-header';
 import { SearchBar } from '@/src/components/ui/search-bar';
@@ -24,6 +25,7 @@ import { Invoice, PaymentHistory } from './types';
 import { ConfirmDialog } from '@/src/components/ui/confirm-dialog';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/src/lib/auth-context';
+import { srApi } from '@/src/features/service-request/api/sr-api';
 
 const statusStyles: Record<string, string> = {
   PAID: 'bg-[var(--accent)]/15 text-[var(--accent)] border-accent/30',
@@ -48,6 +50,7 @@ export default function FinancePage() {
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
   const [voidTarget, setVoidTarget] = useState<Invoice | null>(null);
   const [isVoiding, setIsVoiding] = useState(false);
+  const [closingTicket, setClosingTicket] = useState<string | null>(null);
 
   const filtered = invoices.filter(
     (inv) =>
@@ -84,6 +87,25 @@ export default function FinancePage() {
       setIsVoiding(false);
       setShowVoidConfirm(false);
       setVoidTarget(null);
+    }
+  }
+
+  async function handleCloseFromFinance(inv: Invoice) {
+    if (!inv.ticketNumber) {
+      toast.error('Tiket tidak ditemukan');
+      return;
+    }
+    setClosingTicket(inv.ticketNumber);
+    try {
+      await srApi.closeTicket(inv.ticketNumber);
+      toast.success(`Tiket ${inv.ticketNumber} berhasil ditutup`);
+      refetch();
+      refetchStats();
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Gagal menutup tiket';
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg);
+    } finally {
+      setClosingTicket(null);
     }
   }
 
@@ -174,15 +196,30 @@ export default function FinancePage() {
             </>
           )}
           {inv.status === 'PAID' && (
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled
-              className="h-8 w-8 rounded-lg text-[var(--muted-foreground)]/30 cursor-not-allowed"
-              aria-label="Sudah dibayar"
-            >
-              <CheckCircle size={16} aria-hidden="true" />
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled
+                className="h-8 w-8 rounded-lg text-[var(--muted-foreground)]/30 cursor-not-allowed"
+                aria-label="Sudah dibayar"
+              >
+                <CheckCircle size={16} aria-hidden="true" />
+              </Button>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleCloseFromFinance(inv)}
+                  disabled={closingTicket === inv.ticketNumber}
+                  className="h-8 w-8 rounded-lg text-[var(--primary)] hover:bg-[var(--primary)]/10"
+                  aria-label="Tutup tiket"
+                  title="Tutup tiket (CLOSED)"
+                >
+                  <DoorClosed size={16} aria-hidden="true" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       ),
