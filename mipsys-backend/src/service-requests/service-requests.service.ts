@@ -17,6 +17,7 @@ import {
   StatusService,
   orderParts,
   spareParts,
+  invoices,
 } from '../database/schema';
 import { alias } from 'drizzle-orm/pg-core';
 import { StatusServiceType } from '../database/schema/common.enums';
@@ -311,6 +312,7 @@ export class ServiceRequestService {
           readyDate: serviceRequests.readyDate,
           closeDate: serviceRequests.closeDate,
           hasInvoice: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number AND invoices.voided_at IS NULL)`,
+          hasInvoicePaid: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number AND invoices.voided_at IS NULL AND invoices.status = 'PAID')`,
         })
         .from(serviceRequests)
         .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
@@ -876,6 +878,25 @@ export class ServiceRequestService {
         throw new BadRequestException(
           `Penutupan hanya bisa dilakukan pada status DONE atau CANCEL. Status saat ini: ${sr.statusService}`
         );
+      }
+
+      if (sr.statusService === 'DONE') {
+        const inv = await tx.query.invoices.findFirst({
+          where: and(
+            eq(invoices.ticketNumber, ticketNumber),
+            isNull(invoices.voidedAt),
+          ),
+        });
+        if (!inv) {
+          throw new BadRequestException(
+            'Belum ada invoice untuk tiket ini. Buat invoice dulu.',
+          );
+        }
+        if (inv.total !== 0 && inv.status !== 'PAID') {
+          throw new BadRequestException(
+            `Tagihan belum lunas (${inv.status}). Lakukan pembayaran dulu.`,
+          );
+        }
       }
 
       this.stateMachine.validate(sr.statusService, 'CLOSED');

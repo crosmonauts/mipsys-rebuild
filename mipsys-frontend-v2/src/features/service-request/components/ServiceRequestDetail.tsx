@@ -702,9 +702,10 @@ const ServiceRequestDetail = () => {
                     )}
 
                   {isAdmin &&
-                    (data.statusService === 'DONE' ||
-                      data.statusService === 'READY' ||
-                      data.statusService === 'CANCEL') && (
+                    (data.statusService === 'CANCEL' ||
+                      ((data.statusService === 'DONE' ||
+                        data.statusService === 'READY') &&
+                        (data as any).hasInvoicePaid)) && (
                       <Button
                         className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                         onClick={() =>

@@ -91,7 +91,10 @@ export class FinanceService {
 
     const invoiceNumber = await this.generateInvoiceNumber();
     const ppnConfig = await this.getPpnConfig();
-    const { ppn, total, ppnRate } = this.calcPpnByConfig(dto.serviceFee + dto.partFee, ppnConfig);
+    const { ppn, total, ppnRate } = this.calcPpnByConfig(
+      dto.serviceFee + dto.partFee,
+      ppnConfig
+    );
 
     const [result] = await this.db
       .insert(invoices)
@@ -126,6 +129,11 @@ export class FinanceService {
     }
     if (invoice.status === 'VOID') {
       throw new BadRequestException('Invoice sudah di-void.');
+    }
+    if (Number(dto.amount) !== Number(invoice.total)) {
+      throw new BadRequestException(
+        `Jumlah bayar harus sama dengan total tagihan Rp ${Number(invoice.total).toLocaleString('id-ID')}.`,
+      );
     }
 
     await this.db.insert(paymentHistories).values({
@@ -228,7 +236,7 @@ export class FinanceService {
     const existingActive = await this.db.query.invoices.findFirst({
       where: and(
         eq(invoices.serviceRequestId, sr.id),
-        isNull(invoices.voidedAt),
+        isNull(invoices.voidedAt)
       ),
     });
     if (existingActive)
@@ -239,7 +247,10 @@ export class FinanceService {
     const partsCost = await this.orderPartsService.getTotalPartsCost(sr.id);
     const serviceFee = sr.serviceFee ?? 0;
     const ppnConfig = await this.getPpnConfig();
-    const { ppn, total, ppnRate } = this.calcPpnByConfig(serviceFee + partsCost, ppnConfig);
+    const { ppn, total, ppnRate } = this.calcPpnByConfig(
+      serviceFee + partsCost,
+      ppnConfig
+    );
 
     const invoiceNumber = await this.generateInvoiceNumber();
 
@@ -297,11 +308,21 @@ export class FinanceService {
     ];
 
     const headerFont = { name: 'Calibri', bold: true, size: 18 };
-    const subHeaderFont = { name: 'Calibri', bold: true, size: 12, color: { argb: 'FF15803D' } };
+    const subHeaderFont = {
+      name: 'Calibri',
+      bold: true,
+      size: 12,
+      color: { argb: 'FF15803D' },
+    };
     const labelFont = { name: 'Calibri', size: 8, color: { argb: 'FF78716C' } };
     const bodyFont = { name: 'Calibri', size: 10 };
     const boldFont = { name: 'Calibri', bold: true, size: 10 };
-    const totalFont = { name: 'Calibri', bold: true, size: 14, color: { argb: 'FF15803D' } };
+    const totalFont = {
+      name: 'Calibri',
+      bold: true,
+      size: 14,
+      color: { argb: 'FF15803D' },
+    };
 
     let row = 1;
 
@@ -347,28 +368,58 @@ export class FinanceService {
       ws.mergeCells(row, 1, row + 1, 5);
       const stampCell = ws.getCell(row, 1);
       stampCell.value = 'LUNAS';
-      stampCell.font = { name: 'Calibri', bold: true, size: 36, color: { argb: 'FF15803D' } };
+      stampCell.font = {
+        name: 'Calibri',
+        bold: true,
+        size: 36,
+        color: { argb: 'FF15803D' },
+      };
       stampCell.alignment = { horizontal: 'center', vertical: 'middle' };
       row += 3;
     }
 
     // Info: Kepada (left) + Tanggal/No Tiket (right)
     ws.getCell(row, 1).value = 'KEPADA';
-    ws.getCell(row, 1).font = { name: 'Calibri', bold: true, size: 8, color: { argb: 'FFA8A29E' } };
+    ws.getCell(row, 1).font = {
+      name: 'Calibri',
+      bold: true,
+      size: 8,
+      color: { argb: 'FFA8A29E' },
+    };
     ws.getCell(row + 1, 1).value = `Yth. ${invoice.clientName}`;
     ws.getCell(row + 1, 1).font = boldFont;
     ws.getCell(row + 2, 1).value = 'di Tempat';
-    ws.getCell(row + 2, 1).font = { name: 'Calibri', size: 9, color: { argb: 'FF78716C' } };
+    ws.getCell(row + 2, 1).font = {
+      name: 'Calibri',
+      size: 9,
+      color: { argb: 'FF78716C' },
+    };
 
     ws.getCell(row, 4).value = 'TANGGAL';
-    ws.getCell(row, 4).font = { name: 'Calibri', bold: true, size: 8, color: { argb: 'FFA8A29E' } };
+    ws.getCell(row, 4).font = {
+      name: 'Calibri',
+      bold: true,
+      size: 8,
+      color: { argb: 'FFA8A29E' },
+    };
     ws.getCell(row, 4).alignment = { horizontal: 'right' };
-    ws.getCell(row + 1, 4).value = new Date(invoice.invoiceDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    ws.getCell(row + 1, 4).value = new Date(
+      invoice.invoiceDate
+    ).toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
     ws.getCell(row + 1, 4).font = bodyFont;
     ws.getCell(row + 1, 4).alignment = { horizontal: 'right' };
 
     ws.getCell(row + 2, 4).value = 'NO. TIKET';
-    ws.getCell(row + 2, 4).font = { name: 'Calibri', bold: true, size: 8, color: { argb: 'FFA8A29E' } };
+    ws.getCell(row + 2, 4).font = {
+      name: 'Calibri',
+      bold: true,
+      size: 8,
+      color: { argb: 'FFA8A29E' },
+    };
     ws.getCell(row + 2, 4).alignment = { horizontal: 'right' };
     ws.mergeCells(row + 3, 4, row + 3, 5);
     ws.getCell(row + 3, 4).value = invoice.ticketNumber;
@@ -380,18 +431,37 @@ export class FinanceService {
     ws.mergeCells(row, 1, row, 5);
     ws.getCell(row, 1).value =
       'Dengan hormat, bersama ini kami sampaikan rincian biaya perbaikan/service untuk unit Bapak/Ibu sebagai berikut:';
-    ws.getCell(row, 1).font = { name: 'Calibri', size: 9, color: { argb: 'FF44403C' } };
+    ws.getCell(row, 1).font = {
+      name: 'Calibri',
+      size: 9,
+      color: { argb: 'FF44403C' },
+    };
     ws.getCell(row, 1).alignment = { wrapText: true };
     row += 2;
 
     // Tabel header
-    const tableHeaders = ['No', 'Item Pekerjaan / Sparepart', 'Qty', 'Harga Satuan', 'Jumlah'];
+    const tableHeaders = [
+      'No',
+      'Item Pekerjaan / Sparepart',
+      'Qty',
+      'Harga Satuan',
+      'Jumlah',
+    ];
     const tableRow = ws.getRow(row);
     tableHeaders.forEach((h, i) => {
       const cell = tableRow.getCell(i + 1);
       cell.value = h;
-      cell.font = { name: 'Calibri', bold: true, size: 8, color: { argb: 'FF78716C' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F4' } };
+      cell.font = {
+        name: 'Calibri',
+        bold: true,
+        size: 8,
+        color: { argb: 'FF78716C' },
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF5F5F4' },
+      };
       cell.border = {
         top: { style: 'thin', color: { argb: 'FFD6D3D1' } },
         bottom: { style: 'thin', color: { argb: 'FFD6D3D1' } },
@@ -406,42 +476,104 @@ export class FinanceService {
     row++;
 
     // Tabel body — per-item real via orderParts (menu aksi invoice only)
-    let tableData: Array<{ no: number; item: string; qty: number | string; price: number; jumlah: number }> = [];
+    let tableData: Array<{
+      no: number;
+      item: string;
+      qty: number | string;
+      price: number;
+      jumlah: number;
+    }> = [];
     if (invoice.serviceRequestId) {
       try {
-        const orderParts = await this.orderPartsService.getByServiceRequest(invoice.serviceRequestId);
+        const orderParts = await this.orderPartsService.getByServiceRequest(
+          invoice.serviceRequestId
+        );
         const activeParts = orderParts.filter((p) => p.status !== 'CANCELLED');
         if (activeParts.length > 0) {
           let idx = 1;
           if (serviceFee > 0) {
-            tableData.push({ no: idx++, item: 'Biaya Jasa (Service Fee)', qty: 1, price: serviceFee, jumlah: serviceFee });
+            tableData.push({
+              no: idx++,
+              item: 'Biaya Jasa (Service Fee)',
+              qty: 1,
+              price: serviceFee,
+              jumlah: serviceFee,
+            });
           }
           activeParts.forEach((p) => {
             const price = Number(p.priceAtAction ?? 0);
             const qty = p.quantity || 0;
-            tableData.push({ no: idx++, item: p.partName, qty, price, jumlah: price * qty });
+            tableData.push({
+              no: idx++,
+              item: p.partName,
+              qty,
+              price,
+              jumlah: price * qty,
+            });
           });
         } else {
           tableData = [
-            { no: 1, item: 'Biaya Jasa (Service Fee)', qty: 1, price: serviceFee, jumlah: serviceFee },
+            {
+              no: 1,
+              item: 'Biaya Jasa (Service Fee)',
+              qty: 1,
+              price: serviceFee,
+              jumlah: serviceFee,
+            },
             ...(partFee > 0
-              ? [{ no: serviceFee > 0 ? 2 : 1, item: 'Biaya Sparepart', qty: 1 as string | number, price: partFee, jumlah: partFee }]
+              ? [
+                  {
+                    no: serviceFee > 0 ? 2 : 1,
+                    item: 'Biaya Sparepart',
+                    qty: 1 as string | number,
+                    price: partFee,
+                    jumlah: partFee,
+                  },
+                ]
               : []),
           ];
         }
       } catch {
         tableData = [
-          { no: 1, item: 'Biaya Jasa (Service Fee)', qty: 1, price: serviceFee, jumlah: serviceFee },
+          {
+            no: 1,
+            item: 'Biaya Jasa (Service Fee)',
+            qty: 1,
+            price: serviceFee,
+            jumlah: serviceFee,
+          },
           ...(partFee > 0
-            ? [{ no: serviceFee > 0 ? 2 : 1, item: 'Biaya Sparepart', qty: 1 as string | number, price: partFee, jumlah: partFee }]
+            ? [
+                {
+                  no: serviceFee > 0 ? 2 : 1,
+                  item: 'Biaya Sparepart',
+                  qty: 1 as string | number,
+                  price: partFee,
+                  jumlah: partFee,
+                },
+              ]
             : []),
         ];
       }
     } else {
       tableData = [
-        { no: 1, item: 'Biaya Jasa (Service Fee)', qty: 1, price: serviceFee, jumlah: serviceFee },
+        {
+          no: 1,
+          item: 'Biaya Jasa (Service Fee)',
+          qty: 1,
+          price: serviceFee,
+          jumlah: serviceFee,
+        },
         ...(partFee > 0
-          ? [{ no: serviceFee > 0 ? 2 : 1, item: 'Biaya Sparepart', qty: 1 as string | number, price: partFee, jumlah: partFee }]
+          ? [
+              {
+                no: serviceFee > 0 ? 2 : 1,
+                item: 'Biaya Sparepart',
+                qty: 1 as string | number,
+                price: partFee,
+                jumlah: partFee,
+              },
+            ]
           : []),
       ];
     }
@@ -450,7 +582,11 @@ export class FinanceService {
       const r = ws.getRow(row);
       r.getCell(1).value = d.no;
       r.getCell(1).alignment = { horizontal: 'center' };
-      r.getCell(1).font = { name: 'Calibri', size: 10, color: { argb: 'FF78716C' } };
+      r.getCell(1).font = {
+        name: 'Calibri',
+        size: 10,
+        color: { argb: 'FF78716C' },
+      };
       r.getCell(2).value = d.item;
       r.getCell(2).font = boldFont;
       r.getCell(3).value = d.qty;
@@ -517,7 +653,12 @@ export class FinanceService {
     // Grand Total
     ws.mergeCells(row, 1, row, 3);
     ws.getCell(row, 1).value = 'GRAND TOTAL';
-    ws.getCell(row, 1).font = { name: 'Calibri', bold: true, size: 12, color: { argb: 'FF44403C' } };
+    ws.getCell(row, 1).font = {
+      name: 'Calibri',
+      bold: true,
+      size: 12,
+      color: { argb: 'FF44403C' },
+    };
     ws.getCell(row, 1).alignment = { horizontal: 'right' };
     ws.mergeCells(row, 4, row, 5);
     ws.getCell(row, 4).value = `Rp ${total.toLocaleString('id-ID')}`;
@@ -528,17 +669,32 @@ export class FinanceService {
     // Terbilang
     ws.mergeCells(row, 1, row, 5);
     ws.getCell(row, 1).value = `# ${numberToWords(total)}`;
-    ws.getCell(row, 1).font = { name: 'Calibri', italic: true, size: 9, color: { argb: 'FF78716C' } };
-    ws.getCell(row, 1).alignment = { horizontal: 'right' };
+    ws.getCell(row, 1).font = {
+      name: 'Calibri',
+      italic: true,
+      size: 9,
+      color: { argb: 'FF78716C' },
+    };
+    ws.getCell(row, 1).alignment = { wrapText: true, vertical: 'top' };
     row += 3;
 
     // Ketentuan & Tanda Tangan
     ws.mergeCells(row, 1, row, 3);
     ws.getCell(row, 1).value = 'KETENTUAN:';
-    ws.getCell(row, 1).font = { name: 'Calibri', bold: true, size: 8, color: { argb: 'FFA8A29E' } };
+    ws.getCell(row, 1).font = {
+      name: 'Calibri',
+      bold: true,
+      size: 8,
+      color: { argb: 'FFA8A29E' },
+    };
     ws.mergeCells(row, 4, row, 5);
     ws.getCell(row, 4).value = 'HORMAT KAMI,';
-    ws.getCell(row, 4).font = { name: 'Calibri', bold: true, size: 8, color: { argb: 'FFA8A29E' } };
+    ws.getCell(row, 4).font = {
+      name: 'Calibri',
+      bold: true,
+      size: 8,
+      color: { argb: 'FFA8A29E' },
+    };
     ws.getCell(row, 4).alignment = { horizontal: 'center' };
     row++;
 
@@ -558,7 +714,18 @@ export class FinanceService {
     terms.forEach((t) => {
       ws.mergeCells(row, 1, row, 3);
       ws.getCell(row, 1).value = `• ${t}`;
-      ws.getCell(row, 1).font = { name: 'Calibri', size: 8, color: { argb: 'FF78716C' } };
+      ws.getCell(row, 1).font = {
+        name: 'Calibri',
+        size: 8,
+        color: { argb: 'FF78716C' },
+      };
+
+      const currentRow = ws.getRow(row);
+      if (t.length > 55) {
+        currentRow.height = 25; // Tinggi ekstra untuk 2 baris teks
+      } else {
+        currentRow.height = 15; // Tinggi normal standar
+      }
       row++;
     });
 
@@ -568,7 +735,11 @@ export class FinanceService {
     ws.getCell(row + 3, 4).alignment = { horizontal: 'center' };
     ws.mergeCells(row + 4, 4, row + 4, 5);
     ws.getCell(row + 4, 4).value = 'Manajemen MiPSys';
-    ws.getCell(row + 4, 4).font = { name: 'Calibri', size: 8, color: { argb: 'FFA8A29E' } };
+    ws.getCell(row + 4, 4).font = {
+      name: 'Calibri',
+      size: 8,
+      color: { argb: 'FFA8A29E' },
+    };
     ws.getCell(row + 4, 4).alignment = { horizontal: 'center' };
 
     const buffer = await wb.xlsx.writeBuffer();
@@ -586,20 +757,40 @@ export class FinanceService {
     const subtotal = serviceFee + partFee;
 
     // Tabel per-item real untuk menu aksi invoice (fetch orderParts)
-    let pdfTableRows: Array<{ no: string; item: string; qty: string; harga: number; jml: number }> = [];
+    let pdfTableRows: Array<{
+      no: string;
+      item: string;
+      qty: string;
+      harga: number;
+      jml: number;
+    }> = [];
     if (invoice.serviceRequestId) {
       try {
-        const orderParts = await this.orderPartsService.getByServiceRequest(invoice.serviceRequestId);
+        const orderParts = await this.orderPartsService.getByServiceRequest(
+          invoice.serviceRequestId
+        );
         const activeParts = orderParts.filter((p) => p.status !== 'CANCELLED');
         if (activeParts.length > 0) {
           let idx = 1;
           if (serviceFee > 0) {
-            pdfTableRows.push({ no: String(idx++), item: 'Biaya Jasa (Service Fee)', qty: '1', harga: serviceFee, jml: serviceFee });
+            pdfTableRows.push({
+              no: String(idx++),
+              item: 'Biaya Jasa (Service Fee)',
+              qty: '1',
+              harga: serviceFee,
+              jml: serviceFee,
+            });
           }
           activeParts.forEach((p) => {
             const price = Number(p.priceAtAction ?? 0);
             const qty = p.quantity || 0;
-            pdfTableRows.push({ no: String(idx++), item: p.partName, qty: String(qty), harga: price, jml: price * qty });
+            pdfTableRows.push({
+              no: String(idx++),
+              item: p.partName,
+              qty: String(qty),
+              harga: price,
+              jml: price * qty,
+            });
           });
         }
       } catch {
@@ -608,8 +799,24 @@ export class FinanceService {
     }
     if (pdfTableRows.length === 0) {
       pdfTableRows = [
-        { no: '1', item: 'Biaya Jasa (Service Fee)', qty: '1', harga: serviceFee, jml: serviceFee },
-        ...(partFee > 0 ? [{ no: serviceFee > 0 ? '2' : '1', item: 'Biaya Sparepart', qty: '1', harga: partFee, jml: partFee }] : []),
+        {
+          no: '1',
+          item: 'Biaya Jasa (Service Fee)',
+          qty: '1',
+          harga: serviceFee,
+          jml: serviceFee,
+        },
+        ...(partFee > 0
+          ? [
+              {
+                no: serviceFee > 0 ? '2' : '1',
+                item: 'Biaya Sparepart',
+                qty: '1',
+                harga: partFee,
+                jml: partFee,
+              },
+            ]
+          : []),
       ];
     }
 
@@ -630,7 +837,10 @@ export class FinanceService {
       doc.font('Helvetica-Bold').fontSize(14).fillColor('#15803D');
       doc.text('INVOICE', 370, 50, { align: 'right', width: 175 });
       doc.font('Helvetica').fontSize(8).fillColor('#A8A29E');
-      doc.text(`No. ${invoice.invoiceNumber}`, 370, 68, { align: 'right', width: 175 });
+      doc.text(`No. ${invoice.invoiceNumber}`, 370, 68, {
+        align: 'right',
+        width: 175,
+      });
       if (invoice.status === 'PAID') {
         doc.font('Helvetica-Bold').fontSize(11).fillColor('#15803D');
         doc.text('LUNAS', 370, 82, { align: 'right', width: 175 });
@@ -653,9 +863,13 @@ export class FinanceService {
       doc.font('Helvetica').fontSize(10);
       doc.text(
         new Date(invoice.invoiceDate).toLocaleDateString('id-ID', {
-          year: 'numeric', month: 'long', day: 'numeric',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         }),
-        370, y, { align: 'right', width: 175 },
+        370,
+        y,
+        { align: 'right', width: 175 }
       );
       y += 14;
       doc.font('Helvetica').fontSize(8).fillColor('#78716C');
@@ -671,7 +885,9 @@ export class FinanceService {
       doc.font('Helvetica').fontSize(9).fillColor('#44403C');
       doc.text(
         'Dengan hormat, bersama ini kami sampaikan rincian biaya perbaikan/service untuk unit Bapak/Ibu sebagai berikut:',
-        50, y, { width: 495, align: 'justify' },
+        50,
+        y,
+        { width: 495, align: 'justify' }
       );
 
       // Tabel
@@ -707,9 +923,15 @@ export class FinanceService {
         doc.text(r.item, colItem, y + 5, { width: 210 });
         doc.font('Helvetica').fontSize(10);
         doc.text(r.qty, colQty, y + 5, { width: 35, align: 'center' });
-        doc.text(`Rp ${r.harga.toLocaleString('id-ID')}`, colHarga, y + 5, { width: 90, align: 'right' });
+        doc.text(`Rp ${r.harga.toLocaleString('id-ID')}`, colHarga, y + 5, {
+          width: 90,
+          align: 'right',
+        });
         doc.font('Helvetica-Bold').fontSize(10);
-        doc.text(`Rp ${r.jml.toLocaleString('id-ID')}`, colJml, y + 5, { width: 90, align: 'right' });
+        doc.text(`Rp ${r.jml.toLocaleString('id-ID')}`, colJml, y + 5, {
+          width: 90,
+          align: 'right',
+        });
         y += 25;
         doc.strokeColor('#D6D3D1').lineWidth(0.5);
         doc.moveTo(50, y).lineTo(545, y).stroke();
@@ -732,11 +954,17 @@ export class FinanceService {
         doc.fillColor(s.bold ? '#1C1917' : '#78716C');
         doc.text(s.label, summaryX, y, { width: 130 });
         doc.fillColor('#1C1917');
-        doc.text(`Rp ${s.value.toLocaleString('id-ID')}`, summaryVal, y, { width: 80, align: 'right' });
+        doc.text(`Rp ${s.value.toLocaleString('id-ID')}`, summaryVal, y, {
+          width: 80,
+          align: 'right',
+        });
         y += 16;
         if (s.label === 'Subtotal') {
           doc.strokeColor('#D6D3D1').lineWidth(0.5);
-          doc.moveTo(summaryX, y - 3).lineTo(545, y - 3).stroke();
+          doc
+            .moveTo(summaryX, y - 3)
+            .lineTo(545, y - 3)
+            .stroke();
         }
       });
 
@@ -749,12 +977,18 @@ export class FinanceService {
       doc.font('Helvetica-Bold').fontSize(10).fillColor('#1C1917');
       doc.text('GRAND TOTAL', summaryX, y, { width: 130 });
       doc.font('Helvetica-Bold').fontSize(12).fillColor('#15803D');
-      doc.text(`Rp ${total.toLocaleString('id-ID')}`, summaryVal, y, { width: 80, align: 'right' });
+      doc.text(`Rp ${total.toLocaleString('id-ID')}`, summaryVal, y, {
+        width: 80,
+        align: 'right',
+      });
       y += 20;
 
       // Terbilang — non-italic, lebih kecil
       doc.font('Helvetica').fontSize(8).fillColor('#78716C');
-      doc.text(`# ${numberToWords(total)}`, 50, y, { width: 495, align: 'right' });
+      doc.text(`# ${numberToWords(total)}`, 50, y, {
+        width: 495,
+        align: 'right',
+      });
 
       // Garis pemisah
       y += 25;
@@ -790,7 +1024,10 @@ export class FinanceService {
       // Tanda tangan
       y += 50;
       doc.font('Helvetica').fontSize(9).fillColor('#1C1917');
-      doc.text('(________________________)', 350, y, { align: 'center', width: 195 });
+      doc.text('(________________________)', 350, y, {
+        align: 'center',
+        width: 195,
+      });
       y += 14;
       doc.font('Helvetica').fontSize(8).fillColor('#A8A29E');
       doc.text('Manajemen MiPSys', 350, y, { align: 'center', width: 195 });
@@ -801,9 +1038,19 @@ export class FinanceService {
       doc.moveTo(50, y).lineTo(545, y).stroke();
       y += 10;
       doc.font('Helvetica').fontSize(7).fillColor('#A8A29E');
-      doc.text('MiPSys — Jl. Raya Service No. 1 | Telp: (021) 1234-5678', 50, y, { align: 'center', width: 495 });
+      doc.text(
+        'MiPSys — Jl. Raya Service No. 1 | Telp: (021) 1234-5678',
+        50,
+        y,
+        { align: 'center', width: 495 }
+      );
       y += 10;
-      doc.text('Dokumen ini dibuat secara otomatis dan tidak memerlukan tanda tangan basah', 50, y, { align: 'center', width: 495 });
+      doc.text(
+        'Dokumen ini dibuat secara otomatis dan tidak memerlukan tanda tangan basah',
+        50,
+        y,
+        { align: 'center', width: 495 }
+      );
 
       doc.end();
     });
@@ -816,7 +1063,12 @@ export class FinanceService {
     return setting ? parseFloat(setting.value) : 11;
   }
 
-  private async getPpnConfig(): Promise<{ ppnRate: number; ppnFormula: string; ppnRounding: string; ppnInclusive: boolean }> {
+  private async getPpnConfig(): Promise<{
+    ppnRate: number;
+    ppnFormula: string;
+    ppnRounding: string;
+    ppnInclusive: boolean;
+  }> {
     const rows = await this.db.query.financeSettings.findMany({
       where: sql`${financeSettings.key} LIKE 'ppn_%'`,
     });
@@ -831,13 +1083,18 @@ export class FinanceService {
 
   private calcPpnByConfig(
     subtotal: number,
-    cfg: { ppnRate: number; ppnFormula: string; ppnRounding: string; ppnInclusive: boolean },
+    cfg: {
+      ppnRate: number;
+      ppnFormula: string;
+      ppnRounding: string;
+      ppnInclusive: boolean;
+    }
   ): { ppn: number; total: number; ppnRate: number } {
     let ppn: number;
     let total: number;
     if (cfg.ppnInclusive || cfg.ppnFormula === 'INCLUSIVE') {
       total = subtotal;
-      ppn = total * cfg.ppnRate / (100 + cfg.ppnRate);
+      ppn = (total * cfg.ppnRate) / (100 + cfg.ppnRate);
       if (cfg.ppnRounding !== 'NONE') ppn = Number(ppn.toFixed(2));
       total = Number(total.toFixed(2));
     } else {
@@ -928,7 +1185,11 @@ function numberToWords(num: number): string {
     if (n < 1000) {
       const hundred = Math.floor(n / 100);
       const rest = n % 100;
-      return ones[hundred] + ' Ratus' + (rest ? ' ' + convertBelowThousand(rest) : '');
+      return (
+        ones[hundred] +
+        ' Ratus' +
+        (rest ? ' ' + convertBelowThousand(rest) : '')
+      );
     }
     return '';
   }
