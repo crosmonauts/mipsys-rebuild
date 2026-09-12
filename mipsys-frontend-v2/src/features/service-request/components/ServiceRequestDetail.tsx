@@ -16,6 +16,7 @@ import {
   Loader2,
   Activity,
   DoorClosed,
+  Pencil,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -558,6 +559,17 @@ const ServiceRequestDetail = () => {
                               Penawaran sudah dibuat
                             </p>
                           </div>
+                          {isAdmin && (
+                            <Button
+                              variant="outline"
+                              className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+                              onClick={() =>
+                                dispatch({ type: 'showQuote', payload: true })
+                              }
+                            >
+                              <Pencil size={14} aria-hidden="true" /> EDIT PENAWARAN
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 border-[var(--primary)]/50 text-[var(--primary)] hover:bg-[var(--primary)]/10"
@@ -833,6 +845,9 @@ const ServiceRequestDetail = () => {
           onSuccess={() => {
             refetch();
           }}
+          initialServiceFee={hasSavedQuote ? data?.serviceFee : undefined}
+          initialPartFee={hasSavedQuote ? data?.partFee : undefined}
+          forceForm={!!hasSavedQuote}
         />
       )}
 

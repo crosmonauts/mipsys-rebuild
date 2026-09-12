@@ -97,7 +97,7 @@ export default function FinancePage() {
     }
     setClosingTicket(inv.ticketNumber);
     try {
-      await srApi.closeTicket(inv.ticketNumber);
+      await srApi.closeTicket(inv.ticketNumber, {});
       toast.success(`Tiket ${inv.ticketNumber} berhasil ditutup`);
       refetch();
       refetchStats();

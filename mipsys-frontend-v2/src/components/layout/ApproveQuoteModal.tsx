@@ -37,6 +37,7 @@ interface ApproveQuoteModalProps {
   onSuccess: () => void;
   initialServiceFee?: string;
   initialPartFee?: string;
+  forceForm?: boolean;
 }
 
 interface ProposedPart extends OrderPart {
@@ -51,6 +52,7 @@ export function ApproveQuoteModal({
   onSuccess,
   initialServiceFee,
   initialPartFee,
+  forceForm,
 }: ApproveQuoteModalProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'form' | 'preview'>('form');
@@ -69,19 +71,19 @@ export function ApproveQuoteModal({
 
   useEffect(() => {
     if (isOpen && serviceRequestId) {
-      if (hasSavedQuote) {
+      if (hasSavedQuote && !forceForm) {
         setServiceFee(initialServiceFee ?? '0');
         setSavedServiceFee(parseFloat(initialServiceFee || '0'));
         setSavedPartFee(parseFloat(initialPartFee || '0'));
         setStep('preview');
       } else {
-        setServiceFee('0');
+        setServiceFee(initialServiceFee ?? '0');
         setStep('form');
       }
       fetchProposedParts();
       financeApi.getPpnConfig().then(setPpnConfig).catch(() => {});
     }
-  }, [isOpen, serviceRequestId, initialServiceFee, initialPartFee, hasSavedQuote]);
+  }, [isOpen, serviceRequestId, initialServiceFee, initialPartFee, hasSavedQuote, forceForm]);
 
   async function fetchProposedParts() {
     if (!serviceRequestId) return;
