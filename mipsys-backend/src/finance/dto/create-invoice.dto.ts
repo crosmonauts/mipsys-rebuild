@@ -5,7 +5,6 @@ export enum InvoiceStatus {
   PAID = 'PAID',
   UNPAID = 'UNPAID',
   OVERDUE = 'OVERDUE',
-  VOID = 'VOID',
 }
 
 export enum PaymentMethod {

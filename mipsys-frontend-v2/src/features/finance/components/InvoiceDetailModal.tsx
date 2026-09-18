@@ -48,7 +48,7 @@ export function InvoiceDetailModal({ invoice, onClose }: Props) {
           <p>
             <span className="font-bold text-[var(--foreground)]">Status:</span>{' '}
             <span
-              className={`font-bold ${invoice.status === 'PAID' ? 'text-[var(--accent)]' : invoice.status === 'VOID' ? 'text-[var(--destructive)]' : 'text-[var(--muted-foreground)]'}`}
+              className={`font-bold ${invoice.status === 'PAID' ? 'text-[var(--accent)]' : 'text-[var(--muted-foreground)]'}`}
             >
               {invoice.status}
             </span>

@@ -6,7 +6,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { desc, eq, and, like, or, sql, SQL, isNull } from 'drizzle-orm';
+import { desc, eq, and, like, or, sql, SQL, isNull, ne } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
@@ -311,8 +311,8 @@ export class ServiceRequestService {
           approveDate: serviceRequests.approveDate,
           readyDate: serviceRequests.readyDate,
           closeDate: serviceRequests.closeDate,
-          hasInvoice: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number AND invoices.voided_at IS NULL)`,
-          hasInvoicePaid: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number AND invoices.voided_at IS NULL AND invoices.status = 'PAID')`,
+          hasInvoice: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number)`,
+          hasInvoicePaid: sql<boolean>`EXISTS(SELECT 1 FROM invoices WHERE invoices.ticket_number = service_requests.ticket_number AND invoices.status = 'PAID')`,
         })
         .from(serviceRequests)
         .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
@@ -571,7 +571,7 @@ export class ServiceRequestService {
       const parts = await tx.query.orderParts.findMany({
         where: and(
           eq(orderParts.serviceRequestId, sr.id),
-          eq(orderParts.status, 'PROPOSED')
+          ne(orderParts.status, 'CANCELLED' as any)
         ),
       });
 
@@ -882,10 +882,7 @@ export class ServiceRequestService {
 
       if (sr.statusService === 'DONE') {
         const inv = await tx.query.invoices.findFirst({
-          where: and(
-            eq(invoices.ticketNumber, ticketNumber),
-            isNull(invoices.voidedAt),
-          ),
+          where: eq(invoices.ticketNumber, ticketNumber),
         });
         if (!inv) {
           throw new BadRequestException(

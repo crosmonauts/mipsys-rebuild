@@ -90,11 +90,11 @@ export function ApproveQuoteModal({
     setIsLoadingParts(true);
     try {
       const data = await orderPartsApi.getBySR(serviceRequestId);
-      const proposed = (Array.isArray(data) ? data : []).filter(
-        (p: OrderPart) => p.status === 'PROPOSED'
+      const activeParts = (Array.isArray(data) ? data : []).filter(
+        (p: OrderPart) => p.status !== 'CANCELLED'
       );
       setParts(
-        proposed.map((p) => ({
+        activeParts.map((p) => ({
           ...p,
           lineTotal: Number(p.priceAtAction ?? 0) * p.quantity,
         }))

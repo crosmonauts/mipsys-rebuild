@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Body,
   Param,
   ParseIntPipe,
@@ -80,12 +79,6 @@ export class FinanceController {
     @Body() dto: RecordPaymentDto
   ) {
     return this.financeService.recordPayment(id, dto);
-  }
-
-  @Patch('invoices/:id/void')
-  @Roles('ADMIN')
-  async voidInvoice(@Param('id', ParseIntPipe) id: number) {
-    return this.financeService.voidInvoice(id);
   }
 
   @Get('stats')

@@ -31,7 +31,6 @@ const statusStyles: Record<string, string> = {
   PAID: 'bg-[var(--accent)]/15 text-[var(--accent)] border-accent/30',
   UNPAID: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   OVERDUE: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-destructive/30',
-  VOID: 'bg-[var(--muted)] text-[var(--muted-foreground)] border-border',
 };
 
 export default function FinancePage() {
@@ -47,9 +46,6 @@ export default function FinancePage() {
   >(null);
   const [showPayInvoiceId, setShowPayInvoiceId] = useState<number | null>(null);
   const [payInvoiceTotal, setPayInvoiceTotal] = useState(0);
-  const [showVoidConfirm, setShowVoidConfirm] = useState(false);
-  const [voidTarget, setVoidTarget] = useState<Invoice | null>(null);
-  const [isVoiding, setIsVoiding] = useState(false);
   const [closingTicket, setClosingTicket] = useState<string | null>(null);
 
   const filtered = invoices.filter(
@@ -71,23 +67,6 @@ export default function FinancePage() {
   function handlePay(invoice: Invoice) {
     setShowPayInvoiceId(invoice.id);
     setPayInvoiceTotal(parseFloat(invoice.total || '0'));
-  }
-
-  async function handleVoid() {
-    if (!voidTarget) return;
-    setIsVoiding(true);
-    try {
-      await financeApi.voidInvoice(voidTarget.id);
-      toast.success('Invoice berhasil di-void');
-      refetch();
-      refetchStats();
-    } catch {
-      toast.error('Gagal void invoice');
-    } finally {
-      setIsVoiding(false);
-      setShowVoidConfirm(false);
-      setVoidTarget(null);
-    }
   }
 
   async function handleCloseFromFinance(inv: Invoice) {
@@ -171,29 +150,15 @@ export default function FinancePage() {
             <Eye size={16} aria-hidden="true" />
           </Button>
           {isAdmin && inv.status === 'UNPAID' && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handlePay(inv)}
-                className="h-8 w-8 rounded-lg text-[var(--accent)] hover:bg-[var(--accent)]/10"
-                aria-label="Catat pembayaran"
-              >
-                <CheckCircle size={16} aria-hidden="true" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setVoidTarget(inv);
-                  setShowVoidConfirm(true);
-                }}
-                className="h-8 w-8 rounded-lg text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-                aria-label="Void invoice"
-              >
-                <Ban size={16} aria-hidden="true" />
-              </Button>
-            </>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handlePay(inv)}
+              className="h-8 w-8 rounded-lg text-[var(--accent)] hover:bg-[var(--accent)]/10"
+              aria-label="Catat pembayaran"
+            >
+              <CheckCircle size={16} aria-hidden="true" />
+            </Button>
           )}
           {inv.status === 'PAID' && (
             <>
@@ -331,19 +296,6 @@ export default function FinancePage() {
         </div>
       )}
 
-      <ConfirmDialog
-        open={showVoidConfirm}
-        onOpenChange={(open) => {
-          setShowVoidConfirm(open);
-          if (!open) setVoidTarget(null);
-        }}
-        title="Void Invoice?"
-        description="Invoice yang di-void tidak bisa dikembalikan. Lanjutkan?"
-        confirmLabel="Ya, Void"
-        variant="destructive"
-        loading={isVoiding}
-        onConfirm={handleVoid}
-      />
     </div>
   );
 }

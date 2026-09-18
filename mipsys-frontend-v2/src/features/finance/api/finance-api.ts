@@ -48,11 +48,6 @@ export const financeApi = {
     return response.data;
   },
 
-  voidInvoice: async (id: number) => {
-    const response = await apiClient.patch(`/finance/invoices/${id}/void`);
-    return response.data;
-  },
-
   getStats: async (): Promise<FinanceStats> => {
     const response = await apiClient.get('/finance/stats');
     return response.data;

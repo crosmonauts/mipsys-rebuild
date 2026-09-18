@@ -27,7 +27,7 @@ export const useInvoices = (search = '', status = '') => {
 export const useFinanceStats = () => {
   const [stats, setStats] = useState<FinanceStats>({
     totalRevenue: 0, outstanding: 0, paidCount: 0, unpaidCount: 0,
-    overdueCount: 0, voidCount: 0, totalInvoices: 0,
+    overdueCount: 0, totalInvoices: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 

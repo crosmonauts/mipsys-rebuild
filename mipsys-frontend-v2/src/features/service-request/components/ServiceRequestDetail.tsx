@@ -636,22 +636,33 @@ const ServiceRequestDetail = () => {
                   )}
 
                   {isTechnician && data.statusService === 'SERVICE' && (
-                    <Button
-                      className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
-                      onClick={handleMarkDone}
-                      disabled={state.isDoneProcessing}
-                    >
-                      {state.isDoneProcessing ? (
-                        <Loader2
-                          className="motion-safe:animate-spin"
-                          size={14}
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <CheckCircle2 size={14} aria-hidden="true" />
-                      )}
-                      SELESAIKAN
-                    </Button>
+                    <div className="space-y-3">
+                      <Button
+                        className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
+                        onClick={() =>
+                          dispatch({ type: 'showDiagnosis', payload: true })
+                        }
+                      >
+                        <Pencil size={14} aria-hidden="true" />
+                        UBAH / TAMBAH PART
+                      </Button>
+                      <Button
+                        className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
+                        onClick={handleMarkDone}
+                        disabled={state.isDoneProcessing}
+                      >
+                        {state.isDoneProcessing ? (
+                          <Loader2
+                            className="motion-safe:animate-spin"
+                            size={14}
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <CheckCircle2 size={14} aria-hidden="true" />
+                        )}
+                        SELESAIKAN
+                      </Button>
+                    </div>
                   )}
 
                   {isAdmin && data.statusService === 'AWAITING_PARTS' && (

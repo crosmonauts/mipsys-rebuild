@@ -44,7 +44,6 @@ export const invoices = pgTable(
     paidDate: date('paid_date'),
     notes: text('notes'),
     ppnRate: numeric('ppn_rate', { precision: 5, scale: 2, mode: 'number' }).default(11),
-    voidedAt: timestamp('voided_at', { mode: 'date' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
     updatedAt: timestamp('updated_at', { mode: 'date' })
       .defaultNow()
@@ -53,14 +52,8 @@ export const invoices = pgTable(
   (table) => ({
     ticketIdx: index('inv_ticket_idx').on(table.ticketNumber),
     statusIdx: index('inv_status_idx').on(table.status),
-    // 1 invoice AKTIF (belum void) per ticket; tiket yang sudah di-void boleh re-invoice
-    ticketUnique: uniqueIndex('inv_ticket_unique')
-      .on(table.ticketNumber)
-      .where(sql`${table.voidedAt} IS NULL`),
-    // 1 invoice AKTIF (belum void) per service request; boleh re-invoice setelah VOID
-    activeSrUnique: uniqueIndex('inv_sr_unique')
-      .on(table.serviceRequestId)
-      .where(sql`${table.voidedAt} IS NULL`),
+    ticketUnique: uniqueIndex('inv_ticket_unique').on(table.ticketNumber),
+    activeSrUnique: uniqueIndex('inv_sr_unique').on(table.serviceRequestId),
     amountsNonNeg: check(
       'chk_inv_amounts_nonneg',
       sql`${table.serviceFee} >= 0 AND ${table.partFee} >= 0 AND ${table.ppn} >= 0 AND ${table.total} >= 0`

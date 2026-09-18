@@ -68,6 +68,8 @@ export function DiagnosisModal({
     if (isOpen) resetForm();
   }, [isOpen]);
 
+  const canEditExisting = currentStatus === 'WAITING_APPROVE' || currentStatus === 'SERVICE';
+
   useEffect(() => {
     if (!isOpen || !serviceRequestId) return;
     fetchExistingParts();
@@ -82,6 +84,17 @@ export function DiagnosisModal({
     const debounce = setTimeout(() => searchParts(searchQuery), 400);
     return () => clearTimeout(debounce);
   }, [searchQuery]);
+
+  async function handleRemoveExisting(partId: number) {
+    try {
+      await orderPartsApi.removePart(partId);
+      toast.success('Part dihapus');
+      await fetchExistingParts();
+      onSuccess();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Gagal hapus part');
+    }
+  }
 
   function resetForm() {
     setDiagnosis('');
@@ -205,7 +218,7 @@ export function DiagnosisModal({
                 onRemovePart={removeSelectedPart}
                 dropdownRef={dropdownRef}
               />
-              <ExistingPartsList parts={existingParts} />
+              <ExistingPartsList parts={existingParts} canEdit={canEditExisting} onRemove={handleRemoveExisting} />
             </div>
 
             <ModalFooter
@@ -439,13 +452,13 @@ function SelectedPartRow({
   );
 }
 
-function ExistingPartsList({ parts }: { parts: OrderPart[] }) {
+function ExistingPartsList({ parts, canEdit, onRemove }: { parts: OrderPart[]; canEdit?: boolean; onRemove?: (id: number) => void }) {
   if (parts.length === 0) return null;
 
   return (
     <div className="space-y-2">
       <label className="text-[10px] font-black uppercase text-[var(--muted-foreground)] ml-1">
-        Part Sudah Terpasang
+        Part Sudah Terpasang {canEdit && '(bisa hapus)'}
       </label>
       {parts.map((part) => (
         <div
@@ -455,12 +468,19 @@ function ExistingPartsList({ parts }: { parts: OrderPart[] }) {
           <div>
             <p className="font-bold text-[var(--foreground)] text-sm">{part.partName}</p>
             <p className="text-[10px] text-[var(--muted-foreground)]">
-              {part.partCode} x {part.quantity}
+              {part.partCode} x {part.quantity} — {part.status}
             </p>
           </div>
-          <p className="font-black text-[var(--primary)] text-sm">
-            Rp {Number(part.priceAtAction ?? 0).toLocaleString('id-ID')}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-black text-[var(--primary)] text-sm">
+              Rp {Number(part.priceAtAction ?? 0).toLocaleString('id-ID')}
+            </p>
+            {canEdit && part.status !== 'CANCELLED' && onRemove && (
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => onRemove(part.id)}>
+                <Trash2 size={14} aria-hidden="true" />
+              </Button>
+            )}
+          </div>
         </div>
       ))}
     </div>

@@ -8,12 +8,11 @@ export interface Invoice {
   ppn: string;
   ppnRate: string;
   total: string;
-  status: 'PAID' | 'UNPAID' | 'OVERDUE' | 'VOID';
+  status: 'PAID' | 'UNPAID' | 'OVERDUE';
   paymentMethod?: 'CASH' | 'TRANSFER' | 'QRIS';
   invoiceDate: string;
   paidDate?: string;
   notes?: string;
-  voidedAt?: string;
   createdAt: string;
   payments?: PaymentHistory[];
 }
@@ -34,7 +33,6 @@ export interface FinanceStats {
   paidCount: number;
   unpaidCount: number;
   overdueCount: number;
-  voidCount: number;
   totalInvoices: number;
 }
 

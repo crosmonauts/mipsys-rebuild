@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, sql, like, or, isNull, SQL } from 'drizzle-orm';
+import { eq, and, desc, sql, like, or, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
@@ -78,10 +78,7 @@ export class FinanceService {
       throw new NotFoundException(`Tiket ${dto.ticketNumber} tidak ditemukan.`);
 
     const existingActive = await this.db.query.invoices.findFirst({
-      where: and(
-        eq(invoices.serviceRequestId, sr.id),
-        isNull(invoices.voidedAt)
-      ),
+      where: eq(invoices.serviceRequestId, sr.id),
     });
     if (existingActive) {
       throw new BadRequestException(
@@ -127,9 +124,6 @@ export class FinanceService {
     if (invoice.status === 'PAID') {
       throw new BadRequestException('Invoice sudah lunas.');
     }
-    if (invoice.status === 'VOID') {
-      throw new BadRequestException('Invoice sudah di-void.');
-    }
     if (Number(dto.amount) !== Number(invoice.total)) {
       throw new BadRequestException(
         `Jumlah bayar harus sama dengan total tagihan Rp ${Number(invoice.total).toLocaleString('id-ID')}.`,
@@ -161,29 +155,6 @@ export class FinanceService {
     };
   }
 
-  async voidInvoice(id: number) {
-    const invoice = await this.db.query.invoices.findFirst({
-      where: eq(invoices.id, id),
-    });
-    if (!invoice)
-      throw new NotFoundException(`Invoice ID ${id} tidak ditemukan.`);
-    if (invoice.status === 'PAID') {
-      throw new BadRequestException(
-        'Tidak bisa void invoice yang sudah lunas.'
-      );
-    }
-
-    await this.db
-      .update(invoices)
-      .set({ status: 'VOID', voidedAt: new Date(), updatedAt: new Date() })
-      .where(eq(invoices.id, id));
-
-    return {
-      success: true,
-      message: `Invoice ${invoice.invoiceNumber} di-void.`,
-    };
-  }
-
   async getStats() {
     const allInvoices = await this.db.query.invoices.findMany();
 
@@ -200,7 +171,6 @@ export class FinanceService {
     const overdueCount = allInvoices.filter(
       (i) => i.status === 'OVERDUE'
     ).length;
-    const voidCount = allInvoices.filter((i) => i.status === 'VOID').length;
 
     return {
       totalRevenue,
@@ -208,7 +178,6 @@ export class FinanceService {
       paidCount,
       unpaidCount,
       overdueCount,
-      voidCount,
       totalInvoices: allInvoices.length,
     };
   }
@@ -234,10 +203,7 @@ export class FinanceService {
     const sr = result[0];
 
     const existingActive = await this.db.query.invoices.findFirst({
-      where: and(
-        eq(invoices.serviceRequestId, sr.id),
-        isNull(invoices.voidedAt)
-      ),
+      where: eq(invoices.serviceRequestId, sr.id),
     });
     if (existingActive)
       throw new BadRequestException(

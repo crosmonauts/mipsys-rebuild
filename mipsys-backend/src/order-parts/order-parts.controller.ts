@@ -39,7 +39,7 @@ export class OrderPartsController {
   }
 
   @Delete(':id')
-  @Roles('TECHNICIAN')
+  @Roles('TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')
   async removePart(@Param('id', ParseIntPipe) id: number) {
     return this.orderPartsService.removePart(id);
   }

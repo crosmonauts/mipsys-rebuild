@@ -40,7 +40,6 @@ export const invoiceStatusEnum = pgEnum('invoice_status', [
   'PAID',
   'UNPAID',
   'OVERDUE',
-  'VOID',
 ]);
 export const paymentMethodEnum = pgEnum('payment_method', [
   'CASH',
