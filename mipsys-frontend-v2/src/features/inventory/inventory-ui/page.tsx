@@ -18,6 +18,8 @@ import type { Column } from '@/src/components/ui/data-table';
 import { partsApi } from '@/src/features/inventory/services/parts-api';
 import { SparePart } from '@/src/features/inventory/types';
 import { AddStockModal } from '@/src/features/inventory/inventory-ui/AddStockModal';
+import { InventoryDetail } from '@/src/features/inventory/components/InventoryDetail';
+import type { InventoryPart } from '@/src/features/inventory/api/inventory-api';
 import { toast } from 'react-hot-toast';
 
 export default function InventoryPage() {
@@ -31,6 +33,7 @@ export default function InventoryPage() {
   const limitPerPage = 10;
   const [selectedPart, setSelectedPart] = useState<SparePart | null>(null);
   const [isRestockOpen, setIsRestockOpen] = useState<boolean>(false);
+  const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
 
   const fetchParts = useCallback(async () => {
     try {
@@ -167,7 +170,18 @@ export default function InventoryPage() {
       header: 'Aksi',
       headerClassName: 'text-center',
       cell: (part) => (
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-1">
+          <Button
+            onClick={() => {
+              setSelectedPart(part);
+              setIsDetailOpen(true);
+            }}
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs font-black uppercase rounded-lg"
+          >
+            Detail
+          </Button>
           {isAdmin && (
             <Button
               onClick={() => handleRestockClick(part)}
@@ -264,6 +278,21 @@ export default function InventoryPage() {
         onSuccess={fetchParts}
         onStockAction={handleStockAction}
       />
+
+      {isDetailOpen && selectedPart && (
+        <InventoryDetail
+          part={
+            {
+              ...selectedPart,
+              minStock: (selectedPart as any).minStock ?? 0,
+              location: (selectedPart as any).location,
+              isUniversal: (selectedPart as any).isUniversal,
+            } as InventoryPart
+          }
+          onClose={() => setIsDetailOpen(false)}
+          onSaved={fetchParts}
+        />
+      )}
 
       <footer className="pt-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-[var(--muted-foreground)] uppercase tracking-widest text-center md:text-left">
         <div className="flex items-center gap-2">

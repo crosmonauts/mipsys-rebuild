@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import {
   CaretLeftIcon,
   PlusIcon,
@@ -39,11 +40,25 @@ import { cn } from '@/src/lib/utils';
 
 interface OrderItem {
   id: string;
+  sparePartId?: number;
   partName: string;
   modelName: string;
   qty: number;
   price: number;
+  stock?: number;
   isEditing: boolean;
+}
+
+interface MasterPartOption {
+  id: number;
+  partCode: string;
+  partName: string;
+  stock: number;
+  minStock: number;
+  price: number;
+  modelName?: string;
+  isUniversal?: boolean;
+  compatibleModels?: string[];
 }
 
 export default function NewPartOrderPage({
@@ -56,12 +71,16 @@ export default function NewPartOrderPage({
   const { update, isSubmitting: isUpdating } = useUpdatePurchaseOrder();
   const [mounted, setMounted] = useState(false);
   const [supplier, setSupplier] = useState('EPSON');
+  const [supplierCustom, setSupplierCustom] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
 
   const [items, setItems] = useState<OrderItem[]>([
     { id: '1', partName: '', modelName: '', qty: 1, price: 0, isEditing: true },
   ]);
+  const [partSearch, setPartSearch] = useState<Record<string, MasterPartOption[]>>({});
+  const [searchingRowId, setSearchingRowId] = useState<string | null>(null);
+  const searchTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const sp = use(searchParams ?? Promise.resolve<{ id?: string }>({}));
   const editId = sp.id ? Number(sp.id) : null;
@@ -79,9 +98,13 @@ export default function NewPartOrderPage({
         .getById(editId)
         .then((po) => {
           setSupplier(po.supplierName);
+          setSupplierCustom(
+            !!po.supplierName && po.supplierName.trim().toUpperCase() !== 'EPSON'
+          );
           setItems(
             po.items?.map((item, i) => ({
               id: String(item.id || i),
+              sparePartId: item.sparePartId,
               partName: item.partName || '',
               modelName: item.modelName || '',
               qty: item.quantity,
@@ -92,7 +115,75 @@ export default function NewPartOrderPage({
         })
         .catch(() => {});
     }
+    return () => {
+      Object.values(searchTimers.current).forEach(clearTimeout);
+    };
   }, [isEditMode, editId]);
+
+  const normalizeName = (v: string) => v.trim().toLowerCase();
+
+  const isDuplicatePart = (candidate: { sparePartId?: number; partName: string; modelName: string }, excludeId?: string) =>
+    items.some((it) => {
+      if (it.id === excludeId) return false;
+      if (candidate.sparePartId && it.sparePartId) return it.sparePartId === candidate.sparePartId;
+      return (
+        normalizeName(it.partName) === normalizeName(candidate.partName) &&
+        normalizeName(it.modelName || '') === normalizeName(candidate.modelName || '')
+      );
+    });
+
+  const handlePartSearch = (rowId: string, query: string) => {
+    updateItem(rowId, 'partName', query);
+    updateItem(rowId, 'sparePartId', undefined as unknown as number);
+    if (searchTimers.current[rowId]) clearTimeout(searchTimers.current[rowId]);
+    if (query.trim().length < 2) {
+      setPartSearch((prev) => ({ ...prev, [rowId]: [] }));
+      setSearchingRowId(null);
+      return;
+    }
+    setSearchingRowId(rowId);
+    searchTimers.current[rowId] = setTimeout(async () => {
+      try {
+        const results = await inventoryApi.searchParts(query.trim());
+        const filtered = (Array.isArray(results) ? results : []).filter(
+          (p: any) =>
+            !items.some(
+              (it) => it.id !== rowId && it.sparePartId && it.sparePartId === p.id,
+            ),
+        ) as unknown as MasterPartOption[];
+        setPartSearch((prev) => ({ ...prev, [rowId]: filtered }));
+      } catch {
+        setPartSearch((prev) => ({ ...prev, [rowId]: [] }));
+      } finally {
+        setSearchingRowId(null);
+      }
+    }, 400);
+  };
+
+  const handleSelectMasterPart = (rowId: string, part: MasterPartOption) => {
+    if (
+      items.some((it) => it.id !== rowId && it.sparePartId && it.sparePartId === part.id)
+    ) {
+      toast.error('Part sudah ada di PO, qty akan digabung saat simpan.');
+      return;
+    }
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === rowId
+          ? {
+              ...it,
+              sparePartId: part.id,
+              partName: part.partName,
+              modelName:
+                part.compatibleModels?.[0] || part.modelName || it.modelName,
+              price: Number(part.price ?? 0),
+              stock: part.stock,
+            }
+          : it,
+      ),
+    );
+    setPartSearch((prev) => ({ ...prev, [rowId]: [] }));
+  };
 
   const addItem = () => {
     const disabledEditItems = items.map((item) => ({
@@ -129,10 +220,10 @@ export default function NewPartOrderPage({
   const updateItem = (
     id: string,
     field: keyof OrderItem,
-    value: string | number,
+    value: string | number | undefined,
   ) => {
-    setItems(
-      items.map((item) =>
+    setItems((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, [field]: value } : item,
       ),
     );
@@ -145,11 +236,18 @@ export default function NewPartOrderPage({
 
   const validate = (): string[] => {
     const errs: string[] = [];
+    if (!supplier.trim()) errs.push('Nama supplier wajib diisi.');
+    const seen = new Set<string>();
     for (const item of items) {
       if (!item.partName.trim())
         errs.push('Setiap item harus memiliki nama part.');
       if (item.qty < 1) errs.push('Qty minimal 1.');
       if (item.price < 1) errs.push('Harga minimal Rp 1.');
+      const key = item.sparePartId
+        ? `sp:${item.sparePartId}`
+        : `name:${normalizeName(item.partName)}|${normalizeName(item.modelName || '')}`;
+      if (seen.has(key)) errs.push(`Duplikat part: ${item.partName || '(tanpa nama)'}. Gabung qty dalam satu baris.`);
+      seen.add(key);
     }
     return errs;
   };
@@ -163,6 +261,7 @@ export default function NewPartOrderPage({
       supplierName: supplier,
       requestedBy: 1,
       items: items.map((item) => ({
+        sparePartId: item.sparePartId,
         partName: item.partName || undefined,
         modelName: item.modelName || undefined,
         quantity: item.qty,
@@ -253,12 +352,34 @@ export default function NewPartOrderPage({
                 <label className="micro-label text-[var(--muted-foreground)] ml-1">
                   Nama Supplier
                 </label>
-                <Input
-                  value={supplier}
-                  onChange={(e) => setSupplier(e.target.value)}
-                  placeholder="Contoh: PT. Epson Indonesia"
-                  className="rounded-xl border border-border/15 h-12 font-bold focus:border-primary transition-all text-[var(--foreground)] bg-[var(--muted)]/50"
-                />
+                <Select
+                  value={supplierCustom ? 'LAINNYA' : 'EPSON'}
+                  onValueChange={(value) => {
+                    if (value === 'LAINNYA') {
+                      setSupplierCustom(true);
+                      setSupplier('');
+                    } else {
+                      setSupplierCustom(false);
+                      setSupplier('EPSON');
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full h-12 rounded-xl border border-border/15 bg-[var(--muted)]/50 font-bold" aria-label="Pilih supplier">
+                    <SelectValue placeholder="Pilih Supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EPSON">EPSON</SelectItem>
+                    <SelectItem value="LAINNYA">Lainnya (input manual)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {supplierCustom && (
+                  <Input
+                    value={supplier}
+                    onChange={(e) => setSupplier(e.target.value)}
+                    placeholder="Nama supplier lain"
+                    className="rounded-xl border border-border/15 h-12 font-bold focus:border-primary transition-all text-[var(--foreground)] bg-[var(--muted)]/50"
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -299,17 +420,70 @@ export default function NewPartOrderPage({
                       <tr key={item.id} className="group transition-colors">
                         <td className="p-4 pl-8">
                           {item.isEditing ? (
-                            <Input
-                              value={item.partName}
-                              onChange={(e) =>
-                                updateItem(item.id, 'partName', e.target.value)
-                              }
-                              placeholder="Input sparepart..."
-                              className="h-11 border border-border/30 bg-[var(--muted)]/50 font-bold focus-visible:ring-2 focus-visible:ring-primary rounded-xl text-[var(--foreground)]"
-                            />
+                            <div className="relative">
+                              <Input
+                                value={item.partName}
+                                onChange={(e) =>
+                                  handlePartSearch(item.id, e.target.value)
+                                }
+                                placeholder="Ketik min. 2 huruf / pilih dari master..."
+                                className="h-11 border border-border/30 bg-[var(--muted)]/50 font-bold focus-visible:ring-2 focus-visible:ring-primary rounded-xl text-[var(--foreground)]"
+                              />
+                              {item.sparePartId ? (
+                                <p className="mt-1 text-[10px] font-bold text-[var(--accent)]">
+                                  Dari master #{item.sparePartId}
+                                  {typeof item.stock === 'number' ? ` • Stok: ${item.stock}` : ''}
+                                </p>
+                              ) : (
+                                item.partName.trim().length >= 2 && (
+                                  <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
+                                    Tidak ketemu? Akan disimpan sebagai part baru (manual fallback).
+                                  </p>
+                                )
+                              )}
+                              {searchingRowId === item.id && (
+                                <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">Mencari master...</p>
+                              )}
+                              {(partSearch[item.id]?.length ?? 0) > 0 && (
+                                <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border/30 bg-[var(--card)] shadow-xl">
+                                  {partSearch[item.id].map((p) => (
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      onClick={() => handleSelectMasterPart(item.id, p)}
+                                      className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-[var(--primary)]/10"
+                                    >
+                                      <span>
+                                        <span className="block text-sm font-bold text-[var(--foreground)]">{p.partName}</span>
+                                        <span className="block text-[10px] text-[var(--muted-foreground)]">
+                                          {p.partCode} • {p.modelName || '-'} • Stok: {p.stock}
+                                          {p.isUniversal
+                                            ? ' • Universal'
+                                            : (p.compatibleModels ?? []).length > 0
+                                              ? ` • ${(p.compatibleModels ?? []).join(', ')}`
+                                              : ''}
+                                        </span>
+                                      </span>
+                                      <span className="text-sm font-black text-[var(--primary)]">
+                                        Rp {Number(p.price ?? 0).toLocaleString('id-ID')}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <p className="font-bold text-[var(--foreground)] pl-3">
                               {item.partName || '-'}
+                              {item.sparePartId ? (
+                                <span className="ml-2 rounded bg-[var(--accent)]/15 px-1.5 py-0.5 text-[9px] font-black uppercase text-[var(--accent)]">
+                                  Master
+                                </span>
+                              ) : (
+                                <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase text-amber-500">
+                                  Baru
+                                </span>
+                              )}
                             </p>
                           )}
                         </td>

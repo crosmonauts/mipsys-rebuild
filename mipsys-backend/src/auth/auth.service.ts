@@ -62,10 +62,14 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as StringValue,
+      issuer: 'mipsys-erp',
+      audience: 'mipsys-api',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       expiresIn: '7d',
+      issuer: 'mipsys-erp',
+      audience: 'mipsys-api',
     });
 
     await this.db

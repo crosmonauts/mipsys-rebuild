@@ -23,11 +23,13 @@ export class CategoryModelsController {
   constructor(private readonly service: CategoryModelsService) {}
 
   @Get()
+  @Roles('ADMIN', 'TECHNICIAN')
   async findAll() {
     return this.service.findAll();
   }
 
   @Get(':id')
+  @Roles('ADMIN', 'TECHNICIAN')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }

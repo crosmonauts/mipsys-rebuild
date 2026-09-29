@@ -26,7 +26,7 @@ interface SelectChain {
 
 interface SetChain {
   set: jest.Mock<
-    { where: jest.Mock<Promise<unknown[]>, [unknown]> },
+    { where: jest.Mock<{ returning: jest.Mock<Promise<StockRow[]>, [unknown]> }, [unknown]> },
     [unknown]
   >;
 }
@@ -57,13 +57,15 @@ const mockDb: MockDb = {
       orderBy: jest.fn<Promise<unknown[]>, [unknown]>().mockResolvedValue([]),
     }),
   }),
-  update: jest.fn<SetChain, [unknown]>().mockReturnValue({
-    set: jest
-      .fn<{ where: jest.Mock<Promise<unknown[]>, [unknown]> }, [unknown]>()
-      .mockReturnValue({
-        where: jest.fn<Promise<unknown[]>, [unknown]>().mockResolvedValue([]),
+  update: jest.fn<SetChain, [unknown]>().mockImplementation(() => ({
+    set: jest.fn().mockReturnValue({
+      where: jest.fn().mockReturnValue({
+        returning: jest
+          .fn<Promise<StockRow[]>, [unknown]>()
+          .mockImplementation(() => Promise.resolve(mockStockRows)),
       }),
-  }),
+    }),
+  })),
   query: {
     stockMovements: {
       findMany: jest.fn<Promise<unknown[]>, [unknown]>().mockResolvedValue([]),
@@ -159,6 +161,13 @@ describe('StockMovementsService', () => {
 
     it('should throw when stock becomes negative for SERVICE_USE', async () => {
       mockStockRows = [{ id: 1, stock: 2 }];
+      (mockDb.update as jest.Mock).mockReturnValueOnce({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
 
       await expect(
         service.updateStock(
@@ -172,6 +181,13 @@ describe('StockMovementsService', () => {
 
     it('should throw when part not found', async () => {
       mockStockRows = [];
+      (mockDb.update as jest.Mock).mockReturnValueOnce({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
 
       await expect(
         service.updateStock(

@@ -7,6 +7,8 @@ export interface QuotePrintPart {
   partName: string;
   quantity: number;
   priceAtAction?: number | string | null;
+  isSubstitute?: boolean;
+  substituteReason?: string | null;
 }
 
 interface QuotePrintTemplateProps {
@@ -16,19 +18,28 @@ interface QuotePrintTemplateProps {
   partFee: number;
   ppnRate?: number;
   ppnConfig?: { ppnRate: number; ppnFormula?: string; ppnRounding?: string; ppnInclusive?: boolean };
+  /** Identitas perusahaan dari master; fallback dipakai bila belum dimuat. */
+  company?: {
+    name: string;
+    address: string;
+    phone: string;
+    email?: string | null;
+    logoUrl?: string | null;
+  } | null;
 }
 
 export const QuotePrintTemplate = React.forwardRef<
   HTMLDivElement,
   QuotePrintTemplateProps
 >((props, ref) => {
-  const { ticketNumber, parts, serviceFee, partFee, ppnRate = 11, ppnConfig } = props;
+  const { ticketNumber, parts, serviceFee, partFee, ppnRate = 11, ppnConfig, company } = props;
   const cfg = ppnConfig || { ppnRate, ppnFormula: 'EXCLUSIVE', ppnRounding: 'HALF_UP', ppnInclusive: false };
 
   const crmData = {
-    companyName: 'MiPSys',
-    companyAddress: 'Jl. Raya Service No. 1',
-    companyPhone: '(021) 1234-5678',
+    companyName: company?.name || 'MiPSys',
+    companyAddress: company?.address || 'Jl. Raya Service No. 1',
+    companyPhone: [company?.phone, company?.email].filter(Boolean).join(' | ') || '(021) 1234-5678',
+    companyLogoUrl: company?.logoUrl ?? null,
     ticketNumber,
     date: new Date().toLocaleDateString('id-ID', {
       year: 'numeric',
@@ -61,12 +72,22 @@ export const QuotePrintTemplate = React.forwardRef<
     >
       {/* Kop Surat */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-stone-300">
-        <div>
+        <div className="flex items-start gap-4">
+          {crmData.companyLogoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={crmData.companyLogoUrl}
+              alt="Logo perusahaan"
+              className="h-16 w-auto max-w-[150px] object-contain"
+            />
+          )}
+          <div>
           <h1 className="text-3xl font-black text-stone-900 uppercase tracking-tight">
             {crmData.companyName}
           </h1>
           <p className="text-xs text-stone-500 mt-1">{crmData.companyAddress}</p>
           <p className="text-xs text-stone-500">{crmData.companyPhone}</p>
+          </div>
         </div>
         <div className="text-right">
           <h2 className="text-lg font-black text-emerald-700 uppercase tracking-widest">
@@ -143,6 +164,14 @@ export const QuotePrintTemplate = React.forwardRef<
               </td>
               <td className="font-semibold border border-stone-300 px-3 py-2 text-xs">
                 {part.partName}
+                {part.isSubstitute && (
+                  <span className="block mt-1 text-[9px] font-bold uppercase tracking-wide text-amber-700">
+                    Substitusi
+                    {part.substituteReason
+                      ? ` — ${part.substituteReason}`
+                      : ''}
+                  </span>
+                )}
               </td>
               <td className="text-center border border-stone-300 px-3 py-2 text-xs">
                 {part.quantity}

@@ -12,7 +12,6 @@ import * as schema from '../database/schema';
 import {
   serviceRequests,
   customers,
-  products,
   staff,
   StatusService,
   orderParts,
@@ -31,11 +30,12 @@ import { StockCommandService } from '../inventory/stock-command.service';
 import { OrderPartsService } from '../order-parts/order-parts.service';
 import { FinanceService } from '../finance/finance.service';
 import { ServiceRequestCustomerResolver } from './services/customer-resolver.service';
-import { ServiceRequestProductResolver } from './services/product-resolver.service';
 import { ServiceRequestActivityService } from './services/activity.service';
 import { ServiceRequestStatsService } from './services/stats.service';
 import { ServiceRequestStateMachine } from './services/state-machine.service';
+import { PartCompatibilityService } from '../inventory/part-compatibility.service';
 import { SrStatusType } from './sr-state-machine.guard';
+import { likePattern } from '../common/utils/escape-like';
 
 @Injectable()
 export class ServiceRequestService {
@@ -47,10 +47,10 @@ export class ServiceRequestService {
     private orderPartsService: OrderPartsService,
     private financeService: FinanceService,
     private customerResolver: ServiceRequestCustomerResolver,
-    private productResolver: ServiceRequestProductResolver,
     private activityService: ServiceRequestActivityService,
     private statsService: ServiceRequestStatsService,
-    private stateMachine: ServiceRequestStateMachine
+    private stateMachine: ServiceRequestStateMachine,
+    private compatService: PartCompatibilityService
   ) {}
 
   async findAll(filters: {
@@ -65,11 +65,12 @@ export class ServiceRequestService {
       const conditions: SQL[] = [];
 
       if (search) {
+        const pattern = likePattern(search);
         const searchCondition = or(
-          like(serviceRequests.ticketNumber, `%${search}%`),
-          like(customers.name, `%${search}%`),
-          like(products.modelName, `%${search}%`),
-          like(products.serialNumber, `%${search}%`)
+          like(serviceRequests.ticketNumber, pattern),
+          like(customers.name, pattern),
+          like(serviceRequests.modelName, pattern),
+          like(serviceRequests.serialNumber, pattern)
         );
         if (searchCondition) conditions.push(searchCondition);
       }
@@ -80,7 +81,9 @@ export class ServiceRequestService {
         );
       }
 
-      const offset = (page - 1) * limit;
+      const safeLimit = Math.min(Math.max(limit, 1), 100);
+      const safePage = Math.max(page, 1);
+      const offset = (safePage - 1) * safeLimit;
 
       const results = await this.db
         .select({
@@ -91,16 +94,15 @@ export class ServiceRequestService {
           incomingDate: serviceRequests.incomingDate,
           customerName: customers.name,
           customerPhone: customers.phone,
-          modelName: products.modelName,
-          serialNumber: products.serialNumber,
+          modelName: serviceRequests.modelName,
+          serialNumber: serviceRequests.serialNumber,
           serviceType: serviceRequests.serviceType,
         })
         .from(serviceRequests)
         .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
-        .leftJoin(products, eq(serviceRequests.productId, products.id))
         .where(conditions.length ? and(...conditions) : undefined)
         .orderBy(desc(serviceRequests.createdAt))
-        .limit(limit)
+        .limit(safeLimit)
         .offset(offset);
 
       return results;
@@ -117,8 +119,8 @@ export class ServiceRequestService {
       const searchCondition = or(
         like(serviceRequests.ticketNumber, `%${search}%`),
         like(customers.name, `%${search}%`),
-        like(products.modelName, `%${search}%`),
-        like(products.serialNumber, `%${search}%`),
+        like(serviceRequests.modelName, `%${search}%`),
+        like(serviceRequests.serialNumber, `%${search}%`),
       );
       if (searchCondition) conditions.push(searchCondition);
     }
@@ -134,8 +136,8 @@ export class ServiceRequestService {
         customerPhone: customers.phone,
         customerType: customers.customerType,
         customerAddress: customers.address,
-        modelName: products.modelName,
-        serialNumber: products.serialNumber,
+        modelName: serviceRequests.modelName,
+        serialNumber: serviceRequests.serialNumber,
         problemDescription: serviceRequests.problemDescription,
         adminName: adminStaff.name,
         techName: techStaff.name,
@@ -152,7 +154,6 @@ export class ServiceRequestService {
       })
       .from(serviceRequests)
       .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
-      .leftJoin(products, eq(serviceRequests.productId, products.id))
       .leftJoin(adminStaff, eq(serviceRequests.adminId, adminStaff.id))
       .leftJoin(techStaff, eq(serviceRequests.technicianCheckId, techStaff.id))
       .where(conditions.length ? and(...conditions) : undefined)
@@ -301,8 +302,8 @@ export class ServiceRequestService {
           customerName: customers.name,
           phone: customers.phone,
           address: customers.address,
-          modelName: products.modelName,
-          serialNumber: products.serialNumber,
+          modelName: serviceRequests.modelName,
+          serialNumber: serviceRequests.serialNumber,
           serviceType: serviceRequests.serviceType,
           serviceFee: serviceRequests.serviceFee,
           partFee: serviceRequests.partFee,
@@ -316,7 +317,6 @@ export class ServiceRequestService {
         })
         .from(serviceRequests)
         .leftJoin(customers, eq(serviceRequests.customerId, customers.id))
-        .leftJoin(products, eq(serviceRequests.productId, products.id))
         .where(eq(serviceRequests.ticketNumber, ticketNumber))
         .limit(1);
 
@@ -343,7 +343,7 @@ export class ServiceRequestService {
     return this.statsService.getDashboardStats();
   }
 
-  async createEntry(dto: CreateServiceRequestDto, adminId: number) {
+  async createEntry(dto: CreateServiceRequestDto, adminId: number | null) {
     return await this.db.transaction(async (tx) => {
       try {
         const targetCustomerId = await this.customerResolver.resolveCustomerId(
@@ -354,20 +354,16 @@ export class ServiceRequestService {
           dto.customerType
         );
 
-        const targetProductId = await this.productResolver.resolveProductId(
-          tx,
-          dto.serialNumber,
-          dto.modelName
-        );
-
         const [insertResult] = await tx
           .insert(serviceRequests)
           .values({
             ticketNumber: 'TEMP',
             serviceType: dto.serviceType,
             customerId: targetCustomerId,
-            productId: targetProductId,
+            modelName: dto.modelName.trim(),
+            serialNumber: dto.serialNumber.trim(),
             adminId: adminId,
+            createdBy: adminId,
             problemDescription: dto.problemDescription?.trim(),
             statusService: StatusService.WAITING_CHECK,
             incomingDate: new Date().toISOString().split('T')[0],
@@ -382,6 +378,14 @@ export class ServiceRequestService {
           .update(serviceRequests)
           .set({ ticketNumber: finalTicket })
           .where(eq(serviceRequests.id, srId));
+
+        await this.activityService.addActivity(
+          tx,
+          srId,
+          'TICKET_CREATED',
+          `Tiket ${finalTicket} dibuat untuk ${dto.customerName} (${dto.modelName} / ${dto.serialNumber})`,
+          adminId ?? null,
+        );
 
         return { success: true, ticketNumber: finalTicket };
       } catch (error) {
@@ -414,21 +418,26 @@ export class ServiceRequestService {
           });
         }
 
-        if (dto.modelName !== undefined || dto.serialNumber !== undefined) {
-          await this.productResolver.updateProduct(tx, existingSR.productId!, {
-            modelName: dto.modelName,
-            serialNumber: dto.serialNumber,
-          });
-        }
-
         const srUpdate: Record<string, any> = { updatedAt: new Date() };
         if (dto.serviceType !== undefined) srUpdate.serviceType = dto.serviceType;
         if (dto.problemDescription !== undefined)
           srUpdate.problemDescription = dto.problemDescription?.trim();
+        if (dto.modelName !== undefined)
+          srUpdate.modelName = dto.modelName?.trim();
+        if (dto.serialNumber !== undefined)
+          srUpdate.serialNumber = dto.serialNumber?.trim();
         await tx
           .update(serviceRequests)
           .set(srUpdate)
           .where(eq(serviceRequests.id, existingSR.id));
+
+        await this.activityService.addActivity(
+          tx,
+          existingSR.id,
+          'TICKET_UPDATED',
+          `Tiket ${ticketNumber} diperbarui`,
+          (dto.performedBy as number | undefined) ?? null,
+        );
 
         return {
           success: true,
@@ -491,7 +500,8 @@ export class ServiceRequestService {
                 quantity: partDto.quantity,
               },
               tx,
-              'PROPOSED'
+              'PROPOSED',
+              sr.modelName
             );
           }
         }
@@ -672,10 +682,14 @@ export class ServiceRequestService {
         );
       }
 
+      // Himipunan part yang sama dipakai saveQuote, approveQuote, dan
+      // invoice: semua yang belum dibatalkan. Sebelumnya approve hanya
+      // menghitung PROPOSED, sehingga part berstatus lain ikut terhitung
+      // di saveQuote/invoice tanpa pernah dipotong dari stok.
       const parts = await tx.query.orderParts.findMany({
         where: and(
           eq(orderParts.serviceRequestId, sr.id),
-          eq(orderParts.status, 'PROPOSED')
+          ne(orderParts.status, 'CANCELLED' as any)
         ),
       });
 
@@ -683,6 +697,44 @@ export class ServiceRequestService {
         throw new BadRequestException(
           'Tidak ada part yang diusulkan. Tambahkan part terlebih dahulu.'
         );
+      }
+
+      // Integritas persetujuan: komposisi boleh direvisi saat menunggu
+      // approve, tetapi customer menyetujui angka saat saveQuote. Bila
+      // komposisi live sudah berbeda, persetujuan itu basi dan approve
+      // harus ditolak sampai penawaran disimpan & dicetak ulang.
+      const livePartFee = parts.reduce(
+        (sum, p) => sum + Number(p.priceAtAction ?? 0) * p.quantity,
+        0
+      );
+      const snapshottedPartFee = Number(sr.partFee ?? 0);
+      if (Math.round(livePartFee) !== Math.round(snapshottedPartFee)) {
+        throw new BadRequestException(
+          `Komposisi part berubah setelah penawaran disimpan (tersimpan Rp${snapshottedPartFee.toLocaleString('id-ID')}, sekarang Rp${livePartFee.toLocaleString('id-ID')}). Simpan ulang & cetak ulang penawaran sebelum menyetujui.`
+        );
+      }
+
+      for (const part of parts) {
+        if (part.sparePartId == null) continue;
+        // Part substitusi sudah melalui persetujuan admin terpisah dan
+        // tercatat alasannya, jadi tidak diuji kompatibilitas lagi di sini.
+        if (part.isSubstitute && part.substituteApprovedAt) {
+          continue;
+        }
+        const compat = await this.compatService.check(
+          part.sparePartId,
+          sr.modelName,
+          tx
+        );
+        if (!compat.ok) {
+          const allowed =
+            compat.compatibleModels.length > 0
+              ? compat.compatibleModels.join(', ')
+              : 'tidak ada model terdaftar';
+          throw new BadRequestException(
+            `Part "${part.partName}" tidak kompatibel dengan model "${sr.modelName}". Cocok untuk: ${allowed}.`
+          );
+        }
       }
 
       let allInStock = true;
@@ -715,7 +767,7 @@ export class ServiceRequestService {
               sparePart.id,
               part.quantity,
               ticketNumber,
-              dto.performedBy ?? 1,
+              dto.performedBy ?? null,
               tx
             );
           }
@@ -826,7 +878,7 @@ export class ServiceRequestService {
             sp.id,
             op.quantity,
             ticketNumber,
-            dto.performedBy ?? 1,
+            dto.performedBy ?? null,
             tx
           );
         }

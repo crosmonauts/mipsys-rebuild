@@ -32,22 +32,9 @@ export const srApi = {
   create: (data: Record<string, unknown>) =>
     apiClient.post('/service-request/entry', data).then((r) => r.data),
 
-  prosesKasir: (ticketNumber: string, paymentData: Record<string, unknown>) =>
+  searchSpareParts: (query: string, srModel?: string) =>
     apiClient
-      .patch(`/service-request/${ticketNumber}/payment`, paymentData)
-      .then((r) => r.data),
-
-  searchSpareParts: (query: string) =>
-    apiClient
-      .get(`/inventory/parts/search`, { params: { q: query } })
-      .then((r) => r.data),
-
-  getLogs: (ticketNumber: string) =>
-    apiClient.get(`/service-request/${ticketNumber}/logs`).then((r) => r.data),
-
-  createLog: (ticketNumber: string, data: Record<string, unknown>) =>
-    apiClient
-      .post(`/service-request/${ticketNumber}/logs`, data)
+      .get(`/inventory/parts/search`, { params: { q: query, srModel } })
       .then((r) => r.data),
 
   diagnose: (
@@ -122,13 +109,5 @@ export const srApi = {
       .post(`/finance/invoices/from-sr/${ticketNumber}`)
       .then((r) => r.data);
     return invoice;
-  },
-
-  payInvoice: async (invoiceId: number, amount: number) => {
-    await apiClient.post(`/finance/invoices/${invoiceId}/pay`, {
-      amount,
-      paymentMethod: 'CASH',
-      paidAt: new Date().toISOString(),
-    });
   },
 };

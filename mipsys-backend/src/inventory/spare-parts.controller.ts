@@ -28,6 +28,7 @@ export class SparePartsController {
   ) {}
 
   @Get()
+  @Roles('ADMIN', 'TECHNICIAN')
   async findAll(
     @Query('search') search?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
@@ -37,8 +38,15 @@ export class SparePartsController {
   }
 
   @Get(':id')
+  @Roles('ADMIN', 'TECHNICIAN')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return await this.readService.getPartById(id);
+  }
+
+  @Get(':id/compatibility')
+  @Roles('ADMIN', 'TECHNICIAN')
+  async getCompatibility(@Param('id', ParseIntPipe) id: number) {
+    return await this.readService.getCompatibility(id);
   }
 
   @Post()

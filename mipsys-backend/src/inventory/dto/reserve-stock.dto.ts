@@ -1,4 +1,4 @@
-import { IsInt, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class ReserveStockDto {
   @IsInt()
@@ -9,5 +9,6 @@ export class ReserveStockDto {
   srTicketNumber!: string;
 
   @IsInt()
-  performedBy!: number;
+  @IsOptional()
+  performedBy?: number;
 }

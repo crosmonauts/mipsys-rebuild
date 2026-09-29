@@ -9,6 +9,9 @@ export interface InventoryPart {
   price: number;
   location?: string;
   modelName?: string;
+  isUniversal?: boolean;
+  compatibleModels?: string[];
+  compatible?: boolean | null;
 }
 
 export const inventoryApi = {
@@ -17,9 +20,9 @@ export const inventoryApi = {
       .get('/inventory/parts', { params: { search, status } })
       .then((r) => r.data as InventoryPart[]),
 
-  searchParts: (query: string) =>
+  searchParts: (query: string, srModel?: string) =>
     apiClient
-      .get('/inventory/parts/search', { params: { q: query } })
+      .get('/inventory/parts/search', { params: { q: query, srModel } })
       .then((r) => r.data as InventoryPart[]),
 
   getPart: (id: number) =>
@@ -30,6 +33,17 @@ export const inventoryApi = {
 
   getModels: () =>
     apiClient.get('/inventory/models').then((r) => r.data as string[]),
+
+  updatePart: (id: number, data: {
+    compatibleModelIds?: number[];
+    isUniversal?: boolean;
+  }) =>
+    apiClient.patch(`/spare-parts/${id}`, data).then((r) => r.data),
+
+  getCompatibility: (id: number) =>
+    apiClient
+      .get(`/spare-parts/${id}/compatibility`)
+      .then((r) => r.data as { id: number; name: string }[]),
 
   reserveStock: (partId: number, data: { quantity: number; srTicketNumber: string; performedBy: number }) =>
     apiClient.post(`/inventory/parts/${partId}/reserve`, data).then((r) => r.data),

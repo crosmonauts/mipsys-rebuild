@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import {
   Users,
   UserCheck,
-  Package,
   Tags,
   Percent,
+  Building2,
   Plus,
   Pencil,
   Trash2,
@@ -25,11 +25,14 @@ import type { Column } from '@/src/components/ui/data-table';
 import ConfirmModal from '@/src/components/ui/confirm-modal';
 import { toast } from 'react-hot-toast';
 import { masterDataApi } from '@/src/features/master-data/api/master-data-api';
-import type { CustomerData, StaffData, ProductData, CategoryModelData } from '@/src/features/master-data/api/master-data-api';
+import type { CustomerData, StaffData, CategoryModelData } from '@/src/features/master-data/api/master-data-api';
 import { useAuth } from '@/src/lib/auth-context';
 import { financeApi } from '@/src/features/finance/api/finance-api';
+import { CompanyProfilePanel } from '@/src/features/master-data/components/CompanyProfilePanel';
+import { companyProfileApi } from '@/src/features/master-data/api/company-profile-api';
+import type { CompanyProfile } from '@/src/features/master-data/api/company-profile-api';
 
-type TabType = 'customers' | 'staff' | 'products' | 'category-models' | 'ppn-config';
+type TabType = 'customers' | 'staff' | 'category-models' | 'ppn-config' | 'company';
 
 interface ModalState {
   open: boolean;
@@ -40,9 +43,9 @@ interface ModalState {
 const tabs = [
   { id: 'customers' as TabType, label: 'Pelanggan', icon: <Users size={16} aria-hidden="true" /> },
   { id: 'staff' as TabType, label: 'Staff', icon: <UserCheck size={16} aria-hidden="true" /> },
-  { id: 'products' as TabType, label: 'Produk', icon: <Package size={16} aria-hidden="true" /> },
   { id: 'category-models' as TabType, label: 'Model', icon: <Tags size={16} aria-hidden="true" /> },
   { id: 'ppn-config' as TabType, label: 'PPN', icon: <Percent size={16} aria-hidden="true" /> },
+  { id: 'company' as TabType, label: 'Profil Perusahaan', icon: <Building2 size={16} aria-hidden="true" /> },
 ];
 
 export default function MasterDataPage() {
@@ -50,6 +53,7 @@ export default function MasterDataPage() {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const visibleTabs = tabs.filter((t) => t.id !== 'ppn-config' || isSuperAdmin);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('customers');
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,7 +61,6 @@ export default function MasterDataPage() {
 
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [staff, setStaff] = useState<StaffData[]>([]);
-  const [products, setProducts] = useState<ProductData[]>([]);
   const [categoryModels, setCategoryModels] = useState<CategoryModelData[]>([]);
 
   const [modal, setModal] = useState<ModalState>({ open: false, mode: 'create' });
@@ -71,15 +74,13 @@ export default function MasterDataPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [c, s, p, m] = await Promise.all([
+      const [c, s, m] = await Promise.all([
         masterDataApi.customers.getAll(),
         masterDataApi.staff.getAll(),
-        masterDataApi.products.getAll(),
         masterDataApi.categoryModels.getAll(),
       ]);
       setCustomers(c);
       setStaff(s);
-      setProducts(p);
       setCategoryModels(m);
     } catch {
       toast.error('Gagal memuat data master');
@@ -101,7 +102,18 @@ export default function MasterDataPage() {
       setPpnLoading(true);
       financeApi.getPpnConfig().then(setPpnConfig).catch(() => toast.error('Gagal memuat konfigurasi PPN')).finally(() => setPpnLoading(false));
     }
+    if (activeTab === 'company') {
+      companyProfileApi.get().then(setCompanyProfile).catch(() => toast.error('Gagal memuat profil perusahaan'));
+    }
   }, [activeTab, isSuperAdmin]);
+
+  const reloadCompanyProfile = async () => {
+    try {
+      setCompanyProfile(await companyProfileApi.get());
+    } catch {
+      toast.error('Gagal memuat profil perusahaan');
+    }
+  };
 
   const openCreate = () => {
     setFormData({});
@@ -133,12 +145,6 @@ export default function MasterDataPage() {
         } else {
           await masterDataApi.staff.update(modal.id!, formData as any);
         }
-      } else if (activeTab === 'products') {
-        if (modal.mode === 'create') {
-          await masterDataApi.products.create(formData as any);
-        } else {
-          await masterDataApi.products.update(modal.id!, formData as any);
-        }
       } else if (activeTab === 'category-models') {
         if (modal.mode === 'create') {
           await masterDataApi.categoryModels.create(formData as any);
@@ -163,7 +169,6 @@ export default function MasterDataPage() {
     try {
       if (activeTab === 'customers') await masterDataApi.customers.delete(confirmDelete.id);
       else if (activeTab === 'staff') await masterDataApi.staff.delete(confirmDelete.id);
-      else if (activeTab === 'products') await masterDataApi.products.delete(confirmDelete.id);
       else if (activeTab === 'category-models') await masterDataApi.categoryModels.delete(confirmDelete.id);
       setConfirmDelete(null);
       fetchData();
@@ -176,9 +181,6 @@ export default function MasterDataPage() {
     (c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.phone?.includes(searchTerm)
   );
   const filteredStaff = staff.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredProducts = products.filter(
-    (p) => p.modelName.toLowerCase().includes(searchTerm.toLowerCase()) || p.serialNumber.includes(searchTerm)
-  );
   const filteredModels = categoryModels.filter((m) => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const renderModalFields = () => {
@@ -222,20 +224,6 @@ export default function MasterDataPage() {
               <option value="ADMIN">Admin</option>
               <option value="TECHNICIAN">Teknisi</option>
             </select>
-          </div>
-        </div>
-      );
-    }
-    if (activeTab === 'products') {
-      return (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="product-model">Nama Model</Label>
-            <Input id="product-model" placeholder="Nama Model" value={formData.modelName || ''} onChange={(e) => setFormData({ ...formData, modelName: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="product-serial">Serial Number</Label>
-            <Input id="product-serial" placeholder="Serial Number" value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} className="h-11 rounded-xl border-2 font-bold" />
           </div>
         </div>
       );
@@ -318,39 +306,12 @@ export default function MasterDataPage() {
           header: 'Aksi',
           headerClassName: 'text-center',
           cell: (s: StaffData) =>
-            isAdmin ? (
+            isSuperAdmin ? (
               <div className="flex items-center justify-center gap-2">
                 <Button onClick={() => openEdit(s)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]" aria-label="Edit data">
                   <Pencil size={16} aria-hidden="true" />
                 </Button>
                 <Button onClick={() => handleDelete(s.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]" aria-label="Hapus data">
-                  <Trash2 size={16} aria-hidden="true" />
-                </Button>
-              </div>
-            ) : null,
-        },
-      ];
-    }
-    if (activeTab === 'products') {
-      return [
-        {
-          header: 'Nama Model',
-          cell: (p: ProductData) => <span className="font-bold text-[var(--foreground)]">{p.modelName}</span>,
-        },
-        {
-          header: 'Serial Number',
-          cell: (p: ProductData) => <span className="text-[var(--muted-foreground)] font-medium">{p.serialNumber}</span>,
-        },
-        {
-          header: 'Aksi',
-          headerClassName: 'text-center',
-          cell: (p: ProductData) =>
-            isAdmin ? (
-              <div className="flex items-center justify-center gap-2">
-                <Button onClick={() => openEdit(p)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]" aria-label="Edit data">
-                  <Pencil size={16} aria-hidden="true" />
-                </Button>
-                <Button onClick={() => handleDelete(p.id)} variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]" aria-label="Hapus data">
                   <Trash2 size={16} aria-hidden="true" />
                 </Button>
               </div>
@@ -389,9 +350,9 @@ export default function MasterDataPage() {
     switch (activeTab) {
       case 'customers': return filteredCustomers;
       case 'staff': return filteredStaff;
-      case 'products': return filteredProducts;
       case 'category-models': return filteredModels;
       case 'ppn-config': return [];
+      case 'company': return [];
     }
   };
 
@@ -414,7 +375,7 @@ export default function MasterDataPage() {
     <div className="space-y-8">
       <PageHeader
         title="Master Database"
-        subtitle="Manajemen data master pelanggan, staff, produk, dan model."
+        subtitle="Manajemen data master pelanggan, staff, dan model."
       />
 
       <div className="flex gap-2 bg-[var(--card)] p-2 rounded-2xl border border-border/20 overflow-x-auto">
@@ -433,7 +394,13 @@ export default function MasterDataPage() {
         ))}
       </div>
 
-      {activeTab === 'ppn-config' ? (
+      {activeTab === 'company' ? (
+        <CompanyProfilePanel
+          profile={companyProfile}
+          canEdit={isSuperAdmin}
+          onSaved={reloadCompanyProfile}
+        />
+      ) : activeTab === 'ppn-config' ? (
         <div className="glass-panel rounded-[2rem] p-6 md:p-8 space-y-6 border border-border/20">
           <div>
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--foreground)] flex items-center gap-2"><Percent size={16} /> Rumus PPN</h3>
@@ -499,9 +466,9 @@ export default function MasterDataPage() {
             <SearchBar
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder={`Cari ${activeTab === 'customers' ? 'pelanggan' : activeTab === 'staff' ? 'staff' : activeTab === 'products' ? 'produk' : 'model'}...`}
+              placeholder={`Cari ${activeTab === 'customers' ? 'pelanggan' : activeTab === 'staff' ? 'staff' : 'model'}...`}
             />
-            {isAdmin && (
+            {(activeTab === 'staff' ? isSuperAdmin : isAdmin) && (
               <Button onClick={openCreate} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] font-black px-6 py-6 rounded-2xl shadow-lg flex gap-2 uppercase text-xs tracking-widest border-none shrink-0">
                 <Plus size={16} strokeWidth={3} aria-hidden="true" /> Tambah Data
               </Button>

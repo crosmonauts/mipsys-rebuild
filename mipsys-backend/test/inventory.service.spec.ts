@@ -28,10 +28,17 @@ interface MockDb {
   transaction: jest.Mock<Promise<unknown>, [(db: MockDb) => Promise<unknown>]>;
 }
 
-const mockDb: MockDb = {
+const mockDb: any = {
   query: {
     spareParts: mockSparePartsQuery,
   },
+  select: jest.fn().mockReturnValue({
+    from: jest.fn().mockReturnValue({
+      innerJoin: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue([]),
+      }),
+    }),
+  }),
   transaction: jest.fn(async (cb: (db: MockDb) => Promise<unknown>) =>
     cb(mockDb)
   ),
@@ -67,7 +74,9 @@ describe('InventoryReadService', () => {
         orderBy: expect.arrayContaining([]) as unknown[],
         limit: 50,
       });
-      expect(result).toEqual(mockParts);
+      expect(result).toEqual(
+        mockParts.map((p) => ({ ...p, compatibleModels: [] }))
+      );
     });
   });
 

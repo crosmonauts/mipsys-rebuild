@@ -13,6 +13,7 @@ import { StockCommandService } from './stock-command.service';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CurrentStaffId } from '../auth/current-staff-id.decorator';
+import { Roles } from '../auth/roles.decorator';
 
 @ApiTags('Inventory')
 @ApiBearerAuth('access-token')
@@ -25,6 +26,7 @@ export class InventoryController {
   ) {}
 
   @Get('parts')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getParts(
     @Query('search') search?: string,
     @Query('status') status?: 'ok' | 'low' | 'empty'
@@ -33,40 +35,49 @@ export class InventoryController {
   }
 
   @Get('parts/search')
-  async searchParts(@Query('q') query: string) {
-    return this.readService.searchParts(query);
+  @Roles('ADMIN', 'TECHNICIAN')
+  async searchParts(
+    @Query('q') query: string,
+    @Query('srModel') srModel?: string
+  ) {
+    return this.readService.searchPartsForModel(query, srModel);
   }
 
   @Get('parts/:id')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getPart(@Param('id', ParseIntPipe) id: number) {
     return this.readService.getPartById(id);
   }
 
   @Get('parts/:id/movements')
+  @Roles('ADMIN')
   async getMovements(@Param('id', ParseIntPipe) id: number) {
     return this.stockMovementsService.getMovementsByPart(id);
   }
 
   @Post('parts/:id/reserve')
+  @Roles('ADMIN', 'TECHNICIAN')
   async reserveStock(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ReserveStockDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
     return this.stockCommand.reserveStock(
       id,
       dto.quantity,
       dto.srTicketNumber,
-      staffId ?? dto.performedBy,
+      staffId ?? null,
     );
   }
 
   @Get('models')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getModels() {
     return this.readService.getModels();
   }
 
   @Get('low-stock-alert')
+  @Roles('ADMIN')
   async getLowStockAlert() {
     return this.readService.getLowStockAlert();
   }

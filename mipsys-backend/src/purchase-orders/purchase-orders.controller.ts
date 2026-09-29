@@ -25,11 +25,13 @@ export class PurchaseOrdersController {
   constructor(private readonly poService: PurchaseOrdersService) {}
 
   @Get()
+  @Roles('ADMIN', 'TECHNICIAN')
   async findAll() {
     return this.poService.findAll();
   }
 
   @Get(':id')
+  @Roles('ADMIN', 'TECHNICIAN')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.poService.findOne(id);
   }
@@ -56,7 +58,7 @@ export class PurchaseOrdersController {
     @Param('id', ParseIntPipe) id: number,
     @Body('status') status: PoStatusType,
     @Body('performedBy') performedBy: number | undefined,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
     @CurrentUser() user: any,
   ) {
     const po = await this.poService.findOne(id);
@@ -71,7 +73,10 @@ export class PurchaseOrdersController {
         throw new ForbiddenException('Akses ditolak: teknisi hanya boleh minta approval (DRAFT → REQUESTED).');
       }
     }
-    return this.poService.updateStatus(id, status, staffId ?? performedBy);
+    // Actor dari JWT; fallback performedBy body hanya jika JWT tidak punya staff
+    // (tidak pernah untuk user terikat staff). Cegah spoofing user.id.
+    void performedBy;
+    return this.poService.updateStatus(id, status, staffId ?? undefined);
   }
 
   @Patch(':id/receive')
@@ -79,9 +84,9 @@ export class PurchaseOrdersController {
   async receivePO(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ReceivePoDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) (dto as any).performedBy = staffId;
+    (dto as any).performedBy = staffId ?? undefined;
     return this.poService.receivePO(id, dto);
   }
 }

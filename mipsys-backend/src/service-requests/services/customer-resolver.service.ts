@@ -1,9 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, ilike } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
 import { customers } from '../../database/schema';
 import { DrizzleTx } from '../../database/types';
+
+export function customerNamePattern(name: string): string {
+  return name.trim();
+}
 
 @Injectable()
 export class ServiceRequestCustomerResolver {
@@ -21,7 +25,7 @@ export class ServiceRequestCustomerResolver {
     const [existing] = await tx
       .select({ id: customers.id })
       .from(customers)
-      .where(eq(customers.name, customerName))
+      .where(ilike(customers.name, customerNamePattern(customerName)))
       .limit(1);
 
     if (existing) return existing.id;

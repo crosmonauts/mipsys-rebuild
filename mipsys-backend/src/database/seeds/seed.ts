@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import * as schema from '../schema';
 import 'dotenv/config';
@@ -115,30 +116,6 @@ async function runSeeder() {
       },
     ]);
     console.log('  ✔ 7 customers dibuat (5 Corporate, 2 Personal)');
-
-    // ========================================================================
-    // TAHAP 3: PRODUCTS (Epson Printers)
-    // ========================================================================
-    console.log('📦 Tahap 3: Products...');
-    await db.insert(schema.products).values([
-      { modelName: 'Epson L3210', serialNumber: 'EPS-L3210-001-2026' },
-      { modelName: 'Epson L3110', serialNumber: 'EPS-L3110-002-2026' },
-      { modelName: 'Epson L8050', serialNumber: 'EPS-L8050-003-2026' },
-      { modelName: 'Epson L15150', serialNumber: 'EPS-L15150-004-2026' },
-      { modelName: 'Epson M2110', serialNumber: 'EPS-M2110-005-2026' },
-      { modelName: 'Epson LQ-2190', serialNumber: 'EPS-LQ2190-006-2026' },
-      { modelName: 'Epson LX-310', serialNumber: 'EPS-LX310-007-2026' },
-      { modelName: 'Epson TM-U220B', serialNumber: 'EPS-TMU220-008-2026' },
-      {
-        modelName: 'Epson SureColor P907',
-        serialNumber: 'EPS-SCP907-009-2026',
-      },
-      {
-        modelName: 'Epson WorkForce Pro WF-C579R',
-        serialNumber: 'EPS-WFC579-010-2026',
-      },
-    ]);
-    console.log('  ✔ 10 products dibuat');
 
     // ========================================================================
     // TAHAP 4: SPARE PARTS (Epson)
@@ -325,7 +302,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260501-0001',
         serviceType: 'WARRANTY',
         customerId: 1,
-        productId: 1,
+        modelName: 'Epson L3210',
+        serialNumber: 'EPS-L3210-001-2026',
         adminId: 1,
         technicianCheckId: 2,
         incomingDate: '2026-05-01',
@@ -339,7 +317,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260502-0002',
         serviceType: 'NON_WARRANTY',
         customerId: 6,
-        productId: 2,
+        modelName: 'Epson L3110',
+        serialNumber: 'EPS-L3110-002-2026',
         adminId: 1,
         technicianCheckId: 2,
         incomingDate: '2026-05-02',
@@ -353,7 +332,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260503-0003',
         serviceType: 'NON_WARRANTY',
         customerId: 2,
-        productId: 3,
+        modelName: 'Epson L8050',
+        serialNumber: 'EPS-L8050-003-2026',
         adminId: 1,
         technicianCheckId: 2,
         incomingDate: '2026-05-03',
@@ -368,7 +348,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260504-0004',
         serviceType: 'NON_WARRANTY',
         customerId: 3,
-        productId: 6,
+        modelName: 'Epson LQ-2190',
+        serialNumber: 'EPS-LQ2190-006-2026',
         adminId: 1,
         technicianCheckId: 3,
         incomingDate: '2026-05-04',
@@ -383,7 +364,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260505-0005',
         serviceType: 'NON_WARRANTY',
         customerId: 4,
-        productId: 8,
+        modelName: 'Epson TM-U220B',
+        serialNumber: 'EPS-TMU220-008-2026',
         adminId: 1,
         technicianCheckId: 3,
         incomingDate: '2026-05-05',
@@ -399,7 +381,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260506-0006',
         serviceType: 'NON_WARRANTY',
         customerId: 7,
-        productId: 5,
+        modelName: 'Epson M2110',
+        serialNumber: 'EPS-M2110-005-2026',
         adminId: 1,
         technicianCheckId: 2,
         incomingDate: '2026-05-06',
@@ -416,7 +399,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260508-0007',
         serviceType: 'NON_WARRANTY',
         customerId: 5,
-        productId: 7,
+        modelName: 'Epson LX-310',
+        serialNumber: 'EPS-LX310-007-2026',
         adminId: 1,
         technicianCheckId: 2,
         incomingDate: '2026-05-08',
@@ -432,7 +416,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260509-0008',
         serviceType: 'NON_WARRANTY',
         customerId: 1,
-        productId: 4,
+        modelName: 'Epson L15150',
+        serialNumber: 'EPS-L15150-004-2026',
         adminId: 1,
         technicianCheckId: 3,
         incomingDate: '2026-05-09',
@@ -450,7 +435,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260510-0009',
         serviceType: 'WARRANTY',
         customerId: 1,
-        productId: 9,
+        modelName: 'Epson SureColor P907',
+        serialNumber: 'EPS-SCP907-009-2026',
         adminId: 1,
         technicianCheckId: 2,
         incomingDate: '2026-05-10',
@@ -469,7 +455,8 @@ async function runSeeder() {
         ticketNumber: 'SR-20260512-0010',
         serviceType: 'WARRANTY',
         customerId: 2,
-        productId: 10,
+        modelName: 'Epson WorkForce Pro WF-C579R',
+        serialNumber: 'EPS-WFC579-010-2026',
         adminId: 1,
         technicianCheckId: 3,
         incomingDate: '2026-05-12',
@@ -925,6 +912,64 @@ async function runSeeder() {
     console.log('  ✔ 10 category models dibuat');
 
     // ========================================================================
+    // TAHAP 13B: PART-MODEL COMPATIBILITIES
+    // ========================================================================
+    console.log('📦 Tahap 13B: Part Compatibilities...');
+    const norm = (v: string | null | undefined) =>
+      (v ?? '').toLowerCase().replace(/epson/g, '').replace(/[^a-z0-9]/g, '');
+    const seedModels = await db.query.categoryModels.findMany({
+      columns: { id: true, name: true },
+    });
+    const seedParts = await db.query.spareParts.findMany({
+      columns: { id: true, partCode: true, modelName: true },
+    });
+    let seedUniversal = 0;
+    let seedMatched = 0;
+    for (const p of seedParts) {
+      const n = norm(p.modelName);
+      if (!n || n === 'all') {
+        await db
+          .update(schema.spareParts)
+          .set({ isUniversal: true })
+          .where(eq(schema.spareParts.id, p.id));
+        seedUniversal++;
+        continue;
+      }
+      const m = seedModels.find((c) => norm(c.name) === n);
+      if (m) {
+        await db
+          .insert(schema.partModelCompatibilities)
+          .values({ sparePartId: p.id, categoryModelId: m.id })
+          .onConflictDoNothing();
+        seedMatched++;
+      } else {
+        console.log(`  ! Part ${p.partCode} tak cocok, lewati`);
+      }
+    }
+    console.log(
+      `  ✔ ${seedUniversal} universal, ${seedMatched} kompatibilitas dibuat`
+    );
+
+    // ========================================================================
+    // TAHAP 14: FINANCE SETTINGS
+    // ========================================================================
+    // ========================================================================
+    // TAHAP 13C: PROFIL PERUSAHAAN (satu baris, id=1)
+    // ========================================================================
+    console.log('📦 Tahap 13C: Company Profile...');
+    await db
+      .insert(schema.companyProfiles)
+      .values({
+        id: 1,
+        name: 'MiPSys',
+        address: 'Jl. Raya Service No. 1',
+        phone: '(021) 1234-5678',
+        isPkp: false,
+      })
+      .onConflictDoNothing();
+    console.log('  ✔ company profile dibuat (isi data asli sebelum go-live)');
+
+    // ========================================================================
     // TAHAP 14: FINANCE SETTINGS
     // ========================================================================
     console.log('📦 Tahap 14: Finance Settings...');
@@ -984,7 +1029,6 @@ async function runSeeder() {
     console.log('   │ Staff                       │     3 │');
     console.log('   │ Users                       │     3 │');
     console.log('   │ Customers                   │     7 │');
-    console.log('   │ Products                    │    10 │');
     console.log('   │ Spare Parts                 │    14 │');
     console.log('   │ Service Requests            │    10 │');
     console.log('   │ Order Parts                 │     4 │');

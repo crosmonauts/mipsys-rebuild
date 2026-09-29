@@ -1,6 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrderPartsService } from '../src/order-parts/order-parts.service';
+import { PartCompatibilityService } from '../src/inventory/part-compatibility.service';
 import { orderParts } from '../src/database/schema';
+
+const mockCompatService = {
+  check: jest
+    .fn()
+    .mockResolvedValue({ ok: true, reason: 'MATCH', compatibleModels: [] }),
+};
 
 interface ReturningChain {
   returning: jest.Mock<Promise<Array<Record<string, number>>>, []>;
@@ -34,6 +41,9 @@ interface MockDb {
     spareParts: {
       findFirst: jest.Mock<Promise<unknown>, [unknown]>;
     };
+    serviceRequests: {
+      findFirst: jest.Mock<Promise<unknown>, [unknown]>;
+    };
   };
   transaction: jest.Mock<Promise<unknown>, [(db: MockDb) => Promise<unknown>]>;
 }
@@ -64,6 +74,11 @@ const mockDb: MockDb = {
     spareParts: {
       findFirst: jest.fn<Promise<unknown>, [unknown]>().mockResolvedValue(null),
     },
+    serviceRequests: {
+      findFirst: jest
+        .fn<Promise<unknown>, [unknown]>()
+        .mockResolvedValue({ id: 1, modelName: 'Epson L3210' }),
+    },
   },
   transaction: jest
     .fn<(db: MockDb) => Promise<unknown>, [(db: MockDb) => Promise<unknown>]>()
@@ -78,6 +93,7 @@ describe('OrderPartsService', () => {
       providers: [
         OrderPartsService,
         { provide: 'DB_CONNECTION', useValue: mockDb },
+        { provide: PartCompatibilityService, useValue: mockCompatService },
       ],
     }).compile();
 

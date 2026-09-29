@@ -4,6 +4,9 @@ import {
   IsOptional,
   IsInt,
   IsNumber,
+  IsBoolean,
+  IsArray,
+  ArrayMinSize,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -41,4 +44,22 @@ export class CreateSparePartDto {
   @Min(0)
   @Type(() => Number)
   price!: number;
+
+  @ApiPropertyOptional({
+    example: [1],
+    description: 'ID model yang kompatibel (wajib jika tidak universal)',
+  })
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @IsOptional()
+  compatibleModelIds?: number[];
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'True jika part universal lintas model',
+  })
+  @IsBoolean()
+  @IsOptional()
+  isUniversal?: boolean;
 }

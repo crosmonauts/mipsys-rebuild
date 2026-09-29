@@ -31,6 +31,7 @@ export interface InvoicePrintProps {
   companyName?: string;
   companyAddress?: string;
   companyPhone?: string;
+  companyLogoUrl?: string | null;
 }
 
 export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
@@ -49,6 +50,7 @@ export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrin
       companyName = 'MiPSys',
       companyAddress = 'Jl. Raya Service No. 1',
       companyPhone = '(021) 1234-5678',
+      companyLogoUrl = null,
     } = props;
 
     const validItems = (items || []).filter(
@@ -84,12 +86,22 @@ export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrin
       >
         {/* KOP SURAT */}
         <header className="flex justify-between items-start gap-4 pb-6 mb-8 border-b-2 border-stone-900">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-stone-900 uppercase">
-              {companyName}
-            </h1>
-            <p className="text-xs font-medium text-stone-700 mt-1">{companyAddress}</p>
-            <p className="text-xs font-medium text-stone-700">{companyPhone}</p>
+          <div className="flex items-start gap-4">
+            {companyLogoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={companyLogoUrl}
+                alt="Logo perusahaan"
+                className="h-16 w-auto max-w-[150px] object-contain"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-stone-900 uppercase">
+                {companyName}
+              </h1>
+              <p className="text-xs font-medium text-stone-700 mt-1">{companyAddress}</p>
+              <p className="text-xs font-medium text-stone-700">{companyPhone}</p>
+            </div>
           </div>
           <div className="text-right shrink-0">
             <h2 className="text-lg font-black tracking-[0.18em] text-stone-900 uppercase">

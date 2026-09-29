@@ -5,10 +5,10 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, ilike } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
-import { categoryModels, products, spareParts } from '../database/schema';
+import { categoryModels, spareParts } from '../database/schema';
 
 @Injectable()
 export class CategoryModelsService {
@@ -33,6 +33,14 @@ export class CategoryModelsService {
   }
 
   async create(name: string, description?: string) {
+    const existing = await this.db.query.categoryModels.findFirst({
+      where: ilike(categoryModels.name, name.trim()),
+    });
+    if (existing) {
+      throw new BadRequestException(
+        `Model '${existing.name}' sudah ada dan tidak dapat diduplikasi.`
+      );
+    }
     const [result] = await this.db
       .insert(categoryModels)
       .values({
@@ -58,14 +66,6 @@ export class CategoryModelsService {
 
   async remove(id: number) {
     await this.findOne(id);
-    const prodRef = await this.db.query.products.findFirst({
-      where: eq(products.categoryModelId, id),
-    });
-    if (prodRef) {
-      throw new BadRequestException(
-        `Model ID ${id} masih digunakan pada produk ${prodRef.serialNumber} dan tidak dapat dihapus.`,
-      );
-    }
     const partRef = await this.db.query.spareParts.findFirst({
       where: eq(spareParts.categoryModelId, id),
     });

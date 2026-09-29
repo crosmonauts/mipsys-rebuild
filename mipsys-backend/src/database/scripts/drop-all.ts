@@ -21,7 +21,6 @@ async function dropAll() {
     'purchase_orders',
     'service_requests',
     'spare_parts',
-    'products',
     'customers',
     'staff',
     'users',

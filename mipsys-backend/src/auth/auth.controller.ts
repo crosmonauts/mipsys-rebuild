@@ -1,4 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -12,6 +13,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login - return JWT' })
   async login(@Body() dto: LoginDto) {
@@ -19,6 +21,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh Token'})
   async refresh(@Body() dto: RefreshDto) {

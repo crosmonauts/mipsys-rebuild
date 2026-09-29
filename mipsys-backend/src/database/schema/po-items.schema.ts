@@ -30,6 +30,9 @@ export const poItems = pgTable(
     receivedQty: integer('received_qty').default(0),
     subtotal: numeric('subtotal', { precision: 14, scale: 2, mode: 'number' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
   },
   (table) => ({
     poIdx: index('po_items_po_idx').on(table.purchaseOrderId),

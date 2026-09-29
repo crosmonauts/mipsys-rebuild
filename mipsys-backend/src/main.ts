@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import type { Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { StandardHttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -8,12 +9,18 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
+  // Matikan koneksi DB + lepas port dengan bersih saat SIGTERM/SIGINT
+  // agar restart berikutnya tidak EADDRINUSE karena socket menggantung.
+  app.enableShutdownHooks();
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
+      forbidUnknownValues: true,
       transform: true,
+      transformOptions: { enableImplicitConversion: false },
     })
   );
 

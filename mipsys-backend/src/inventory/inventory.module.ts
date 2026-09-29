@@ -6,6 +6,7 @@ import { SparePartsController } from './spare-parts.controller';
 import { InventoryReadService } from './inventory-read.service';
 import { InventoryWriteService } from './inventory-write.service';
 import { StockCommandService } from './stock-command.service';
+import { PartCompatibilityService } from './part-compatibility.service';
 import { InventoryListener } from './listeners/inventory.listener';
 
 @Module({
@@ -15,8 +16,14 @@ import { InventoryListener } from './listeners/inventory.listener';
     InventoryReadService,
     InventoryWriteService,
     StockCommandService,
+    PartCompatibilityService,
     InventoryListener,
   ],
-  exports: [InventoryReadService, InventoryWriteService, StockCommandService],
+  exports: [
+    InventoryReadService,
+    InventoryWriteService,
+    StockCommandService,
+    PartCompatibilityService,
+  ],
 })
 export class InventoryModule {}

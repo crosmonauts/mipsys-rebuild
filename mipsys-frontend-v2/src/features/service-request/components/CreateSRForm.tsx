@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/lib/auth-context';
+import { masterDataApi, type CustomerData, type CategoryModelData } from '@/src/features/master-data/api/master-data-api';
 import {
   Printer,
   User,
@@ -33,12 +34,62 @@ import {
 import { Input } from '@/src/components/ui/input';
 import { Textarea } from '@/src/components/ui/textarea';
 import { Button } from '@/src/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/components/ui/select';
 
 export function CreateSRForm() {
   const router = useRouter();
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const [isLoading, setIsLoading] = useState(false);
+  const [customers, setCustomers] = useState<CustomerData[]>([]);
+  const [models, setModels] = useState<CategoryModelData[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerList, setShowCustomerList] = useState(false);
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const customerBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    masterDataApi.customers.getAll().then(setCustomers).catch(() => {});
+    masterDataApi.categoryModels.getAll().then(setModels).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (customerBoxRef.current && !customerBoxRef.current.contains(e.target as Node)) {
+        setShowCustomerList(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const customerMatches = customerSearch.trim().length < 2
+    ? []
+    : customers
+        .filter(
+          (c) =>
+            c.name.toLowerCase().includes(customerSearch.trim().toLowerCase()) ||
+            (c.phone || '').includes(customerSearch.trim())
+        )
+        .slice(0, 8);
+
+  const pickCustomer = (c: CustomerData) => {
+    form.setValue('customerName', c.name, { shouldValidate: true });
+    form.setValue('phone', c.phone || '', { shouldValidate: true });
+    form.setValue('address', c.address || '', { shouldValidate: true });
+    if (c.customerType === 'PERSONAL' || c.customerType === 'CORPORATE' || c.customerType === 'INTERNAL') {
+      form.setValue('customerType', c.customerType);
+    }
+    setCustomerSearch(c.name);
+    setShowCustomerList(false);
+    setIsNewCustomer(false);
+  };
 
   const form = useForm<SRFormValues>({
     resolver: zodResolver(serviceRequestSchema),
@@ -66,6 +117,8 @@ export function CreateSRForm() {
       );
 
       form.reset();
+      setCustomerSearch('');
+      setIsNewCustomer(false);
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       const errorMsg =
@@ -133,11 +186,55 @@ export function CreateSRForm() {
                         Nama Lengkap / Instansi
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          className="h-12 bg-[var(--card)] border-border/30 rounded-xl"
-                          placeholder="Bpk. Nanda / Kantor Pajak"
-                          {...field}
-                        />
+                        <div className="relative" ref={customerBoxRef}>
+                          <Input
+                            className="h-12 bg-[var(--card)] border-border/30 rounded-xl"
+                            placeholder="Ketik min. 2 huruf / pilih dari master..."
+                            value={isNewCustomer ? field.value : customerSearch || field.value}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              field.onChange(v);
+                              setCustomerSearch(v);
+                              setShowCustomerList(true);
+                              setIsNewCustomer(false);
+                            }}
+                            onFocus={() => {
+                              if (!isNewCustomer && customerSearch.trim().length >= 2) {
+                                setShowCustomerList(true);
+                              }
+                            }}
+                          />
+                          {showCustomerList && !isNewCustomer && (
+                            <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-xl border border-border/30 bg-[var(--card)] shadow-xl">
+                              {customerMatches.map((c) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => pickCustomer(c)}
+                                  className="block w-full px-4 py-2.5 text-left hover:bg-[var(--primary)]/10"
+                                >
+                                  <span className="block text-sm font-bold text-[var(--foreground)]">{c.name}</span>
+                                  <span className="block text-[10px] text-[var(--muted-foreground)]">
+                                    {c.phone || '-'} • {c.customerType || '-'}
+                                  </span>
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsNewCustomer(true);
+                                  setShowCustomerList(false);
+                                  form.setValue('customerName', customerSearch);
+                                  form.setValue('phone', '');
+                                  form.setValue('address', '');
+                                }}
+                                className="block w-full px-4 py-2.5 text-left text-xs font-black uppercase tracking-wider text-[var(--primary)] hover:bg-[var(--primary)]/10"
+                              >
+                                + Daftarkan “{customerSearch.trim()}” sebagai customer baru
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage className="text-xs font-bold" />
                     </FormItem>
@@ -224,14 +321,21 @@ export function CreateSRForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="micro-label text-[var(--muted-foreground)]">
-                        Model Mesin
+                        Model Mesin (dari master)
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          className="h-12 bg-[var(--card)] border-border/30 rounded-xl uppercase font-bold"
-                          placeholder="L3110"
-                          {...field}
-                        />
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="h-12 bg-[var(--card)] border-border/30 rounded-xl font-bold" aria-label="Pilih model mesin">
+                            <SelectValue placeholder="Pilih model dari master" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {models.map((m) => (
+                              <SelectItem key={m.id} value={m.name}>
+                                {m.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

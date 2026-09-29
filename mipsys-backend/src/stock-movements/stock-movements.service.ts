@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { stockMovements, spareParts } from '../database/schema';
@@ -68,33 +68,32 @@ export class StockMovementsService {
     quantity: number,
     movementType: MovementTypeType
   ) {
-    const [current] = await db
-      .select({ stock: spareParts.stock })
-      .from(spareParts)
-      .where(eq(spareParts.id, sparePartId))
-      .limit(1);
-
-    if (!current) {
-      throw new BadRequestException(`Part ID ${sparePartId} tidak ditemukan.`);
-    }
-
-    const newStock = current.stock + quantity;
-
-    if (
-      newStock < 0 &&
-      (movementType === 'SERVICE_USE' || movementType === 'ADJUSTMENT')
-    ) {
-      throw new BadRequestException(
-        `Stok tidak mencukupi. Tersedia: ${current.stock}, dibutuhkan: ${Math.abs(quantity)}`
-      );
-    }
-
-    await db
+    const [updated] = await db
       .update(spareParts)
       .set({
-        stock: newStock,
+        stock: sql`${spareParts.stock} + ${quantity}`,
         updatedAt: new Date(),
       })
-      .where(eq(spareParts.id, sparePartId));
+      .where(
+        and(
+          eq(spareParts.id, sparePartId),
+          sql`${spareParts.stock} + ${quantity} >= 0`,
+        ),
+      )
+      .returning({ id: spareParts.id, stock: spareParts.stock });
+
+    if (!updated) {
+      const [current] = await db
+        .select({ stock: spareParts.stock })
+        .from(spareParts)
+        .where(eq(spareParts.id, sparePartId))
+        .limit(1);
+      if (!current) {
+        throw new BadRequestException(`Part ID ${sparePartId} tidak ditemukan.`);
+      }
+      throw new BadRequestException(
+        `Stok tidak mencukupi. Tersedia: ${current.stock}, dibutuhkan: ${Math.abs(quantity)}`,
+      );
+    }
   }
 }

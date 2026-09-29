@@ -24,16 +24,19 @@ export class CustomersController {
   constructor(private readonly service: CustomersService) {}
 
   @Get()
+  @Roles('ADMIN')
   async findAll(@Query('search') search?: string) {
     return this.service.findAll(search);
   }
 
   @Get('count')
+  @Roles('ADMIN')
   async count() {
     return this.service.count();
   }
 
   @Get(':id')
+  @Roles('ADMIN')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }

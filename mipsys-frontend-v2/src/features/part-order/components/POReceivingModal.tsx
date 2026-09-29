@@ -23,17 +23,25 @@ export function POReceivingModal({ poId, items, onClose, onSuccess }: POReceivin
   async function handleSubmit() {
     setIsSubmitting(true);
     try {
-      const payload = items.map((item) => ({
-        poItemId: item.id!,
-        receivedQty: receivedQtys[item.id!] || 0,
-      }));
+      // Backend menolak receivedQty < 1: kirim hanya baris yang diterima (> 0).
+      const payload = items
+        .map((item) => ({
+          poItemId: item.id!,
+          receivedQty: receivedQtys[item.id!] || 0,
+        }))
+        .filter((row) => row.receivedQty > 0);
+
+      if (payload.length === 0) {
+        toast.error('Isi jumlah terima minimal 1 pada salah satu baris.');
+        return;
+      }
 
       await poApi.receivePO(poId, payload, user?.staffId);
       toast.success('Penerimaan barang berhasil dicatat');
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Gagal mencatat penerimaan');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Gagal mencatat penerimaan');
     } finally {
       setIsSubmitting(false);
     }

@@ -11,7 +11,7 @@ import {
   check,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { serviceRequests } from './service-request.schema';
+import { serviceRequests, staff } from './service-request.schema';
 import { invoiceStatusEnum, paymentMethodEnum } from './enums';
 
 export const invoices = pgTable(
@@ -48,10 +48,16 @@ export const invoices = pgTable(
     updatedAt: timestamp('updated_at', { mode: 'date' })
       .defaultNow()
       .$onUpdate(() => sql`now()`),
+    createdBy: integer('created_by').references(() => staff.id),
+    updatedBy: integer('updated_by').references(() => staff.id),
+    deletedAt: timestamp('deleted_at', { mode: 'date' }),
+    deletedBy: integer('deleted_by').references(() => staff.id),
   },
   (table) => ({
     ticketIdx: index('inv_ticket_idx').on(table.ticketNumber),
     statusIdx: index('inv_status_idx').on(table.status),
+    paidDateIdx: index('inv_paid_date_idx').on(table.paidDate),
+    statusPaidIdx: index('inv_status_paid_idx').on(table.status, table.paidDate),
     ticketUnique: uniqueIndex('inv_ticket_unique').on(table.ticketNumber),
     activeSrUnique: uniqueIndex('inv_sr_unique').on(table.serviceRequestId),
     amountsNonNeg: check(

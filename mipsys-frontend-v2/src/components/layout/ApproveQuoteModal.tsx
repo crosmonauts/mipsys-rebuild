@@ -26,6 +26,8 @@ import { QuotePrintTemplate } from '@/src/components/layout/QuotePrintTemplate';
 import { useAuth } from '@/src/lib/auth-context';
 import { srApi } from '@/src/features/service-request/api/sr-api';
 import { orderPartsApi } from '@/src/features/service-request/api/order-parts-api';
+import { extractApiError } from '@/src/lib/api-error';
+import { usePrintCompany } from '@/src/lib/use-print-company';
 import { OrderPart } from '@/src/features/service-request/api/order-parts-api';
 import { financeApi } from '@/src/features/finance/api/finance-api';
 
@@ -57,6 +59,7 @@ export function ApproveQuoteModal({
   const { user } = useAuth();
   const [step, setStep] = useState<'form' | 'preview'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const printCompany = usePrintCompany();
   const [parts, setParts] = useState<ProposedPart[]>([]);
   const [isLoadingParts, setIsLoadingParts] = useState(false);
   const [serviceFee, setServiceFee] = useState<string>('0');
@@ -145,8 +148,7 @@ export function ApproveQuoteModal({
       setStep('preview');
       toast.success('Penawaran berhasil disimpan');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal menyimpan penawaran';
-      toast.error(message);
+      toast.error(extractApiError(error, 'Gagal menyimpan penawaran'));
     } finally {
       setIsSubmitting(false);
     }
@@ -189,6 +191,13 @@ export function ApproveQuoteModal({
                     />
 
                     <PartsList parts={parts} isLoading={isLoadingParts} />
+                    {hasSavedQuote && (
+                      <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-[11px] text-[var(--foreground)]/80">
+                        Ada penawaran yang sudah disimpan. Bila komposisi part
+                        berubah, simpan ulang di sini dan cetak ulang untuk
+                        pelanggan sebelum menyetujui.
+                      </p>
+                    )}
 
                     <SummaryRow totalPartCost={totalPartCost} serviceFee={serviceFeeNum} ppnConfig={ppnConfig} />
                   </div>
@@ -213,6 +222,7 @@ export function ApproveQuoteModal({
                           serviceFee={savedServiceFee}
                           partFee={savedPartFee}
                           ppnConfig={ppnConfig || undefined}
+                          company={printCompany}
                         />
                       </div>
                     </div>

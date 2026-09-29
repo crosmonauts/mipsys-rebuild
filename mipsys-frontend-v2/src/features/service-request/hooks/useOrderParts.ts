@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { orderPartsApi, OrderPart, AddPartDto } from '../api/order-parts-api';
+import {
+  orderPartsApi,
+  OrderPart,
+  AddPartDto,
+  AddSubstituteDto,
+} from '../api/order-parts-api';
 import { toast } from 'react-hot-toast';
 
 export const useOrderParts = (serviceRequestId: number | null) => {
@@ -40,6 +45,20 @@ export const useOrderParts = (serviceRequestId: number | null) => {
     }
   };
 
+  const addSubstitute = async (data: AddSubstituteDto) => {
+    try {
+      await orderPartsApi.addSubstitute(data);
+      toast.success('Part substitusi ditambahkan dan tercatat');
+      await fetchParts();
+    } catch (error) {
+      const message =
+        (error as { response?: { data?: { message?: string | string[] } } })
+          ?.response?.data?.message ?? 'Gagal menambahkan part substitusi';
+      toast.error(Array.isArray(message) ? message.join(', ') : message);
+      throw error;
+    }
+  };
+
   const removePart = async (id: number) => {
     try {
       await orderPartsApi.removePart(id);
@@ -51,5 +70,13 @@ export const useOrderParts = (serviceRequestId: number | null) => {
     }
   };
 
-  return { parts, totalFee, isLoading, addPart, removePart, refetch: fetchParts };
+  return {
+    parts,
+    totalFee,
+    isLoading,
+    addPart,
+    addSubstitute,
+    removePart,
+    refetch: fetchParts,
+  };
 };

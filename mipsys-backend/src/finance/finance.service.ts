@@ -19,6 +19,10 @@ import { invoiceStatusEnum } from '../database/schema/enums';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { RecordPaymentDto } from './dto/record-payment.dto';
 import { OrderPartsService } from '../order-parts/order-parts.service';
+import { likePattern } from '../common/utils/escape-like';
+import { loadCompanyHeader } from '../reports/company-profile';
+import { extensionForMime, fitInside, readImageSize } from '../reports/excel/image-fit';
+import { numberToWords } from '../reports/excel/terbilang';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 
@@ -40,10 +44,11 @@ export class FinanceService {
       conditions.push(eq(invoices.status, status as InvoiceStatus));
     }
     if (search) {
+      const pattern = likePattern(search);
       const searchCondition = or(
-        like(invoices.invoiceNumber, `%${search}%`),
-        like(invoices.clientName, `%${search}%`),
-        like(invoices.ticketNumber, `%${search}%`)
+        like(invoices.invoiceNumber, pattern),
+        like(invoices.clientName, pattern),
+        like(invoices.ticketNumber, pattern)
       );
       if (searchCondition) conditions.push(searchCondition);
     }
@@ -51,6 +56,7 @@ export class FinanceService {
     const results = await this.db.query.invoices.findMany({
       where: conditions.length > 0 ? and(...conditions) : undefined,
       orderBy: [desc(invoices.invoiceDate)],
+      limit: 100,
     });
 
     return results;
@@ -130,47 +136,69 @@ export class FinanceService {
       );
     }
 
-    await this.db.insert(paymentHistories).values({
-      invoiceId: id,
-      amount: dto.amount,
-      paymentMethod: dto.paymentMethod,
-      paidAt: new Date(),
-      referenceNumber: dto.referenceNumber || null,
-      notes: dto.notes || null,
-    });
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT id FROM invoices WHERE id = ${id} FOR UPDATE`,
+      );
+      const locked = await tx.query.invoices.findFirst({
+        where: eq(invoices.id, id),
+      });
+      if (!locked)
+        throw new NotFoundException(`Invoice ID ${id} tidak ditemukan.`);
+      if (locked.status === 'PAID') {
+        throw new BadRequestException('Invoice sudah lunas.');
+      }
 
-    await this.db
-      .update(invoices)
-      .set({
-        status: 'PAID',
+      await tx.insert(paymentHistories).values({
+        invoiceId: id,
+        amount: dto.amount,
         paymentMethod: dto.paymentMethod,
-        paidDate: new Date().toISOString().split('T')[0],
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, id));
+        paidAt: new Date(),
+        referenceNumber: dto.referenceNumber || null,
+        notes: dto.notes || null,
+      });
 
-    return {
-      success: true,
-      message: `Pembayaran untuk ${invoice.invoiceNumber} dicatat.`,
-    };
+      await tx
+        .update(invoices)
+        .set({
+          status: 'PAID',
+          paymentMethod: dto.paymentMethod,
+          paidDate: new Date().toISOString().split('T')[0],
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, id));
+
+      return {
+        success: true,
+        message: `Pembayaran untuk ${locked.invoiceNumber} dicatat.`,
+      };
+    });
   }
 
   async getStats() {
-    const allInvoices = await this.db.query.invoices.findMany();
+    const rows = await this.db
+      .select({
+        status: invoices.status,
+        count: sql<number>`count(*)::int`,
+        total: sql<string>`COALESCE(SUM(${invoices.total}), 0)`,
+      })
+      .from(invoices)
+      .groupBy(invoices.status);
 
-    const totalRevenue = allInvoices
-      .filter((i) => i.status === 'PAID')
-      .reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+    const byStatus = new Map<string, { count: number; total: number }>();
+    let totalInvoices = 0;
+    for (const r of rows) {
+      const count = Number(r.count) || 0;
+      const total = Number(r.total) || 0;
+      totalInvoices += count;
+      if (r.status) byStatus.set(r.status, { count, total });
+    }
 
-    const outstanding = allInvoices
-      .filter((i) => i.status === 'UNPAID')
-      .reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-
-    const paidCount = allInvoices.filter((i) => i.status === 'PAID').length;
-    const unpaidCount = allInvoices.filter((i) => i.status === 'UNPAID').length;
-    const overdueCount = allInvoices.filter(
-      (i) => i.status === 'OVERDUE'
-    ).length;
+    const totalRevenue = byStatus.get('PAID')?.total ?? 0;
+    const outstanding = byStatus.get('UNPAID')?.total ?? 0;
+    const paidCount = byStatus.get('PAID')?.count ?? 0;
+    const unpaidCount = byStatus.get('UNPAID')?.count ?? 0;
+    const overdueCount = byStatus.get('OVERDUE')?.count ?? 0;
 
     return {
       totalRevenue,
@@ -178,7 +206,7 @@ export class FinanceService {
       paidCount,
       unpaidCount,
       overdueCount,
-      totalInvoices: allInvoices.length,
+      totalInvoices,
     };
   }
 
@@ -290,21 +318,54 @@ export class FinanceService {
       color: { argb: 'FF15803D' },
     };
 
-    let row = 1;
+    // Kop Surat — dari master company_profiles
+    const kop = await loadCompanyHeader(this.db as any);
+    const kopText = {
+      name: kop.name,
+      address: kop.address,
+      phone: [kop.phone, kop.email].filter(Boolean).join(' | '),
+    };
 
-    // Kop Surat
-    ws.mergeCells(row, 1, row, 3);
-    const companyCell = ws.getCell(row, 1);
-    companyCell.value = 'MiPSys';
+    // Bila ada logo, baris 1-2 dipakai gambar dan teks mulai baris 3.
+    const kopLogoExt = kop.logo ? extensionForMime(kop.logo.mime) : null;
+    const kopHasLogo = Boolean(kop.logo && kopLogoExt);
+    let row = 1;
+    if (kopHasLogo && kop.logo && kopLogoExt) {
+      const logoId = wb.addImage({
+        base64: kop.logo.base64,
+        extension: kopLogoExt,
+      });
+      ws.mergeCells(1, 1, 2, 2);
+      ws.getCell(1, 1).alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+      };
+      const logoBox = { width: 110, height: 50 };
+      const natural = readImageSize(Buffer.from(kop.logo.base64, 'base64'));
+      const sized = natural ? fitInside(natural, logoBox) : logoBox;
+      ws.addImage(logoId, {
+        tl: { col: 0.05, row: 0.05 },
+        ext: { width: sized.width, height: sized.height },
+      });
+      ws.getRow(1).height = 28;
+      ws.getRow(2).height = 28;
+      row = 3;
+    }
+    const kopTextColumn = kopHasLogo ? 3 : 1;
+    const kopTextEnd = kopHasLogo ? 3 : 3;
+
+    ws.mergeCells(row, kopTextColumn, row, kopTextEnd);
+    const companyCell = ws.getCell(row, kopTextColumn);
+    companyCell.value = kopText.name;
     companyCell.font = headerFont;
     row++;
-    ws.mergeCells(row, 1, row, 3);
-    ws.getCell(row, 1).value = 'Jl. Raya Service No. 1';
-    ws.getCell(row, 1).font = labelFont;
+    ws.mergeCells(row, kopTextColumn, row, kopTextEnd);
+    ws.getCell(row, kopTextColumn).value = kopText.address;
+    ws.getCell(row, kopTextColumn).font = labelFont;
     row++;
-    ws.mergeCells(row, 1, row, 3);
-    ws.getCell(row, 1).value = '(021) 1234-5678';
-    ws.getCell(row, 1).font = labelFont;
+    ws.mergeCells(row, kopTextColumn, row, kopTextEnd);
+    ws.getCell(row, kopTextColumn).value = kopText.phone;
+    ws.getCell(row, kopTextColumn).font = labelFont;
     row++;
 
     ws.mergeCells(row, 4, row, 5);
@@ -700,7 +761,7 @@ export class FinanceService {
     ws.getCell(row + 3, 4).font = boldFont;
     ws.getCell(row + 3, 4).alignment = { horizontal: 'center' };
     ws.mergeCells(row + 4, 4, row + 4, 5);
-    ws.getCell(row + 4, 4).value = 'Manajemen MiPSys';
+    ws.getCell(row + 4, 4).value = `Manajemen ${kop.name}`;
     ws.getCell(row + 4, 4).font = {
       name: 'Calibri',
       size: 8,
@@ -786,6 +847,9 @@ export class FinanceService {
       ];
     }
 
+    // Profil diambil di luar promise builder agar tetap bisa di-await.
+    const pdfKop = await loadCompanyHeader(this.db as any);
+
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
       const chunks: Buffer[] = [];
@@ -794,11 +858,28 @@ export class FinanceService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Kop Surat
-      doc.font('Helvetica-Bold').fontSize(24).text('MiPSys', 50, 50);
+      // Kop Surat — dari master company_profiles
+      const pdfContact = [pdfKop.phone, pdfKop.email]
+        .filter(Boolean)
+        .join(' | ');
+      const pdfLogoBox = { width: 110, height: 46 };
+      let kopTextX = 50;
+      if (pdfKop.logo) {
+        const natural = readImageSize(Buffer.from(pdfKop.logo.base64, 'base64'));
+        const sized =
+          natural &&
+          fitInside(natural, pdfLogoBox);
+        if (sized && sized.width > 0) {
+          doc.image(Buffer.from(pdfKop.logo.base64, 'base64'), 50, 52, {
+            fit: [sized.width, sized.height],
+          });
+          kopTextX = 50 + pdfLogoBox.width + 16;
+        }
+      }
+      doc.font('Helvetica-Bold').fontSize(24).text(pdfKop.name, kopTextX, 50);
       doc.font('Helvetica').fontSize(8).fillColor('#78716C');
-      doc.text('Jl. Raya Service No. 1', 50, 80);
-      doc.text('(021) 1234-5678', 50, 92);
+      doc.text(pdfKop.address, kopTextX, 80);
+      doc.text(pdfContact, kopTextX, 92);
 
       doc.font('Helvetica-Bold').fontSize(14).fillColor('#15803D');
       doc.text('INVOICE', 370, 50, { align: 'right', width: 175 });
@@ -996,7 +1077,7 @@ export class FinanceService {
       });
       y += 14;
       doc.font('Helvetica').fontSize(8).fillColor('#A8A29E');
-      doc.text('Manajemen MiPSys', 350, y, { align: 'center', width: 195 });
+      doc.text(`Manajemen ${pdfKop.name}`, 350, y, { align: 'center', width: 195 });
 
       // Footer
       y += 30;
@@ -1005,7 +1086,7 @@ export class FinanceService {
       y += 10;
       doc.font('Helvetica').fontSize(7).fillColor('#A8A29E');
       doc.text(
-        'MiPSys — Jl. Raya Service No. 1 | Telp: (021) 1234-5678',
+        `${pdfKop.name} — ${pdfKop.address} | Telp: ${pdfKop.phone}`,
         50,
         y,
         { align: 'center', width: 495 }
@@ -1020,13 +1101,6 @@ export class FinanceService {
 
       doc.end();
     });
-  }
-
-  private async getPpnRate(): Promise<number> {
-    const setting = await this.db.query.financeSettings.findFirst({
-      where: eq(financeSettings.key, 'ppn_rate'),
-    });
-    return setting ? parseFloat(setting.value) : 11;
   }
 
   private async getPpnConfig(): Promise<{
@@ -1080,102 +1154,22 @@ export class FinanceService {
     const period = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
     const counterKey = `inv_counter_${period}`;
 
-    await this.db
+    const [row] = await this.db
       .insert(financeSettings)
       .values({
         key: counterKey,
-        value: '0',
+        value: '1',
         description: `Invoice counter for ${period}`,
       })
-      .onConflictDoNothing();
-
-    await this.db
-      .update(financeSettings)
-      .set({
-        value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)`,
+      .onConflictDoUpdate({
+        target: financeSettings.key,
+        set: {
+          value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)`,
+        },
       })
-      .where(eq(financeSettings.key, counterKey));
-
-    const updated = await this.db.query.financeSettings.findFirst({
-      where: eq(financeSettings.key, counterKey),
-    });
-    const counter = updated ? parseInt(updated.value, 10) : 1;
+      .returning({ value: financeSettings.value });
+    const counter = row ? parseInt(row.value, 10) : 1;
 
     return `${prefix}-${period}-${String(counter).padStart(4, '0')}`;
   }
-}
-
-function numberToWords(num: number): string {
-  if (num === 0) return 'Nol Rupiah';
-  const units = ['', 'Ribu', 'Juta', 'Miliar', 'Triliun'];
-  const ones = [
-    '',
-    'Satu',
-    'Dua',
-    'Tiga',
-    'Empat',
-    'Lima',
-    'Enam',
-    'Tujuh',
-    'Delapan',
-    'Sembilan',
-    'Sepuluh',
-    'Sebelas',
-  ];
-  const tens = [
-    '',
-    '',
-    'Dua Puluh',
-    'Tiga Puluh',
-    'Empat Puluh',
-    'Lima Puluh',
-    'Enam Puluh',
-    'Tujuh Puluh',
-    'Delapan Puluh',
-    'Sembilan Puluh',
-  ];
-
-  function convertBelowThousand(n: number): string {
-    if (n === 0) return '';
-    if (n < 12) return ones[n];
-    if (n < 20) return ones[n - 10] + ' Belas';
-    if (n < 100) {
-      const ten = Math.floor(n / 10);
-      const rest = n % 10;
-      return tens[ten] + (rest ? ' ' + ones[rest] : '');
-    }
-    if (n < 200) {
-      const rest = n - 100;
-      return 'Seratus' + (rest ? ' ' + convertBelowThousand(rest) : '');
-    }
-    if (n < 1000) {
-      const hundred = Math.floor(n / 100);
-      const rest = n % 100;
-      return (
-        ones[hundred] +
-        ' Ratus' +
-        (rest ? ' ' + convertBelowThousand(rest) : '')
-      );
-    }
-    return '';
-  }
-
-  function convert(n: number): string {
-    if (n < 0) return 'Minus ' + convert(-n);
-    if (n < 1000) return convertBelowThousand(n);
-    for (let i = 1; i < units.length; i++) {
-      const divisor = Math.pow(1000, i);
-      if (n < divisor * 1000) {
-        const quotient = Math.floor(n / divisor);
-        const remainder = n % divisor;
-        let prefix: string;
-        if (quotient === 1 && i === 1) prefix = 'Se';
-        else prefix = convert(quotient) + ' ';
-        return prefix + units[i] + (remainder ? ' ' + convert(remainder) : '');
-      }
-    }
-    return '';
-  }
-
-  return convert(Math.round(num)).trim().replace(/\s+/g, ' ') + ' Rupiah';
 }

@@ -75,7 +75,7 @@ export class StockCommandService {
     sparePartId: number,
     quantity: number,
     srTicketNumber: string,
-    performedBy: number,
+    performedBy: number | null,
     tx?: DrizzleTx
   ) {
     const exec = async (db: DrizzleTx) => {
@@ -103,7 +103,7 @@ export class StockCommandService {
           movementType: 'SERVICE_USE',
           referenceType: 'SR_TICKET',
           referenceId: srTicketNumber,
-          performedBy,
+          performedBy: performedBy ?? undefined,
         },
         db
       );

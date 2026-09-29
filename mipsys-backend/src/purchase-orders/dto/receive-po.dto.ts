@@ -1,4 +1,4 @@
-import { IsArray, IsInt, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsOptional, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ReceivePoItemDto {
@@ -17,5 +17,6 @@ export class ReceivePoDto {
   items!: ReceivePoItemDto[];
 
   @IsInt()
-  performedBy!: number;
+  @IsOptional()
+  performedBy?: number;
 }

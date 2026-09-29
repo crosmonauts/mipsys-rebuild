@@ -42,14 +42,14 @@ export class StaffController {
   }
 
   @Post()
-  @Roles('ADMIN')
+  @Roles('SUPER_ADMIN')
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateStaffDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @Roles('ADMIN')
+  @Roles('SUPER_ADMIN')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateStaffDto
@@ -58,7 +58,7 @@ export class StaffController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN')
+  @Roles('SUPER_ADMIN')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }

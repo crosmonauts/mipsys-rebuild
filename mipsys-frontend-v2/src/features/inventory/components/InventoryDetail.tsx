@@ -1,16 +1,43 @@
 'use client';
 
-import { X, MapPin, DollarSign, Package, AlertTriangle } from 'lucide-react';
-import { InventoryPart } from '../api/inventory-api';
+import React, { useEffect, useState } from 'react';
+import { X, MapPin, DollarSign, Package, AlertTriangle, Tags, Loader2, Check } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { InventoryPart, inventoryApi, categoryModelsApi, CategoryModel } from '../api/inventory-api';
 import { StockMovementHistory } from './StockMovementHistory';
+import { useAuth } from '@/src/lib/auth-context';
+import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
 
 interface InventoryDetailProps {
   part: InventoryPart;
   onClose: () => void;
+  onSaved?: () => void;
 }
 
-export function InventoryDetail({ part, onClose }: InventoryDetailProps) {
+export function InventoryDetail({ part, onClose, onSaved }: InventoryDetailProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const [models, setModels] = useState<CategoryModel[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
+  const [universal, setUniversal] = useState(false);
+  const [loadingCompat, setLoadingCompat] = useState(false);
+  const [savingCompat, setSavingCompat] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    setLoadingCompat(true);
+    Promise.all([
+      categoryModelsApi.getAll().catch(() => [] as CategoryModel[]),
+      inventoryApi.getCompatibility(part.id).catch(() => [] as { id: number; name: string }[]),
+    ])
+      .then(([all, compat]) => {
+        setModels(all);
+        setSelected(compat.map((c) => c.id));
+        setUniversal(!!part.isUniversal);
+      })
+      .finally(() => setLoadingCompat(false));
+  }, [isAdmin, part.id, part.isUniversal]);
   const stockPercent = part.minStock > 0 ? Math.min((part.stock / (part.minStock * 2)) * 100, 100) : 0;
   const isCritical = part.stock === 0;
   const isLow = part.stock > 0 && part.stock < part.minStock;
@@ -110,6 +137,77 @@ export function InventoryDetail({ part, onClose }: InventoryDetailProps) {
               </div>
             )}
           </div>
+
+          {isAdmin && (
+            <div className="rounded-xl border border-border/30 p-4 space-y-3">
+              <h3 className="font-bold text-[var(--foreground)] flex items-center gap-2 text-sm">
+                <Tags size={14} aria-hidden="true" /> Kompatibilitas Model
+              </h3>
+              {loadingCompat ? (
+                <p className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                  <Loader2 size={14} className="motion-safe:animate-spin" aria-hidden="true" /> Memuat…
+                </p>
+              ) : (
+                <>
+                  <label className="flex items-center gap-2 text-sm font-bold text-[var(--foreground)] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={universal}
+                      onChange={(e) => setUniversal(e.target.checked)}
+                      className="h-4 w-4 accent-[var(--primary)]"
+                    />
+                    Universal (cocok semua model)
+                  </label>
+                  {!universal && (
+                    <div className="grid grid-cols-1 gap-1.5 max-h-44 overflow-y-auto">
+                      {models.map((m) => (
+                        <label key={m.id} className="flex items-center gap-2 text-sm text-[var(--foreground)] cursor-pointer rounded-lg px-2 py-1.5 hover:bg-[var(--muted)]/50">
+                          <input
+                            type="checkbox"
+                            checked={selected.includes(m.id)}
+                            onChange={(e) =>
+                              setSelected((prev) =>
+                                e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)
+                              )
+                            }
+                            className="h-4 w-4 accent-[var(--primary)]"
+                          />
+                          <span className="font-medium">{m.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    disabled={savingCompat}
+                    onClick={async () => {
+                      setSavingCompat(true);
+                      try {
+                        await inventoryApi.updatePart(part.id, {
+                          isUniversal: universal,
+                          compatibleModelIds: universal ? [] : selected,
+                        });
+                        toast.success('Kompatibilitas tersimpan');
+                        onSaved?.();
+                      } catch (err: any) {
+                        toast.error(err?.response?.data?.message || 'Gagal menyimpan kompatibilitas');
+                      } finally {
+                        setSavingCompat(false);
+                      }
+                    }}
+                    className="h-10 rounded-xl text-xs font-black uppercase gap-2"
+                  >
+                    {savingCompat ? (
+                      <Loader2 size={14} className="motion-safe:animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Check size={14} aria-hidden="true" />
+                    )}
+                    Simpan Kompatibilitas
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
 
           <div>
             <h3 className="font-bold text-[var(--foreground)] mb-3">Riwayat Pergerakan Stok</h3>

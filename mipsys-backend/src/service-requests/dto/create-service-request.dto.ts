@@ -58,6 +58,6 @@ export class CreateServiceRequestDto {
   problemDescription?: string;
 
   @IsInt({ message: 'Admin ID harus berupa angka' })
-  @IsNotEmpty({ message: 'Admin ID wajib disertakan' })
-  adminId!: number;
+  @IsOptional()
+  adminId?: number;
 }

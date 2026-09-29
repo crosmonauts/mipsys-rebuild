@@ -11,8 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
+import { CurrentStaffId } from '../auth/current-staff-id.decorator';
 import { OrderPartsService } from './order-parts.service';
 import { CreateOrderPartDto } from './dto/create-order-part.dto';
+import { AddSubstitutePartDto } from './dto/add-substitute-part.dto';
 
 @ApiTags('Order Parts')
 @ApiBearerAuth('access-token')
@@ -27,12 +29,31 @@ export class OrderPartsController {
     return this.orderPartsService.addPart(dto);
   }
 
+  /**
+   * Part model lain yang tidak kompatibel: hanya admin yang boleh
+   * menyetujuinya, dan alasan wajib diisi agar tercatat.
+   */
+  @Post('substitute')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.CREATED)
+  async addSubstitutePart(
+    @Body() dto: AddSubstitutePartDto,
+    @CurrentStaffId() staffId: number | null,
+  ) {
+    return this.orderPartsService.addSubstitutePart({
+      ...dto,
+      approvedBy: staffId,
+    });
+  }
+
   @Get('sr/:serviceRequestId')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getBySR(@Param('serviceRequestId', ParseIntPipe) id: number) {
     return this.orderPartsService.getByServiceRequest(id);
   }
 
   @Get('sr/:serviceRequestId/total-cost')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getTotalCost(@Param('serviceRequestId', ParseIntPipe) id: number) {
     const total = await this.orderPartsService.getTotalPartsCost(id);
     return { serviceRequestId: id, totalPartsCost: total };

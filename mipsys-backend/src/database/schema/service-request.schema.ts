@@ -11,12 +11,19 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { staffRoleEnum, serviceTypeEnum, serviceStatusEnum } from './enums';
-import { categoryModels } from './category-model.schema';
 
 export const staff = pgTable('staff', {
   id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
   role: staffRoleEnum('role').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => sql`now()`),
+  createdBy: integer('created_by'),
+  updatedBy: integer('updated_by'),
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  deletedBy: integer('deleted_by'),
 });
 
 export const customers = pgTable('customers', {
@@ -25,15 +32,14 @@ export const customers = pgTable('customers', {
   phone: varchar('phone', { length: 50 }),
   address: text('address'),
   customerType: varchar('customer_type', { length: 50 }),
-});
-
-export const products = pgTable('products', {
-  id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
-  modelName: varchar('model_name', { length: 100 }).notNull(),
-  serialNumber: varchar('serial_number', { length: 100 }).unique().notNull(),
-  categoryModelId: integer('category_model_id').references(
-    () => categoryModels.id
-  ),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => sql`now()`),
+  createdBy: integer('created_by').references(() => staff.id),
+  updatedBy: integer('updated_by').references(() => staff.id),
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  deletedBy: integer('deleted_by').references(() => staff.id),
 });
 
 export const serviceRequests = pgTable(
@@ -45,7 +51,8 @@ export const serviceRequests = pgTable(
     incNo: varchar('inc_no', { length: 100 }),
     serviceType: serviceTypeEnum('service_type').notNull(),
     customerId: integer('customer_id').references(() => customers.id),
-    productId: integer('product_id').references(() => products.id),
+    modelName: varchar('model_name', { length: 100 }).notNull(),
+    serialNumber: varchar('serial_number', { length: 100 }).notNull(),
     adminId: integer('admin_id').references(() => staff.id),
     technicianCheckId: integer('tech_check_id').references(() => staff.id),
     incomingDate: date('incoming_date').notNull(),
@@ -71,12 +78,18 @@ export const serviceRequests = pgTable(
     updatedAt: timestamp('updated_at', { mode: 'date' })
       .defaultNow()
       .$onUpdate(() => sql`now()`),
+    createdBy: integer('created_by').references(() => staff.id),
+    updatedBy: integer('updated_by').references(() => staff.id),
+    deletedAt: timestamp('deleted_at', { mode: 'date' }),
+    deletedBy: integer('deleted_by').references(() => staff.id),
+    version: integer('version').default(1).notNull(),
   },
   (table) => ({
     ticketIdx: index('ticket_idx').on(table.ticketNumber),
     rmaIdx: index('rma_idx').on(table.rmaNo),
     customerIdx: index('sr_customer_idx').on(table.customerId),
-    productIdx: index('sr_product_idx').on(table.productId),
+    modelIdx: index('sr_model_idx').on(table.modelName),
+    serialIdx: index('sr_serial_idx').on(table.serialNumber),
     adminIdx: index('sr_admin_idx').on(table.adminId),
     techCheckIdx: index('sr_tech_check_idx').on(table.technicianCheckId),
     statusIdx: index('sr_status_idx').on(table.statusService),
@@ -98,9 +111,15 @@ export const serviceLogs = pgTable(
     action: varchar('action', { length: 100 }).notNull(),
     description: text('description'),
     performedBy: integer('performed_by').references(() => staff.id),
+    correlationId: varchar('correlation_id', { length: 100 }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => ({
     serviceRequestIdx: index('sl_sr_idx').on(table.serviceRequestId),
+    createdIdx: index('sl_created_idx').on(table.createdAt),
+    srCreatedIdx: index('sl_sr_created_idx').on(
+      table.serviceRequestId,
+      table.createdAt,
+    ),
   })
 );

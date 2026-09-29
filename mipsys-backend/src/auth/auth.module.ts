@@ -7,12 +7,28 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 
+function requiredJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'JWT_SECRET wajib diisi (min 32 karakter). Set di .env, jangan pakai default.',
+    );
+  }
+  if (
+    process.env.NODE_ENV === 'production' &&
+    secret === 'mipsys-dev-secret'
+  ) {
+    throw new Error('JWT_SECRET dev tidak boleh dipakai di production.');
+  }
+  return secret;
+}
+
 @Module({
   imports: [
     DatabaseModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'mipsys-dev-secret',
+      secret: requiredJwtSecret(),
       signOptions: {
         expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as StringValue,
       },

@@ -33,11 +33,19 @@ export const expenses = pgTable(
     category: expenseCategoryEnum('category').default('OTHER'),
     createdBy: integer('created_by').references(() => staff.id),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+    updatedBy: integer('updated_by').references(() => staff.id),
+    deletedAt: timestamp('deleted_at', { mode: 'date' }),
+    deletedBy: integer('deleted_by').references(() => staff.id),
   },
   (table) => ({
     expenseTypeIdx: index('exp_type_idx').on(table.expenseType),
     poIdx: index('exp_po_idx').on(table.poId),
     dateIdx: index('exp_date_idx').on(table.expenseDate),
+    categoryIdx: index('exp_category_idx').on(table.category),
+    dateTypeIdx: index('exp_date_type_idx').on(table.expenseDate, table.expenseType),
     amountPositive: check('chk_exp_amount_positive', sql`${table.amount} > 0`),
   })
 );

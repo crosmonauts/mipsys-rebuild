@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { usePrintCompany } from '@/src/lib/use-print-company';
 import { useReactToPrint } from 'react-to-print';
 import { InvoicePrintTemplate, InvoicePrintItem } from '@/src/components/layout/InvoicePrintTemplate';
 import { financeApi } from '@/src/features/finance/api/finance-api';
@@ -25,6 +26,7 @@ interface LoadedInvoice {
 }
 
 export default function InvoicePreviewPage() {
+  const printCompany = usePrintCompany();
   const [invoices, setInvoices] = useState<LoadedInvoice[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [ticketInput, setTicketInput] = useState('');
@@ -288,6 +290,10 @@ export default function InvoicePreviewPage() {
                   month: 'long',
                   day: 'numeric',
                 })}
+                companyName={printCompany?.name}
+                companyAddress={printCompany?.address}
+                companyPhone={printCompany?.phone}
+                companyLogoUrl={printCompany?.logoUrl ?? null}
                 ticketNumber={selectedInvoice.ticketNumber}
                 customer={
                   srCustomer

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
 import { StockMovementsModule } from '../stock-movements/stock-movements.module';
+import { InventoryModule } from '../inventory/inventory.module';
 import { PurchaseOrdersController } from './purchase-orders.controller';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { PoItemsService } from './po-items.service';
 
 @Module({
-  imports: [DatabaseModule, StockMovementsModule],
+  imports: [DatabaseModule, StockMovementsModule, InventoryModule],
   controllers: [PurchaseOrdersController],
   providers: [PurchaseOrdersService, PoItemsService],
   exports: [PurchaseOrdersService],

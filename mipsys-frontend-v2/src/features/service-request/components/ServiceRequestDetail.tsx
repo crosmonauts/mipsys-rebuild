@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useReducer, useEffect, useCallback } from 'react';
+import React, { useReducer, useEffect, useCallback, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -37,6 +37,8 @@ import { ProblemDescription } from './ProblemDescription';
 import { RepairTimeline } from './RepairTimeline';
 import { PartsUsedList } from './PartsUsedList';
 import { useOrderParts } from '../hooks/useOrderParts';
+import { SubstitutePartPanel } from './SubstitutePartPanel';
+import { extractApiError, isQuoteStaleError } from '@/src/lib/api-error';
 
 const statusToBadge: Record<
   string,
@@ -139,10 +141,13 @@ const ServiceRequestDetail = () => {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const isTechnician = user?.role === 'TECHNICIAN' || user?.role === 'SUPER_ADMIN';
   const [state, dispatch] = useReducer(detailReducer, INITIAL_STATE);
+  // Menandai bahwa komposisi offer berubah setelah being saved, so approval is blocked.
+  const [quoteStale, setQuoteStale] = useState(false);
   const {
     parts,
     totalFee,
     isLoading: partsLoading,
+    refetch: refetchParts,
   } = useOrderParts(data?.id ?? null);
 
   const hasUnsavedChanges = state.isEditing;
@@ -230,9 +235,18 @@ const ServiceRequestDetail = () => {
       }
       await refetch();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Gagal menyetujui penawaran';
-      toast.error(message);
+      const message = extractApiError(error, 'Gagal menyetujui penawaran');
+      if (isQuoteStaleError(error)) {
+        // Persetujuan customer sudah basi:Composition offer must be updated and re-issued.
+        setQuoteStale(true);
+        toast.error(
+          `${message} Buka Penawaran untuk menyimpan & mencetak ulang.`,
+          { duration: 8000 },
+        );
+      } else {
+        setQuoteStale(false);
+        toast.error(message);
+      }
     } finally {
       dispatch({ type: 'isApproving', payload: false });
       dispatch({ type: 'showApproveConfirm', payload: false });
@@ -463,6 +477,15 @@ const ServiceRequestDetail = () => {
                 totalFee={totalFee}
                 isLoading={partsLoading}
               />
+              {isAdmin && data?.id && (
+                <div className="mt-4">
+                  <SubstitutePartPanel
+                    serviceRequestId={data.id}
+                    modelName={data.modelName ?? ''}
+                    onAdded={refetchParts}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -583,6 +606,28 @@ const ServiceRequestDetail = () => {
                             <FileText size={14} aria-hidden="true" /> CETAK
                             PENAWARAN
                           </Button>
+                          {isAdmin && quoteStale && (
+                            <div className="w-full rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 space-y-2">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                                Penawaran perlu diperbarui
+                              </p>
+                              <p className="text-[11px] text-[var(--foreground)]/80">
+                                Komposisi part berubah setelah penawaran disimpan,
+                                sehingga persetujuan customer tidak lagi sesuai.
+                                Simpan dan cetak ulang penawaran sebelum menyetujui.
+                              </p>
+                              <Button
+                                className="w-full h-10 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-amber-600 text-white hover:bg-amber-700"
+                                onClick={() => {
+                                  setQuoteStale(false);
+                                  dispatch({ type: 'showQuote', payload: true });
+                                }}
+                              >
+                                <FileText size={14} aria-hidden="true" />
+                                Simpan &amp; Cetak Ulang Penawaran
+                              </Button>
+                            </div>
+                          )}
                           {isAdmin && (
                             <Button
                               className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
@@ -728,7 +773,7 @@ const ServiceRequestDetail = () => {
                     (data.statusService === 'CANCEL' ||
                       ((data.statusService === 'DONE' ||
                         data.statusService === 'READY') &&
-                        (data as any).hasInvoicePaid)) && (
+                        (data.hasInvoicePaid ?? false))) && (
                       <Button
                         className="w-full h-12 rounded-xl text-[10px] font-black tracking-widest gap-2 bg-[var(--primary)]/15 text-[var(--primary)] hover:bg-[var(--primary)]/25"
                         onClick={() =>
@@ -854,6 +899,7 @@ const ServiceRequestDetail = () => {
           isOpen={state.showQuote}
           onClose={() => dispatch({ type: 'showQuote', payload: false })}
           onSuccess={() => {
+            setQuoteStale(false);
             refetch();
           }}
           initialServiceFee={hasSavedQuote ? data?.serviceFee : undefined}

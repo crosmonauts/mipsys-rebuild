@@ -23,6 +23,9 @@ export const stockMovements = pgTable(
     referenceId: varchar('reference_id', { length: 100 }),
     performedBy: integer('performed_by').references(() => staff.id),
     notes: text('notes'),
+    stockBefore: integer('stock_before'),
+    stockAfter: integer('stock_after'),
+    correlationId: varchar('correlation_id', { length: 100 }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => ({
@@ -31,6 +34,10 @@ export const stockMovements = pgTable(
     referenceIdx: index('sm_reference_idx').on(
       table.referenceType,
       table.referenceId
+    ),
+    partCreatedIdx: index('sm_part_created_idx').on(
+      table.sparePartId,
+      table.createdAt,
     ),
   })
 );

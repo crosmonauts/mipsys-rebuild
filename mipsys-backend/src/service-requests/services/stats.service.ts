@@ -1,6 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../database/schema';
+import { serviceRequests } from '../../database/schema';
 
 @Injectable()
 export class ServiceRequestStatsService {
@@ -12,27 +14,34 @@ export class ServiceRequestStatsService {
 
   async getDashboardStats() {
     try {
-      const allSR = await this.db.query.serviceRequests.findMany();
+      const rows = await this.db
+        .select({
+          statusService: serviceRequests.statusService,
+          statusSystem: serviceRequests.statusSystem,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(serviceRequests)
+        .groupBy(serviceRequests.statusService, serviceRequests.statusSystem);
 
-      const pending = allSR.filter(
-        (s) =>
-          s.statusService === 'WAITING_CHECK' ||
-          s.statusService === 'WAITING_APPROVE'
-      ).length;
-      const inService = allSR.filter(
-        (s) => s.statusService === 'SERVICE'
-      ).length;
-      const awaitingParts = allSR.filter(
-        (s) => s.statusService === 'AWAITING_PARTS'
-      ).length;
-      const ready = allSR.filter((s) => s.statusService === 'DONE').length;
-      const closed = allSR.filter((s) => s.statusSystem === 'CLOSED').length;
-      const cancelled = allSR.filter(
-        (s) => s.statusService === 'CANCEL'
-      ).length;
+      const byStatus = new Map<string, number>();
+      let total = 0;
+      let closed = 0;
+      for (const r of rows) {
+        const c = Number(r.count) || 0;
+        total += c;
+        if (r.statusService) byStatus.set(r.statusService, (byStatus.get(r.statusService) ?? 0) + c);
+        if (r.statusSystem === 'CLOSED') closed += c;
+      }
+
+      const pending =
+        (byStatus.get('WAITING_CHECK') ?? 0) + (byStatus.get('WAITING_APPROVE') ?? 0);
+      const inService = byStatus.get('SERVICE') ?? 0;
+      const awaitingParts = byStatus.get('AWAITING_PARTS') ?? 0;
+      const ready = byStatus.get('DONE') ?? 0;
+      const cancelled = byStatus.get('CANCEL') ?? 0;
 
       return {
-        total: allSR.length,
+        total,
         pending,
         inService,
         awaitingParts,

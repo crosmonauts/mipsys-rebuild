@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { eq, and, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, ilike, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import {
@@ -19,6 +19,10 @@ import { CreatePoHeaderDto, CreatePoItemDto } from './dto/create-po-header.dto';
 import { ReceivePoDto } from './dto/receive-po.dto';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { PoItemsService } from './po-items.service';
+import {
+  PartCompatibilityService,
+  normalizeModelName,
+} from '../inventory/part-compatibility.service';
 import { validatePoTransition, PoStatusType } from './po-state-machine.guard';
 
 type PoItem = typeof poItems.$inferSelect;
@@ -31,6 +35,7 @@ export class PurchaseOrdersService {
     @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>,
     private stockMovementsService: StockMovementsService,
     private poItemsService: PoItemsService,
+    private compatService: PartCompatibilityService,
     private eventEmitter: EventEmitter2
   ) {}
 
@@ -105,9 +110,7 @@ export class PurchaseOrdersService {
   private mergeDuplicateItems(items: CreatePoItemDto[]): CreatePoItemDto[] {
     const map = new Map<string, CreatePoItemDto>();
     for (const item of items) {
-      const key = item.sparePartId
-        ? `sp:${item.sparePartId}`
-        : `name:${item.partName ?? ''}|${item.modelName ?? ''}`;
+      const key = normalizePoItemKey(item);
       const existing = map.get(key);
       if (existing) {
         existing.quantity += item.quantity;
@@ -137,7 +140,7 @@ export class PurchaseOrdersService {
         .insert(purchaseOrders)
         .values({
           poNumber,
-          supplierName: dto.supplierName || 'EPSON',
+          supplierName: dto.supplierName?.trim() || 'EPSON',
           status: 'DRAFT',
           requestedBy: dto.requestedBy,
           notes: dto.notes?.trim() ?? null,
@@ -169,7 +172,7 @@ export class PurchaseOrdersService {
       await tx
         .update(purchaseOrders)
         .set({
-          supplierName: dto.supplierName || 'EPSON',
+          supplierName: dto.supplierName?.trim() || 'EPSON',
           notes: dto.notes?.trim() ?? null,
           totalAmount,
           updatedAt: new Date(),
@@ -242,14 +245,17 @@ export class PurchaseOrdersService {
         if (!sparePartId) {
           const partName = poItem.partName || `PO Item #${poItem.id}`;
 
-          const matchConditions = [eq(spareParts.partName, partName)];
-          if (poItem.modelName) {
-            matchConditions.push(eq(spareParts.modelName, poItem.modelName));
-          }
-
-          const existingPart = await tx.query.spareParts.findFirst({
-            where: and(...matchConditions),
+          const candidates = await tx.query.spareParts.findMany({
+            where: ilike(spareParts.partName, partName.trim()),
+            limit: 20,
           });
+          const wantModel = normalizeModelName(poItem.modelName);
+          const existingPart =
+            candidates.find(
+              (c) =>
+                !poItem.modelName ||
+                normalizeModelName(c.modelName) === wantModel
+            ) ?? null;
 
           if (existingPart) {
             sparePartId = existingPart.id;
@@ -257,6 +263,20 @@ export class PurchaseOrdersService {
               .update(poItems)
               .set({ sparePartId, partName })
               .where(eq(poItems.id, poItem.id));
+            if (poItem.modelName) {
+              const categoryId = await this.compatService.resolveCategoryId(
+                poItem.modelName,
+                tx
+              );
+              if (categoryId !== null) {
+                await this.compatService.ensureCompatibility(
+                  sparePartId,
+                  categoryId,
+                  dto.performedBy ?? null,
+                  tx
+                );
+              }
+            }
           } else {
             const [newPart] = await tx
               .insert(spareParts)
@@ -279,6 +299,21 @@ export class PurchaseOrdersService {
               .update(poItems)
               .set({ sparePartId, partName })
               .where(eq(poItems.id, poItem.id));
+
+            if (poItem.modelName) {
+              const categoryId = await this.compatService.resolveCategoryId(
+                poItem.modelName,
+                tx
+              );
+              if (categoryId !== null) {
+                await this.compatService.ensureCompatibility(
+                  sparePartId,
+                  categoryId,
+                  dto.performedBy ?? null,
+                  tx
+                );
+              }
+            }
           }
         }
 
@@ -316,13 +351,15 @@ export class PurchaseOrdersService {
           'PO_RECEIVE'
         );
 
-        await tx
-          .update(spareParts)
-          .set({
-            price: poItem.unitPrice,
-            updatedAt: new Date(),
-          })
-          .where(eq(spareParts.id, sparePartId));
+        if (Number(poItem.unitPrice) > 0) {
+          await tx
+            .update(spareParts)
+            .set({
+              price: poItem.unitPrice,
+              updatedAt: new Date(),
+            })
+            .where(eq(spareParts.id, sparePartId));
+        }
 
         if (cumulativeReceived < poItem.quantity) {
           allFullyReceived = false;
@@ -367,27 +404,32 @@ export class PurchaseOrdersService {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const counterKey = `po_counter_${dateStr}`;
 
-    await this.db
+    const [row] = await this.db
       .insert(financeSettings)
       .values({
         key: counterKey,
-        value: '0',
+        value: '1',
         description: `PO counter for ${dateStr}`,
       })
-      .onConflictDoNothing();
-
-    await this.db
-      .update(financeSettings)
-      .set({
-        value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)`,
+      .onConflictDoUpdate({
+        target: financeSettings.key,
+        set: {
+          value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)`,
+        },
       })
-      .where(eq(financeSettings.key, counterKey));
-
-    const updated = await this.db.query.financeSettings.findFirst({
-      where: eq(financeSettings.key, counterKey),
-    });
-    const counter = updated ? parseInt(updated.value, 10) : 1;
+      .returning({ value: financeSettings.value });
+    const counter = row ? parseInt(row.value, 10) : 1;
 
     return `${prefix}-${dateStr}-${String(counter).padStart(4, '0')}`;
   }
+}
+
+export function normalizePoItemKey(item: {
+  sparePartId?: number | null;
+  partName?: string | null;
+  modelName?: string | null;
+}): string {
+  if (item.sparePartId) return `sp:${item.sparePartId}`;
+  const norm = (v?: string | null) => (v ?? '').trim().toLowerCase();
+  return `name:${norm(item.partName)}|${norm(item.modelName)}`;
 }

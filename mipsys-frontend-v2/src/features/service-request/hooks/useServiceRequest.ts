@@ -21,6 +21,7 @@ export interface ServiceRequestDetail {
   serviceFee: string;
   partFee: string;
   hasInvoice?: boolean;
+  hasInvoicePaid?: boolean;
 }
 
 export const useServiceRequest = (ticketNumber: string) => {
@@ -52,6 +53,7 @@ export const useServiceRequest = (ticketNumber: string) => {
         serviceFee: res.serviceFee || '0',
         partFee: res.partFee || '0',
         hasInvoice: res.hasInvoice ?? false,
+        hasInvoicePaid: res.hasInvoicePaid ?? false,
       });
     } catch (error) {
       toast.error('Gagal sinkronisasi data unit');

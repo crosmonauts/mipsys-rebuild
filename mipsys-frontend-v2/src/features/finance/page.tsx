@@ -7,7 +7,6 @@ import {
   CreditCard,
   AlertCircle,
   CheckCircle,
-  Ban,
   Eye,
   DoorClosed,
 } from 'lucide-react';

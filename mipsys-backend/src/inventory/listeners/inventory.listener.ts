@@ -74,26 +74,21 @@ export class InventoryListener {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const counterKey = `po_counter_${dateStr}`;
 
-    await this.db
+    const [row] = await this.db
       .insert(financeSettings)
       .values({
         key: counterKey,
-        value: '0',
+        value: '1',
         description: `PO counter for ${dateStr}`,
       })
-      .onConflictDoNothing();
-
-    await this.db
-      .update(financeSettings)
-      .set({
-        value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)`,
+      .onConflictDoUpdate({
+        target: financeSettings.key,
+        set: {
+          value: sql`CAST(CAST(${financeSettings.value} AS INTEGER) + 1 AS TEXT)`,
+        },
       })
-      .where(eq(financeSettings.key, counterKey));
-
-    const updated = await this.db.query.financeSettings.findFirst({
-      where: eq(financeSettings.key, counterKey),
-    });
-    const counter = updated ? parseInt(updated.value, 10) : 1;
+      .returning({ value: financeSettings.value });
+    const counter = row ? parseInt(row.value, 10) : 1;
 
     return `PO-AUTO-${dateStr}-${String(counter).padStart(4, '0')}`;
   }

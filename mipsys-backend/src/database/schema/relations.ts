@@ -2,11 +2,11 @@ import { relations } from 'drizzle-orm';
 import {
   serviceRequests,
   customers,
-  products,
   staff,
   serviceLogs,
 } from './service-request.schema';
 import { orderParts, spareParts } from './spare-part.schema';
+import { partModelCompatibilities } from './part-compatibility.schema';
 import { categoryModels } from './category-model.schema';
 import { purchaseOrders } from './purchase-order.schema';
 import { poItems } from './po-items.schema';
@@ -21,10 +21,6 @@ export const serviceRequestsRelations = relations(
     customer: one(customers, {
       fields: [serviceRequests.customerId],
       references: [customers.id],
-    }),
-    product: one(products, {
-      fields: [serviceRequests.productId],
-      references: [products.id],
     }),
     admin: one(staff, {
       fields: [serviceRequests.adminId],
@@ -88,14 +84,22 @@ export const sparePartsRelations = relations(spareParts, ({ one, many }) => ({
     fields: [spareParts.categoryModelId],
     references: [categoryModels.id],
   }),
+  compatibilities: many(partModelCompatibilities),
 }));
 
-export const productsRelations = relations(products, ({ one }) => ({
-  categoryModel: one(categoryModels, {
-    fields: [products.categoryModelId],
-    references: [categoryModels.id],
-  }),
-}));
+export const partModelCompatibilitiesRelations = relations(
+  partModelCompatibilities,
+  ({ one }) => ({
+    sparePart: one(spareParts, {
+      fields: [partModelCompatibilities.sparePartId],
+      references: [spareParts.id],
+    }),
+    categoryModel: one(categoryModels, {
+      fields: [partModelCompatibilities.categoryModelId],
+      references: [categoryModels.id],
+    }),
+  })
+);
 
 export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
   sparePart: one(spareParts, {

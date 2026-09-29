@@ -18,10 +18,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @Inject('DB_CONNECTION') private db: NodePgDatabase<typeof schema>
   ) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.length < 32) {
+      throw new Error(
+        'JWT_SECRET wajib diisi (min 32 karakter). Set di .env, jangan pakai default.',
+      );
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'mipsys-dev-secret',
+      secretOrKey: secret,
+      algorithms: ['HS256'],
+      issuer: 'mipsys-erp',
+      audience: 'mipsys-api',
     });
   }
 

@@ -29,6 +29,7 @@ export class ServiceRequestsController {
   constructor(private readonly serviceRequestService: ServiceRequestService) {}
 
   @Get('dashboard')
+  @Roles('ADMIN', 'TECHNICIAN')
   async findAll(
     @Query('search') search?: string,
     @Query('page') page?: string,
@@ -44,6 +45,7 @@ export class ServiceRequestsController {
   }
 
   @Get('export/xlsx')
+  @Roles('ADMIN')
   async exportXlsx(
     @Query('search') search?: string,
     @Query('status') status?: string,
@@ -59,16 +61,19 @@ export class ServiceRequestsController {
   }
 
   @Get('activities')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getActivities() {
     return await this.serviceRequestService.getActivities();
   }
 
   @Get('stats')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getStats() {
     return await this.serviceRequestService.getDashboardStats();
   }
 
   @Get(':id')
+  @Roles('ADMIN', 'TECHNICIAN')
   async getDetail(@Param('id') id: string) {
     return await this.serviceRequestService.findOne(id);
   }
@@ -78,9 +83,14 @@ export class ServiceRequestsController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() createDto: CreateServiceRequestDto,
-    @CurrentStaffId() staffId: number
+    @CurrentStaffId() staffId: number | null
   ) {
-    return await this.serviceRequestService.createEntry(createDto, staffId);
+    // adminId selalu dari JWT (server-authoritative); superadmin tanpa
+    // staff tercatat sebagai null (kolom admin_id nullable).
+    return await this.serviceRequestService.createEntry(
+      createDto,
+      staffId ?? null,
+    );
   }
 
   @Patch(':ticketNumber')
@@ -102,9 +112,11 @@ export class ServiceRequestsController {
   async diagnose(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: DiagnoseSrDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) dto.performedBy = staffId;
+    // Actor selalu dari JWT (server-authoritative). Nilai dari client
+    // diabaikan agar tidak bisa spoofing / melanggar FK staff(id).
+    dto.performedBy = staffId ?? undefined;
     return this.serviceRequestService.diagnose(ticketNumber, dto);
   }
 
@@ -114,9 +126,9 @@ export class ServiceRequestsController {
   async saveQuote(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: SaveQuoteDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) (dto as any).performedBy = staffId;
+    (dto as any).performedBy = staffId ?? undefined;
     return this.serviceRequestService.saveQuote(ticketNumber, dto);
   }
 
@@ -126,9 +138,9 @@ export class ServiceRequestsController {
   async cancelQuote(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: CancelQuoteDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) dto.performedBy = staffId;
+    dto.performedBy = staffId ?? undefined;
     return this.serviceRequestService.cancelQuote(ticketNumber, dto);
   }
 
@@ -138,9 +150,9 @@ export class ServiceRequestsController {
   async retryAwaitingParts(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: CancelQuoteDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) dto.performedBy = staffId;
+    dto.performedBy = staffId ?? undefined;
     return this.serviceRequestService.retryAwaitingParts(ticketNumber, dto);
   }
 
@@ -150,9 +162,9 @@ export class ServiceRequestsController {
   async closeTicket(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: { performedBy?: number },
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) dto.performedBy = staffId;
+    dto.performedBy = staffId ?? undefined;
     return this.serviceRequestService.closeTicket(ticketNumber, dto);
   }
 
@@ -162,9 +174,9 @@ export class ServiceRequestsController {
   async approveQuote(
     @Param('ticketNumber') ticketNumber: string,
     @Body() dto: ApproveQuoteDto,
-    @CurrentStaffId() staffId: number,
+    @CurrentStaffId() staffId: number | null,
   ) {
-    if (staffId) (dto as any).performedBy = staffId;
+    (dto as any).performedBy = staffId ?? undefined;
     return this.serviceRequestService.approveQuote(ticketNumber, dto);
   }
 }

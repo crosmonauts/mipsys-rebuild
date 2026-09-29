@@ -59,7 +59,7 @@ export class PoItemsService {
     poItemId: number,
     receivedQty: number
   ) {
-    const item = await this.db.query.poItems.findFirst({
+    const item = await tx.query.poItems.findFirst({
       where: eq(poItems.id, poItemId),
     });
     if (!item) return;

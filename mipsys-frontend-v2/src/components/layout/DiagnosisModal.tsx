@@ -25,6 +25,7 @@ import { Input } from '@/src/components/ui/input';
 import { useAuth } from '@/src/lib/auth-context';
 import { srApi } from '@/src/features/service-request/api/sr-api';
 import { orderPartsApi } from '@/src/features/service-request/api/order-parts-api';
+import { extractApiError } from '@/src/lib/api-error';
 import { OrderPart } from '@/src/features/service-request/api/order-parts-api';
 
 interface DiagnosisModalProps {
@@ -60,6 +61,7 @@ export function DiagnosisModal({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [existingParts, setExistingParts] = useState<OrderPart[]>([]);
+  const [srModel, setSrModel] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const newStatus = 'WAITING_APPROVE';
@@ -73,6 +75,10 @@ export function DiagnosisModal({
   useEffect(() => {
     if (!isOpen || !serviceRequestId) return;
     fetchExistingParts();
+    srApi.getDetail(ticketNumber).then(
+      (d: any) => setSrModel(d?.modelName || d?.model_name || ''),
+      () => setSrModel('')
+    );
   }, [isOpen, serviceRequestId]);
 
   useEffect(() => {
@@ -83,7 +89,8 @@ export function DiagnosisModal({
 
     const debounce = setTimeout(() => searchParts(searchQuery), 400);
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, srModel]);
 
   async function handleRemoveExisting(partId: number) {
     try {
@@ -91,8 +98,8 @@ export function DiagnosisModal({
       toast.success('Part dihapus');
       await fetchExistingParts();
       onSuccess();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Gagal hapus part');
+    } catch (e: unknown) {
+      toast.error(extractApiError(e, 'Gagal hapus part'));
     }
   }
 
@@ -116,7 +123,7 @@ export function DiagnosisModal({
   async function searchParts(query: string) {
     setIsSearching(true);
     try {
-      const data = await srApi.searchSpareParts(query);
+      const data = await srApi.searchSpareParts(query, srModel || undefined);
       setSearchResults(Array.isArray(data) ? data : []);
     } catch {
       setSearchResults([]);
@@ -129,6 +136,11 @@ export function DiagnosisModal({
     const alreadySelected = selectedParts.find((p) => p.sparePartId === part.id);
     if (alreadySelected) {
       toast.error('Part sudah ditambahkan');
+      return;
+    }
+    if (part.compatible === false) {
+      const allowed = (part.compatibleModels ?? []).join(', ') || 'tidak ada model terdaftar';
+      toast.error(`Part tidak kompatibel dengan ${srModel || 'model unit ini'}. Cocok untuk: ${allowed}.`);
       return;
     }
 
@@ -176,9 +188,8 @@ export function DiagnosisModal({
       toast.success(`Status → ${newStatus}. ${selectedParts.length} part diusulkan.`);
       onSuccess();
       onClose();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal menyimpan diagnosis';
-      toast.error(message);
+    } catch (e: unknown) {
+      toast.error(extractApiError(e, 'Gagal menyimpan diagnosis'));
     } finally {
       setIsSubmitting(false);
     }
@@ -218,6 +229,13 @@ export function DiagnosisModal({
                 onRemovePart={removeSelectedPart}
                 dropdownRef={dropdownRef}
               />
+              {currentStatus === 'WAITING_APPROVE' && (
+                <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-[11px] text-[var(--foreground)]/80">
+                  Revisi pada status menunggu approve akan membuat persetujuan
+                  pelanggan basi. Setelah selesai, simpan ulang dan cetak ulang
+                  penawaran sebelum menyetujui.
+                </p>
+              )}
               <ExistingPartsList parts={existingParts} canEdit={canEditExisting} onRemove={handleRemoveExisting} />
             </div>
 
@@ -391,6 +409,7 @@ function PartSearchResult({
   part: any;
   onSelect: (part: any) => void;
 }) {
+  const incompatible = part.compatible === false;
   return (
     <Button
       variant="ghost"
@@ -400,7 +419,17 @@ function PartSearchResult({
     >
       <div className="text-left">
         <p className="font-bold text-[var(--foreground)] text-sm">{part.partName}</p>
-        <p className="text-[10px] text-[var(--muted-foreground)]">{part.partCode}</p>
+        <p className="text-[10px] text-[var(--muted-foreground)]">
+          {part.partCode}
+          {part.isUniversal ? (
+            <span className="ml-1 rounded bg-[var(--accent)]/15 px-1 py-px font-black uppercase text-[var(--accent)]">Universal</span>
+          ) : (part.compatibleModels ?? []).length > 0 ? (
+            <span className="ml-1">• {(part.compatibleModels ?? []).join(', ')}</span>
+          ) : null}
+          {incompatible && (
+            <span className="ml-1 rounded bg-[var(--destructive)]/15 px-1 py-px font-black uppercase text-[var(--destructive)]">Tidak kompatibel</span>
+          )}
+        </p>
       </div>
       <div className="text-right">
         <p className="font-black text-[var(--primary)] text-sm">

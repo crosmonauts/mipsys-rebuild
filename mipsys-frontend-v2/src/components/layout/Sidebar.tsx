@@ -11,6 +11,7 @@ import {
   Wallet,
   Users,
   ShoppingBag,
+  ChartBar,
 } from '@phosphor-icons/react';
 import { Printer, SignOut, X } from '@phosphor-icons/react';
 
@@ -49,6 +50,11 @@ export function Sidebar({
             title: 'Finance & Billing',
             icon: <Wallet size={20} />,
             link: '/finance',
+          },
+          {
+            title: 'Laporan',
+            icon: <ChartBar size={20} />,
+            link: '/reports',
           },
           {
             title: 'Master Database',

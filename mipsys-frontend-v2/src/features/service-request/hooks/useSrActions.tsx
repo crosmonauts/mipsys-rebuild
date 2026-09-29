@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { srApi } from '../api/sr-api';
 import { financeApi } from '../../finance/api/finance-api';
+import { extractApiError } from '@/src/lib/api-error';
 import type { ServiceRequestDetail } from './useServiceRequest';
 
 type DispatchFn = (action: { type: string; payload: unknown }) => void;
@@ -57,8 +58,7 @@ export function useSrActions(
       }
       await refetch();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal menyetujui penawaran';
-      toast.error(message);
+      toast.error(extractApiError(error, 'Gagal menyetujui penawaran'));
     } finally {
       dispatch({ type: 'isApproving', payload: false });
     }

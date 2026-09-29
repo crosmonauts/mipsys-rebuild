@@ -24,7 +24,7 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
     if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
+      throw new ForbiddenException('Akses ditolak: role wajib didefinisikan.');
     }
 
     const request = context.switchToHttp().getRequest<{ user?: { role?: string } }>();
