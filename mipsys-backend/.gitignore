@@ -17,9 +17,14 @@ lerna-debug.log*
 .DS_Store
 
 # Tests
+# Folder /test sengaja TIDAK diabaikan: spec adalah bukti integritas
+# dan harus ikut ter-commit agar bisa direview dan dijalankan CI.
+# Yang diabaikan hanya hasil build spec (artefak tsc) dan coverage.
 /coverage
 /.nyc_output
-/test
+/test/**/*.js
+/test/**/*.js.map
+/test/**/*.d.ts
 
 # IDEs and editors
 /.idea
