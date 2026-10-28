@@ -187,23 +187,6 @@ export const QuotePrintTemplate = React.forwardRef<
               </td>
             </tr>
           ))}
-          <tr>
-            <td className="text-center text-stone-500 border border-stone-300 px-3 py-2 text-xs">
-              {parts.length + 1}
-            </td>
-            <td className="font-semibold border border-stone-300 px-3 py-2 text-xs">
-              Biaya Jasa (Service Fee)
-            </td>
-            <td className="text-center border border-stone-300 px-3 py-2 text-xs">
-              1
-            </td>
-            <td className="text-right border border-stone-300 px-3 py-2 text-xs">
-              Rp {serviceFee.toLocaleString('id-ID')}
-            </td>
-            <td className="text-right font-semibold border border-stone-300 px-3 py-2 text-xs">
-              Rp {serviceFee.toLocaleString('id-ID')}
-            </td>
-          </tr>
         </tbody>
       </table>
 

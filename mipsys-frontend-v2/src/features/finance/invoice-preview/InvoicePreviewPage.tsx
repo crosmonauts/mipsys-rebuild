@@ -144,41 +144,83 @@ export default function InvoicePreviewPage() {
     }
   }
 
-  // Build items for template — REAL DATA ONLY, zero hardcode RAM 8GB DDR4
+  /**
+   * Item tabel hanya sparepart. Biaya jasa tidak pernah menjadi baris
+   * tabel; nominalnya diteruskan ke calcInvoice sebagai serviceFee.
+   * Kalau jasa ikut dihitung dari item, menghapus baris tabel ini ikut
+   * menghapus jasa dari subtotal, PPN, dan total.
+   */
+  const serviceFee = Number(selectedInvoice?.serviceFee || 0);
+
   const templateItems: InvoicePrintItem[] = React.useMemo(() => {
     if (!selectedInvoice) return [];
 
-    // If we have real SR parts, use them directly (each part is line item)
     if (srParts.length > 0) {
-      const items: InvoicePrintItem[] = [];
-      // Service fee as first line if >0
-      const svc = Number(selectedInvoice.serviceFee || 0);
-      if (svc > 0) {
-        items.push({ id: 'svc', name: 'Biaya Jasa (Service Fee)', qty: 1, unitPrice: svc });
-      }
-      srParts.forEach((p, idx) => {
-        items.push({
-          id: `part-${idx}`,
-          name: p.partName,
-          qty: Number(p.quantity) || 0,
-          unitPrice: Number(p.unitPrice) || 0,
-        });
-      });
-      return items;
+      return srParts.map((p, idx) => ({
+        id: `part-${idx}`,
+        name: p.partName,
+        qty: Number(p.quantity) || 0,
+        unitPrice: Number(p.unitPrice) || 0,
+      }));
     }
 
-    // Fallback: invoice only has aggregate partFee — show as single aggregated line (still real data)
-    const serviceFee = Number(selectedInvoice.serviceFee || 0);
+    // Fallback: invoice hanya menyimpan total part sebagai agregat.
     const partFee = Number(selectedInvoice.partFee || 0);
-    const items: InvoicePrintItem[] = [];
-    if (serviceFee > 0) items.push({ id: 'svc', name: 'Biaya Jasa (Service Fee)', qty: 1, unitPrice: serviceFee });
-    if (partFee > 0) items.push({ id: 'part', name: 'Biaya Sparepart', qty: 1, unitPrice: partFee });
-    // If both zero but invoice exists, show empty (handled by template)
-    return items;
+    return partFee > 0
+      ? [{ id: 'part', name: 'Biaya Sparepart', qty: 1, unitPrice: partFee }]
+      : [];
   }, [selectedInvoice, srParts]);
 
-  const calc = React.useMemo(() => calcInvoice(templateItems, selectedInvoice ? Number(selectedInvoice.ppnRate || 11) : 11), [templateItems, selectedInvoice]);
-  const terbilangText = React.useMemo(() => terbilang(calc.grandTotal), [calc.grandTotal]);
+  const calc = React.useMemo(
+    () =>
+      calcInvoice(
+        templateItems,
+        selectedInvoice ? Number(selectedInvoice.ppnRate || 11) : 11,
+        serviceFee,
+      ),
+    [templateItems, selectedInvoice, serviceFee],
+  );
+
+  /**
+   * Angka resmi invoice berasal dari server. Hitung ulang di browser
+   * hanya pembanding: bila berbeda, tampilkan peringatan alih-alih
+   * diam-diam mencetak nominal yang berbeda dari invoice tersimpan.
+   */
+  const serverAmounts = React.useMemo(() => {
+    if (!selectedInvoice) return null;
+    return {
+      serviceFee: Number(selectedInvoice.serviceFee || 0),
+      partFee: Number(selectedInvoice.partFee || 0),
+      ppn: Number(selectedInvoice.ppn || 0),
+      total: Number(selectedInvoice.total || 0),
+    };
+  }, [selectedInvoice]);
+
+  const mismatch = React.useMemo(() => {
+    if (!serverAmounts) return null;
+    const diffs: string[] = [];
+    if (Math.round(calc.partsSubtotal) !== Math.round(serverAmounts.partFee)) {
+      diffs.push('total part');
+    }
+    if (Math.round(calc.serviceFee) !== Math.round(serverAmounts.serviceFee)) {
+      diffs.push('biaya jasa');
+    }
+    if (Math.round(calc.grandTotal) !== Math.round(serverAmounts.total)) {
+      diffs.push('total akhir');
+    }
+    return diffs.length > 0 ? diffs : null;
+  }, [calc, serverAmounts]);
+
+  // Yang dicetak selalu angka server.
+  const printable = {
+    serviceFee: serverAmounts?.serviceFee ?? 0,
+    partFee: serverAmounts?.partFee ?? 0,
+    subtotal: (serverAmounts?.serviceFee ?? 0) + (serverAmounts?.partFee ?? 0),
+    ppn: serverAmounts?.ppn ?? 0,
+    total: serverAmounts?.total ?? 0,
+  };
+
+  const TERBILANG = React.useMemo(() => terbilang(printable.total), [printable.total]);
 
   return (
     <div className="min-h-screen bg-[#f8f7f5] p-4 sm:p-6 lg:p-8">
@@ -248,24 +290,35 @@ export default function InvoicePreviewPage() {
             </form>
           </div>
 
+          {mismatch && (
+            <p
+              className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900"
+              role="alert"
+            >
+              Peringatan: hitung ulang di browser tidak sama dengan invoice
+              tersimpan ({mismatch.join(', ')}). Yang dicetak memakai angka
+              resmi dari server.
+            </p>
+          )}
+
           {/* Kalkulasi debug — visible, high contrast */}
           {selectedInvoice && (
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-stone-900 p-4 text-white">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-300">Subtotal</p>
-                <p className="text-sm font-bold">Rp {calc.subtotal.toLocaleString('id-ID')}</p>
+                <p className="text-sm font-bold">Rp {printable.subtotal.toLocaleString('id-ID')}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-300">PPN {calc.ppnRate}%</p>
-                <p className="text-sm font-bold">Rp {calc.ppn.toLocaleString('id-ID')}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-300">PPN {selectedInvoice?.ppnRate ?? 11}%</p>
+                <p className="text-sm font-bold">Rp {printable.ppn.toLocaleString('id-ID')}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-300">Grand Total</p>
-                <p className="text-sm font-black">Rp {calc.grandTotal.toLocaleString('id-ID')}</p>
+                <p className="text-sm font-black">Rp {printable.total.toLocaleString('id-ID')}</p>
               </div>
               <div className="col-span-2 sm:col-span-1">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-300">Terbilang</p>
-                <p className="text-[11px] font-medium italic leading-tight text-stone-200">“{terbilangText}”</p>
+                <p className="text-[11px] font-medium italic leading-tight text-stone-200">“{TERBILANG}”</p>
               </div>
             </div>
           )}
@@ -294,6 +347,10 @@ export default function InvoicePreviewPage() {
                 companyAddress={printCompany?.address}
                 companyPhone={printCompany?.phone}
                 companyLogoUrl={printCompany?.logoUrl ?? null}
+                serviceFee={printable.serviceFee}
+                partFee={printable.partFee}
+                serverPpn={printable.ppn}
+                serverTotal={printable.total}
                 ticketNumber={selectedInvoice.ticketNumber}
                 customer={
                   srCustomer

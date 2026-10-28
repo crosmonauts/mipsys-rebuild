@@ -21,7 +21,24 @@ import { RecordPaymentDto } from './dto/record-payment.dto';
 import { OrderPartsService } from '../order-parts/order-parts.service';
 import { likePattern } from '../common/utils/escape-like';
 import { loadCompanyHeader } from '../reports/company-profile';
-import { extensionForMime, fitInside, readImageSize } from '../reports/excel/image-fit';
+import {
+  excelColumnsForPixels,
+  extensionForMime,
+  fitInside,
+  readImageSize,
+} from '../reports/excel/image-fit';
+import {
+  estimateWrappedLines,
+  mergedWidthChars,
+} from '../reports/excel/row-height';
+import {
+  buildInvoiceTerms,
+  buildSummaryLines,
+  buildTableLines,
+  paymentLabel,
+  type InvoicePartLine,
+} from './invoice-table';
+import { KOP_WIDTH, PAGE_LEFT, layoutKop } from './invoice-kop-layout';
 import { numberToWords } from '../reports/excel/terbilang';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
@@ -293,13 +310,8 @@ export class FinanceService {
       pageSetup: { paperSize: 9, orientation: 'portrait' },
     });
 
-    ws.columns = [
-      { width: 6 },
-      { width: 35 },
-      { width: 10 },
-      { width: 18 },
-      { width: 18 },
-    ];
+    const wsWidths = [6, 35, 10, 18, 18];
+    ws.columns = wsWidths.map((width) => ({ width }));
 
     const headerFont = { name: 'Calibri', bold: true, size: 18 };
     const subHeaderFont = {
@@ -326,23 +338,38 @@ export class FinanceService {
       phone: [kop.phone, kop.email].filter(Boolean).join(' | '),
     };
 
-    // Bila ada logo, baris 1-2 dipakai gambar dan teks mulai baris 3.
+    // Bila ada logo, baris 1-2 dipakai gambar dan teks dipindah ke kanan
+    // sebanyak kolom yang benar-benar dipakai logo. Dulu teks selalu
+    // mulai di kolom 3, sehingga logo kecil menyisakan celah lebar.
     const kopLogoExt = kop.logo ? extensionForMime(kop.logo.mime) : null;
     const kopHasLogo = Boolean(kop.logo && kopLogoExt);
+    // Teks kop harus tetap punya minimal satu kolom di kiri kolom judul.
+    const kopTextEnd = 3;
     let row = 1;
+    let logoWidthPx = 0;
     if (kopHasLogo && kop.logo && kopLogoExt) {
       const logoId = wb.addImage({
         base64: kop.logo.base64,
         extension: kopLogoExt,
       });
-      ws.mergeCells(1, 1, 2, 2);
+      const logoBox = { width: 110, height: 50 };
+      const natural = readImageSize(Buffer.from(kop.logo.base64, 'base64'));
+      const sized = natural ? fitInside(natural, logoBox) : logoBox;
+      logoWidthPx = sized.width;
+
+      // Area logo memakai kolom 1..span, sisanya untuk teks.
+      const span = Math.max(
+        excelColumnsForPixels(logoWidthPx + 12),
+        2,
+        kopTextEnd - 1,
+      );
+      // Satu merge saja untuk area logo; merge per kolom lalu digabung
+      // lagi akan saling tumpang tindih dan ditolak ExcelJS.
+      ws.mergeCells(1, 1, 2, span);
       ws.getCell(1, 1).alignment = {
         horizontal: 'center',
         vertical: 'middle',
       };
-      const logoBox = { width: 110, height: 50 };
-      const natural = readImageSize(Buffer.from(kop.logo.base64, 'base64'));
-      const sized = natural ? fitInside(natural, logoBox) : logoBox;
       ws.addImage(logoId, {
         tl: { col: 0.05, row: 0.05 },
         ext: { width: sized.width, height: sized.height },
@@ -351,8 +378,12 @@ export class FinanceService {
       ws.getRow(2).height = 28;
       row = 3;
     }
-    const kopTextColumn = kopHasLogo ? 3 : 1;
-    const kopTextEnd = kopHasLogo ? 3 : 3;
+    const kopTextColumn = kopHasLogo
+      ? Math.min(
+          Math.max(excelColumnsForPixels(logoWidthPx + 12), 2),
+          kopTextEnd - 1,
+        )
+      : 1;
 
     ws.mergeCells(row, kopTextColumn, row, kopTextEnd);
     const companyCell = ws.getCell(row, kopTextColumn);
@@ -502,111 +533,41 @@ export class FinanceService {
     });
     row++;
 
-    // Tabel body — per-item real via orderParts (menu aksi invoice only)
-    let tableData: Array<{
-      no: number;
-      item: string;
-      qty: number | string;
-      price: number;
-      jumlah: number;
-    }> = [];
-    if (invoice.serviceRequestId) {
-      try {
-        const orderParts = await this.orderPartsService.getByServiceRequest(
-          invoice.serviceRequestId
-        );
-        const activeParts = orderParts.filter((p) => p.status !== 'CANCELLED');
-        if (activeParts.length > 0) {
-          let idx = 1;
-          if (serviceFee > 0) {
-            tableData.push({
-              no: idx++,
-              item: 'Biaya Jasa (Service Fee)',
-              qty: 1,
-              price: serviceFee,
-              jumlah: serviceFee,
-            });
-          }
-          activeParts.forEach((p) => {
-            const price = Number(p.priceAtAction ?? 0);
-            const qty = p.quantity || 0;
-            tableData.push({
-              no: idx++,
-              item: p.partName,
-              qty,
-              price,
-              jumlah: price * qty,
-            });
-          });
-        } else {
-          tableData = [
-            {
-              no: 1,
-              item: 'Biaya Jasa (Service Fee)',
-              qty: 1,
-              price: serviceFee,
-              jumlah: serviceFee,
-            },
-            ...(partFee > 0
-              ? [
-                  {
-                    no: serviceFee > 0 ? 2 : 1,
-                    item: 'Biaya Sparepart',
-                    qty: 1 as string | number,
-                    price: partFee,
-                    jumlah: partFee,
-                  },
-                ]
-              : []),
-          ];
-        }
-      } catch {
-        tableData = [
-          {
-            no: 1,
-            item: 'Biaya Jasa (Service Fee)',
-            qty: 1,
-            price: serviceFee,
-            jumlah: serviceFee,
-          },
-          ...(partFee > 0
-            ? [
-                {
-                  no: serviceFee > 0 ? 2 : 1,
-                  item: 'Biaya Sparepart',
-                  qty: 1 as string | number,
-                  price: partFee,
-                  jumlah: partFee,
-                },
-              ]
-            : []),
-        ];
-      }
-    } else {
-      tableData = [
-        {
-          no: 1,
-          item: 'Biaya Jasa (Service Fee)',
-          qty: 1,
-          price: serviceFee,
-          jumlah: serviceFee,
-        },
-        ...(partFee > 0
-          ? [
-              {
-                no: serviceFee > 0 ? 2 : 1,
-                item: 'Biaya Sparepart',
-                qty: 1 as string | number,
-                price: partFee,
-                jumlah: partFee,
-              },
-            ]
-          : []),
-      ];
-    }
+    // Tabel body — hanya sparepart; biaya jasa tetap di baris total.
+    const partLines = await this.loadInvoicePartLines(invoice);
+    const tableData = buildTableLines(partLines).map((line) => ({
+      no: line.no,
+      item: line.item,
+      qty: line.qty,
+      price: line.harga,
+      jumlah: line.jml,
+      isNote: line.isNote,
+    }));
 
     tableData.forEach((d) => {
       const r = ws.getRow(row);
+      if (d.isNote) {
+        // Baris catatan: tanpa nomor/qty/harga, hanya keterangan.
+        ws.mergeCells(row, 2, row, 5);
+        r.getCell(2).value = d.item;
+        r.getCell(2).font = {
+          name: 'Calibri',
+          italic: true,
+          size: 10,
+          color: { argb: 'FF78716C' },
+        };
+        r.getCell(2).alignment = { horizontal: 'center' };
+        for (let c = 1; c <= 5; c++) {
+          r.getCell(c).border = {
+            top: { style: 'thin', color: { argb: 'FFD6D3D1' } },
+            bottom: { style: 'thin', color: { argb: 'FFD6D3D1' } },
+            left: { style: 'thin', color: { argb: 'FFD6D3D1' } },
+            right: { style: 'thin', color: { argb: 'FFD6D3D1' } },
+          };
+        }
+        row++;
+        return;
+      }
       r.getCell(1).value = d.no;
       r.getCell(1).alignment = { horizontal: 'center' };
       r.getCell(1).font = {
@@ -616,6 +577,7 @@ export class FinanceService {
       };
       r.getCell(2).value = d.item;
       r.getCell(2).font = boldFont;
+      r.getCell(2).alignment = { wrapText: true, vertical: 'top' };
       r.getCell(3).value = d.qty;
       r.getCell(3).alignment = { horizontal: 'center' };
       r.getCell(3).font = bodyFont;
@@ -641,12 +603,12 @@ export class FinanceService {
     row++;
 
     // Ringkasan Total (right-aligned di kolom 3-5)
-    const summaryData = [
-      { label: 'Total Biaya Part', value: partFee, bold: false },
-      { label: 'Total Biaya Jasa', value: serviceFee, bold: false },
-      { label: 'Subtotal', value: subtotal, bold: true },
-      { label: `PPN ${ppnRate}%`, value: ppn, bold: false },
-    ];
+    const summaryData = buildSummaryLines(
+      serviceFee,
+      partFee,
+      ppn,
+      `PPN ${ppnRate}%`,
+    );
 
     summaryData.forEach((s) => {
       ws.mergeCells(row, 1, row, 3);
@@ -725,19 +687,14 @@ export class FinanceService {
     ws.getCell(row, 4).alignment = { horizontal: 'center' };
     row++;
 
-    const paymentLabelXlsx =
-      invoice.paymentMethod === 'TRANSFER'
-        ? 'Transfer'
-        : invoice.paymentMethod === 'QRIS'
-          ? 'QRIS'
-          : invoice.paymentMethod === 'CASH'
-            ? 'Cash'
-            : 'CASH/TRANSFER/QRIS';
-    const terms = [
-      `Pembayaran via metode terpilih (${paymentLabelXlsx}) — harap konfirmasi ke kasir`,
-      'Pembayaran dilakukan di kasir sebelum unit diambil',
-      'Garansi pekerjaan sesuai ketentuan yang berlaku',
-    ];
+    // Tinggi baris ketentuan dihitung dari jumlah baris teks yang benar,
+    // bukan dari panjang karakter. Tanda tangan diletakkan relatif ke
+    // baris ketentuan terakhir supaya tidak pernah menimpa ketentuan.
+    const terms = buildInvoiceTerms(paymentLabel(invoice.paymentMethod));
+    const termsHeightPerLine = 11;
+    const termsPadding = 3;
+    let lastTermRow = row - 1;
+
     terms.forEach((t) => {
       ws.mergeCells(row, 1, row, 3);
       ws.getCell(row, 1).value = `• ${t}`;
@@ -746,31 +703,58 @@ export class FinanceService {
         size: 8,
         color: { argb: 'FF78716C' },
       };
+      ws.getCell(row, 1).alignment = { wrapText: true, vertical: 'top' };
 
-      const currentRow = ws.getRow(row);
-      if (t.length > 55) {
-        currentRow.height = 25; // Tinggi ekstra untuk 2 baris teks
-      } else {
-        currentRow.height = 15; // Tinggi normal standar
-      }
+      // Lebar effective dari kolom 1-3 dalam satuan font default (11pt).
+      const termWidthChars = mergedWidthChars(wsWidths, 1, 3);
+      const lines = estimateWrappedLines(`• ${t}`, 8, termWidthChars);
+      ws.getRow(row).height = lines * termsHeightPerLine + termsPadding;
+      lastTermRow = row;
       row++;
     });
 
-    ws.mergeCells(row + 3, 4, row + 3, 5);
-    ws.getCell(row + 3, 4).value = '(________________________)';
-    ws.getCell(row + 3, 4).font = boldFont;
-    ws.getCell(row + 3, 4).alignment = { horizontal: 'center' };
-    ws.mergeCells(row + 4, 4, row + 4, 5);
-    ws.getCell(row + 4, 4).value = `Manajemen ${kop.name}`;
-    ws.getCell(row + 4, 4).font = {
+    const signRow = lastTermRow + 3;
+    ws.mergeCells(signRow, 4, signRow, 5);
+    ws.getCell(signRow, 4).value = '(________________________)';
+    ws.getCell(signRow, 4).font = boldFont;
+    ws.getCell(signRow, 4).alignment = { horizontal: 'center' };
+    ws.mergeCells(signRow + 1, 4, signRow + 1, 5);
+    ws.getCell(signRow + 1, 4).value = `Manajemen ${kop.name}`;
+    ws.getCell(signRow + 1, 4).font = {
       name: 'Calibri',
       size: 8,
       color: { argb: 'FFA8A29E' },
     };
-    ws.getCell(row + 4, 4).alignment = { horizontal: 'center' };
+    ws.getCell(signRow + 1, 4).alignment = { horizontal: 'center' };
 
     const buffer = await wb.xlsx.writeBuffer();
     return Buffer.from(buffer);
+  }
+
+  /**
+   * Sparepart aktif pada SR invoice. Dikembalikan sebagai baris tabel;
+   * kegagalan diambil alih oleh baris catatan, bukan melempar error,
+   * karena dokumen tetap harus tercetak.
+   */
+  private async loadInvoicePartLines(invoice: {
+    serviceRequestId?: number | null;
+  }): Promise<InvoicePartLine[]> {
+    if (!invoice.serviceRequestId) return [];
+    try {
+      const orderParts = await this.orderPartsService.getByServiceRequest(
+        invoice.serviceRequestId
+      );
+      return orderParts
+        .filter((p) => p.status !== 'CANCELLED')
+        .map((p) => ({
+          sparePartId: p.sparePartId,
+          partName: p.partName,
+          quantity: Number(p.quantity ?? 0),
+          price: Number(p.priceAtAction ?? 0),
+        }));
+    } catch {
+      return [];
+    }
   }
 
   async exportPdf(id: number): Promise<Buffer> {
@@ -783,69 +767,9 @@ export class FinanceService {
     const ppnRate = Number(invoice.ppnRate ?? 11);
     const subtotal = serviceFee + partFee;
 
-    // Tabel per-item real untuk menu aksi invoice (fetch orderParts)
-    let pdfTableRows: Array<{
-      no: string;
-      item: string;
-      qty: string;
-      harga: number;
-      jml: number;
-    }> = [];
-    if (invoice.serviceRequestId) {
-      try {
-        const orderParts = await this.orderPartsService.getByServiceRequest(
-          invoice.serviceRequestId
-        );
-        const activeParts = orderParts.filter((p) => p.status !== 'CANCELLED');
-        if (activeParts.length > 0) {
-          let idx = 1;
-          if (serviceFee > 0) {
-            pdfTableRows.push({
-              no: String(idx++),
-              item: 'Biaya Jasa (Service Fee)',
-              qty: '1',
-              harga: serviceFee,
-              jml: serviceFee,
-            });
-          }
-          activeParts.forEach((p) => {
-            const price = Number(p.priceAtAction ?? 0);
-            const qty = p.quantity || 0;
-            pdfTableRows.push({
-              no: String(idx++),
-              item: p.partName,
-              qty: String(qty),
-              harga: price,
-              jml: price * qty,
-            });
-          });
-        }
-      } catch {
-        // fallback handled below
-      }
-    }
-    if (pdfTableRows.length === 0) {
-      pdfTableRows = [
-        {
-          no: '1',
-          item: 'Biaya Jasa (Service Fee)',
-          qty: '1',
-          harga: serviceFee,
-          jml: serviceFee,
-        },
-        ...(partFee > 0
-          ? [
-              {
-                no: serviceFee > 0 ? '2' : '1',
-                item: 'Biaya Sparepart',
-                qty: '1',
-                harga: partFee,
-                jml: partFee,
-              },
-            ]
-          : []),
-      ];
-    }
+    // Tabel rincian: hanya sparepart. Biaya jasa tetap dihitung di total.
+    const partLines = await this.loadInvoicePartLines(invoice);
+    const pdfTableRows = buildTableLines(partLines);
 
     // Profil diambil di luar promise builder agar tetap bisa di-await.
     const pdfKop = await loadCompanyHeader(this.db as any);
@@ -858,47 +782,64 @@ export class FinanceService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Kop Surat — dari master company_profiles
-      const pdfContact = [pdfKop.phone, pdfKop.email]
-        .filter(Boolean)
-        .join(' | ');
-      const pdfLogoBox = { width: 110, height: 46 };
-      let kopTextX = 50;
-      if (pdfKop.logo) {
-        const natural = readImageSize(Buffer.from(pdfKop.logo.base64, 'base64'));
-        const sized =
-          natural &&
-          fitInside(natural, pdfLogoBox);
-        if (sized && sized.width > 0) {
-          doc.image(Buffer.from(pdfKop.logo.base64, 'base64'), 50, 52, {
-            fit: [sized.width, sized.height],
-          });
-          kopTextX = 50 + pdfLogoBox.width + 16;
-        }
+      // Kop Surat — posisi dihitung dari isi (logo + nama + alamat), bukan
+      // angka tetap, supaya logo kecil tidak menyisakan celah dan nama
+      // panjang tidak menabrak judul.
+      const kop = layoutKop({
+        logo: pdfKop.logo ? Buffer.from(pdfKop.logo.base64, 'base64') : null,
+        companyName: pdfKop.name,
+        address: pdfKop.address,
+        contact: [pdfKop.phone, pdfKop.email].filter(Boolean).join(' | '),
+        areaWidth: KOP_WIDTH,
+        titleWidth: 175,
+        measure: (t, f, size) =>
+          doc.font(f === 'bold' ? 'Helvetica-Bold' : 'Helvetica').fontSize(size)
+            .widthOfString(t),
+        measureHeight: (t, f, size, width) =>
+          doc.font(f === 'bold' ? 'Helvetica-Bold' : 'Helvetica').fontSize(size)
+            .heightOfString(t, { width }),
+      });
+
+      const titleLeft = PAGE_LEFT + KOP_WIDTH - 175;
+      if (kop.logo) {
+        doc.image(
+          Buffer.from(pdfKop.logo!.base64, 'base64'),
+          kop.logo.x,
+          kop.logo.y,
+          { fit: [kop.logo.width, kop.logo.height] },
+        );
       }
-      doc.font('Helvetica-Bold').fontSize(24).text(pdfKop.name, kopTextX, 50);
-      doc.font('Helvetica').fontSize(8).fillColor('#78716C');
-      doc.text(pdfKop.address, kopTextX, 80);
-      doc.text(pdfContact, kopTextX, 92);
+      for (const line of kop.lines) {
+        doc
+          .font(line.font === 'bold' ? 'Helvetica-Bold' : 'Helvetica')
+          .fontSize(line.size)
+          .fillColor(line.font === 'bold' ? '#1C1917' : '#78716C')
+          .text(line.text, line.x, line.y, { width: kop.textWidth });
+      }
 
       doc.font('Helvetica-Bold').fontSize(14).fillColor('#15803D');
-      doc.text('INVOICE', 370, 50, { align: 'right', width: 175 });
+      doc.text('INVOICE', titleLeft, kop.lines[0].y, {
+        align: 'right',
+        width: 175,
+      });
       doc.font('Helvetica').fontSize(8).fillColor('#A8A29E');
-      doc.text(`No. ${invoice.invoiceNumber}`, 370, 68, {
+      doc.text(`No. ${invoice.invoiceNumber}`, titleLeft, kop.lines[0].y + 18, {
         align: 'right',
         width: 175,
       });
       if (invoice.status === 'PAID') {
         doc.font('Helvetica-Bold').fontSize(11).fillColor('#15803D');
-        doc.text('LUNAS', 370, 82, { align: 'right', width: 175 });
+        doc.text('LUNAS', titleLeft, kop.lines[0].y + 32, {
+          align: 'right',
+          width: 175,
+        });
       }
 
-      // Garis bawah kop
+      // Garis bawah kop mengikuti tinggi isi sebenarnya.
       doc.strokeColor('#D6D3D1').lineWidth(1.5);
-      doc.moveTo(50, 105).lineTo(545, 105).stroke();
+      doc.moveTo(PAGE_LEFT, kop.bottomY).lineTo(PAGE_LEFT + KOP_WIDTH, kop.bottomY).stroke();
 
-      // LUNAS stamp — dipindah lurus di bawah nomor invoice (tidak rotate, tidak samar)
-      let y = 115;
+      let y = kop.bottomY + 10;
 
       // Info: Kepada + Tanggal/Tiket
       doc.font('Helvetica-Bold').fontSize(7).fillColor('#A8A29E');
@@ -945,11 +886,15 @@ export class FinanceService {
       const colHarga = 340;
       const colJml = 450;
 
+      // Lebar kolom item berhenti sebelum kolom Qty, bukan sebelum kolom
+      // harga — kalau sampai ke harga, teks part meluber ke kolom Qty.
+      const itemWidth = colQty - colItem - 8;
+
       // Header tabel
-      doc.rect(50, y, 495, 20).fill('#F5F5F4');
+      doc.rect(PAGE_LEFT, y, KOP_WIDTH, 20).fill('#F5F5F4');
       doc.font('Helvetica-Bold').fontSize(8).fillColor('#78716C');
       doc.text('No', colNo, y + 6, { width: 20, align: 'center' });
-      doc.text('Item Pekerjaan / Sparepart', colItem, y + 6, { width: 210 });
+      doc.text('Item Pekerjaan / Sparepart', colItem, y + 6, { width: itemWidth });
       doc.text('Qty', colQty, y + 6, { width: 35, align: 'center' });
       doc.text('Harga Satuan', colHarga, y + 6, { width: 90, align: 'right' });
       doc.text('Jumlah', colJml, y + 6, { width: 90, align: 'right' });
@@ -957,31 +902,40 @@ export class FinanceService {
 
       // Garis header
       doc.strokeColor('#D6D3D1').lineWidth(0.5);
-      doc.moveTo(50, y).lineTo(545, y).stroke();
+      doc.moveTo(PAGE_LEFT, y).lineTo(PAGE_LEFT + KOP_WIDTH, y).stroke();
 
-      // Baris data — pakai pdfTableRows per-item real
-      const tableRows = pdfTableRows;
+      // Baris data — tinggi baris mengikuti isi, bukan konstanta, agar nama
+      // part panjang tidak menabrak baris di bawahnya.
+      pdfTableRows.forEach((r) => {
+        const priceText = `Rp ${r.harga.toLocaleString('id-ID')}`;
+        const totalText = `Rp ${r.jml.toLocaleString('id-ID')}`;
+        const rowHeight =
+          Math.max(
+            doc.font('Helvetica-Bold').fontSize(10).heightOfString(r.item, { width: itemWidth }),
+            12,
+          ) + 10;
 
-      doc.font('Helvetica').fontSize(10).fillColor('#1C1917');
-      tableRows.forEach((r) => {
-        doc.font('Helvetica').fontSize(10).fillColor('#78716C');
-        doc.text(r.no, colNo, y + 5, { width: 20, align: 'center' });
-        doc.font('Helvetica-Bold').fontSize(10).fillColor('#1C1917');
-        doc.text(r.item, colItem, y + 5, { width: 210 });
-        doc.font('Helvetica').fontSize(10);
-        doc.text(r.qty, colQty, y + 5, { width: 35, align: 'center' });
-        doc.text(`Rp ${r.harga.toLocaleString('id-ID')}`, colHarga, y + 5, {
-          width: 90,
-          align: 'right',
-        });
-        doc.font('Helvetica-Bold').fontSize(10);
-        doc.text(`Rp ${r.jml.toLocaleString('id-ID')}`, colJml, y + 5, {
-          width: 90,
-          align: 'right',
-        });
-        y += 25;
+        if (!r.isNote) {
+          doc.font('Helvetica').fontSize(10).fillColor('#78716C');
+          doc.text(r.no, colNo, y + 5, { width: 20, align: 'center' });
+        }
+        doc
+          .font(r.isNote ? 'Helvetica-Oblique' : 'Helvetica-Bold')
+          .fontSize(r.isNote ? 9 : 10)
+          .fillColor(r.isNote ? '#78716C' : '#1C1917');
+        doc.text(r.item, colItem, y + 5, { width: itemWidth });
+
+        if (!r.isNote) {
+          doc.font('Helvetica').fontSize(10);
+          doc.text(r.qty, colQty, y + 5, { width: 35, align: 'center' });
+          doc.text(priceText, colHarga, y + 5, { width: 90, align: 'right' });
+          doc.font('Helvetica-Bold').fontSize(10);
+          doc.text(totalText, colJml, y + 5, { width: 90, align: 'right' });
+        }
+
+        y += rowHeight;
         doc.strokeColor('#D6D3D1').lineWidth(0.5);
-        doc.moveTo(50, y).lineTo(545, y).stroke();
+        doc.moveTo(PAGE_LEFT, y).lineTo(PAGE_LEFT + KOP_WIDTH, y).stroke();
       });
 
       // Ringkasan Total
@@ -989,12 +943,12 @@ export class FinanceService {
       const summaryX = 320;
       const summaryVal = 460;
 
-      const summaryItems = [
-        { label: 'Total Biaya Part', value: partFee, bold: false },
-        { label: 'Total Biaya Jasa', value: serviceFee, bold: false },
-        { label: 'Subtotal', value: subtotal, bold: true },
-        { label: `PPN ${ppnRate}%`, value: ppn, bold: false },
-      ];
+      const summaryItems = buildSummaryLines(
+        serviceFee,
+        partFee,
+        ppn,
+        `PPN ${ppnRate}%`,
+      );
 
       summaryItems.forEach((s) => {
         doc.font(s.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(10);
@@ -1044,59 +998,63 @@ export class FinanceService {
       y += 15;
 
       // Ketentuan & Tanda Tangan
+      // Blok ketentuannya measuring height dinamis supaya ketentuan panjang
+      // tidak menabrak tanda tangan di bawahnya.
+      const termsWidth = 280;
+      const terms = buildInvoiceTerms(paymentLabel(invoice.paymentMethod));
+      const termsTop = y + 15;
+      let termsBottom = termsTop;
+
       doc.font('Helvetica-Bold').fontSize(7).fillColor('#A8A29E');
-      doc.text('KETENTUAN:', 50, y);
+      doc.text('KETENTUAN:', PAGE_LEFT, y);
       doc.text('HORMAT KAMI,', 350, y, { align: 'center', width: 195 });
-      y += 15;
 
       doc.font('Helvetica').fontSize(8).fillColor('#78716C');
-      const paymentLabelPdf =
-        invoice.paymentMethod === 'TRANSFER'
-          ? 'Transfer'
-          : invoice.paymentMethod === 'QRIS'
-            ? 'QRIS'
-            : invoice.paymentMethod === 'CASH'
-              ? 'Cash'
-              : 'CASH/TRANSFER/QRIS';
-      const terms = [
-        `Pembayaran via metode terpilih (${paymentLabelPdf}) — harap konfirmasi ke kasir`,
-        'Pembayaran dilakukan di kasir sebelum unit diambil',
-        'Garansi pekerjaan sesuai ketentuan yang berlaku',
-      ];
+      let termY = termsTop;
       terms.forEach((t) => {
-        doc.text(`• ${t}`, 50, y, { width: 280 });
-        y += 12;
+        const height = doc.heightOfString(`• ${t}`, { width: termsWidth });
+        doc.text(`• ${t}`, PAGE_LEFT, termY, { width: termsWidth });
+        termY += height + 3;
       });
+      termsBottom = termY;
 
-      // Tanda tangan
-      y += 50;
+      // Tanda tangan — diposisikan dari akhir ketentuan aktual, bukan
+      // offset tetap yang mengasumsikan semua ketentuan satu baris.
+      let signY = termsBottom + 50;
       doc.font('Helvetica').fontSize(9).fillColor('#1C1917');
-      doc.text('(________________________)', 350, y, {
+      doc.text('(________________________)', 350, signY, {
         align: 'center',
         width: 195,
       });
-      y += 14;
-      doc.font('Helvetica').fontSize(8).fillColor('#A8A29E');
-      doc.text(`Manajemen ${pdfKop.name}`, 350, y, { align: 'center', width: 195 });
+      const signLabelHeight = doc
+        .font('Helvetica')
+        .fontSize(8)
+        .heightOfString(`Manajemen ${pdfKop.name}`, { width: 195 });
+      doc.fillColor('#A8A29E');
+      doc.text(`Manajemen ${pdfKop.name}`, 350, signY + 14, {
+        align: 'center',
+        width: 195,
+      });
+      y = signY + 14 + signLabelHeight + 10;
 
       // Footer
-      y += 30;
+      y += 20;
       doc.strokeColor('#D6D3D1').lineWidth(0.5);
-      doc.moveTo(50, y).lineTo(545, y).stroke();
+      doc.moveTo(PAGE_LEFT, y).lineTo(PAGE_LEFT + KOP_WIDTH, y).stroke();
       y += 10;
       doc.font('Helvetica').fontSize(7).fillColor('#A8A29E');
       doc.text(
         `${pdfKop.name} — ${pdfKop.address} | Telp: ${pdfKop.phone}`,
-        50,
+        PAGE_LEFT,
         y,
-        { align: 'center', width: 495 }
+        { align: 'center', width: KOP_WIDTH }
       );
       y += 10;
       doc.text(
         'Dokumen ini dibuat secara otomatis dan tidak memerlukan tanda tangan basah',
-        50,
+        PAGE_LEFT,
         y,
-        { align: 'center', width: 495 }
+        { align: 'center', width: KOP_WIDTH }
       );
 
       doc.end();

@@ -5,7 +5,7 @@ import { ReportService } from './report.service';
 
 @ApiTags('Finance')
 @ApiBearerAuth('access-token')
-@Roles('ADMIN')
+@Roles('SUPER_ADMIN')
 @Controller('finance')
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}

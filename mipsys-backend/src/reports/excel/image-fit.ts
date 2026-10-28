@@ -103,3 +103,15 @@ export function extensionForMime(mime: string): 'png' | 'jpeg' | null {
       return null;
   }
 }
+
+/**
+ * Lebar satu unit kolom spreadsheet ≈ 7 piksel pada font default (Calibri 11).
+ * Dipakai untuk menentukan berapa kolom yang perlu dipakai logo sebelum
+ * teks kop dipindahkan ke kanan.
+ */
+export const EXCEL_COLUMN_PX = 7;
+
+export function excelColumnsForPixels(pixels: number): number {
+  if (pixels <= 0) return 0;
+  return Math.ceil(pixels / EXCEL_COLUMN_PX);
+}

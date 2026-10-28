@@ -33,3 +33,10 @@ Thumbs.db
 
 # Vercel
 /.vercel
+
+# Next.js auto-generated
+# next-env.d.ts ditulis ulang tiap `next dev` / `next build`, dan
+# tsconfig.tsbuildinfo adalah cache incremental compiler. Keduanya
+# hanya artefak, sehingga tidak perlu masuk repo.
+/next-env.d.ts
+*.tsbuildinfo

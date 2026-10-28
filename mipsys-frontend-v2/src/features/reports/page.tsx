@@ -82,7 +82,7 @@ function errorMessage(error: unknown): string {
 export function ReportsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const [tab, setTab] = useState<TabKey>('service');
   const [startDate, setStartDate] = useState(() => isoDay(30));
@@ -97,11 +97,11 @@ export function ReportsPage() {
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && user && !isAdmin) {
-      toast.error('Halaman laporan hanya untuk admin');
+    if (!isLoading && user && !isSuperAdmin) {
+      toast.error('Halaman laporan hanya untuk superadmin');
       router.replace('/');
     }
-  }, [isLoading, user, isAdmin, router]);
+  }, [isLoading, user, isSuperAdmin, router]);
 
   const period = useMemo<ReportPeriod>(
     () => ({ startDate, endDate }),
@@ -174,7 +174,7 @@ export function ReportsPage() {
   }, [tab, period, partId]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isSuperAdmin) return;
     let active = true;
     fetchReport()
       .then((result) => {
@@ -196,7 +196,7 @@ export function ReportsPage() {
     return () => {
       active = false;
     };
-  }, [isAdmin, fetchReport]);
+  }, [isSuperAdmin, fetchReport]);
 
   function changeTab(next: TabKey) {
     setLoadingData(true);
@@ -260,7 +260,7 @@ export function ReportsPage() {
       ? Boolean(partId) && stockCard !== null
       : data.length > 0;
 
-  if (isLoading || !user || !isAdmin) {
+  if (isLoading || !user || !isSuperAdmin) {
     return (
       <div className="space-y-8">
         <PageHeader title="Laporan" />

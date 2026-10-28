@@ -25,7 +25,7 @@ const EXPORT_THROTTLE = { default: { limit: 1, ttl: 60000 } };
 
 @ApiTags('Reports')
 @ApiBearerAuth('access-token')
-@Roles('ADMIN')
+@Roles('SUPER_ADMIN')
 @Controller('reports')
 export class ReportsController {
   constructor(

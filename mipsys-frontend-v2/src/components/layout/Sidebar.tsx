@@ -27,6 +27,7 @@ export function Sidebar({
   const { user, logout } = useAuth();
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const menuItems = [
     { title: 'Dashboard', icon: <Layout size={20} />, link: '/' },
     {
@@ -52,14 +53,18 @@ export function Sidebar({
             link: '/finance',
           },
           {
-            title: 'Laporan',
-            icon: <ChartBar size={20} />,
-            link: '/reports',
-          },
-          {
             title: 'Master Database',
             icon: <Users size={20} />,
             link: '/master-data',
+          },
+        ]
+      : []),
+    ...(isSuperAdmin
+      ? [
+          {
+            title: 'Laporan',
+            icon: <ChartBar size={20} />,
+            link: '/reports',
           },
         ]
       : []),

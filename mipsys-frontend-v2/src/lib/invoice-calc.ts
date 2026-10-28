@@ -1,9 +1,13 @@
 /**
- * Kalkulasi Invoice — sistematis, presisi, testable
- * Subtotal = sum(qty * unitPrice)
- * PPN      = Math.round(subtotal * ppnRate / 100)
- * Grand    = subtotal + ppn
- * Hindari subtotal*1.11 floating error.
+ * Kalkulasi Invoice — sistematis, presisi, testable.
+ *
+ * Subtotal = serviceFee + sum(qty * unitPrice)
+ * PPN      = turunan subtotal
+ * Grand    = subtotal + PPN
+ *
+ * Biaya jasa sengaja menjadi parameter terpisah, bukan salah satu item.
+ * Item tabel hanya sparepart; bila jasa ikut dihitung dari item,
+ * menghapus baris tabel itu akan ikut menghapus jasa dari total.
  */
 
 export interface InvoiceCalcItem {
@@ -12,7 +16,11 @@ export interface InvoiceCalcItem {
 }
 
 export interface InvoiceCalcResult {
+  /** Subtotal = biaya jasa + total part. */
   subtotal: number;
+  /** Total part saja (isi tabel rincian). */
+  partsSubtotal: number;
+  serviceFee: number;
   ppn: number;
   grandTotal: number;
   ppnRate: number;
@@ -28,12 +36,15 @@ export interface PpnConfig {
 export function calcInvoice(
   items: InvoiceCalcItem[],
   ppnRateOrConfig: number | PpnConfig = 11,
+  serviceFee = 0,
 ): InvoiceCalcResult {
-  const subtotal = items.reduce((sum, item) => {
+  const partsSubtotal = items.reduce((sum, item) => {
     const qty = Number(item.qty) || 0;
     const price = Number(item.unitPrice) || 0;
     return sum + qty * price;
   }, 0);
+  const fee = Number(serviceFee) || 0;
+  const subtotal = partsSubtotal + fee;
 
   const cfg: PpnConfig = typeof ppnRateOrConfig === 'number' ? { ppnRate: ppnRateOrConfig } : ppnRateOrConfig;
   const rate = Number(cfg.ppnRate ?? 11);
@@ -67,7 +78,7 @@ export function calcInvoice(
     grandTotal = subtotal + ppn;
   }
 
-  return { subtotal, ppn, grandTotal, ppnRate: rate };
+  return { subtotal, partsSubtotal, serviceFee: fee, ppn, grandTotal, ppnRate: rate };
 }
 
 export function formatIDR(amount: number | string): string {

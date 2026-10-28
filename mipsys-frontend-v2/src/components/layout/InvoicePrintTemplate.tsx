@@ -32,6 +32,12 @@ export interface InvoicePrintProps {
   companyAddress?: string;
   companyPhone?: string;
   companyLogoUrl?: string | null;
+  /** Biaya jasa; hanya tampil di baris total, bukan sebagai item tabel. */
+  serviceFee?: number;
+  partFee?: number;
+  /** Nominal resmi dari server; dipakai utuh bila diberikan. */
+  serverPpn?: number;
+  serverTotal?: number;
 }
 
 export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrintProps>(
@@ -51,16 +57,28 @@ export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrin
       companyAddress = 'Jl. Raya Service No. 1',
       companyPhone = '(021) 1234-5678',
       companyLogoUrl = null,
+      serviceFee = 0,
+      partFee = 0,
+      serverPpn,
+      serverTotal,
     } = props;
 
     const validItems = (items || []).filter(
       (it) => it && typeof it.name === 'string' && it.name.trim().length > 0,
     );
 
-    const { subtotal, ppn, grandTotal } = calcInvoice(
+    // Total dihitung dari nominal resmi (jasa + part), bukan dari isi
+    // tabel, agar biaya jasa tetap utuh walau tak menjadi baris item.
+    const { ppn, grandTotal } = calcInvoice(
       validItems.map((it) => ({ qty: it.qty, unitPrice: it.unitPrice })),
       ppnConfig || ppnRate,
+      serviceFee,
     );
+    const subtotal = serviceFee + partFee;
+    // Nominal server menang: invoice yang dicetak tidak boleh berbeda dari
+    // invoice yang tersimpan.
+    const finalPpn = serverPpn ?? ppn;
+    const finalTotal = serverTotal ?? grandTotal;
 
     const ppnLabel = `PPN ${ppnRate}%`;
     const terbilangText = terbilang(grandTotal);
@@ -250,12 +268,20 @@ export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrin
           aria-label="Ringkasan total tagihan"
         >
           <div className="flex justify-between text-xs">
+            <span className="font-medium text-stone-700">Total Biaya Part</span>
+            <span className="font-bold text-stone-900">Rp {formatIDRPlain(partFee)}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="font-medium text-stone-700">Total Biaya Jasa</span>
+            <span className="font-bold text-stone-900">Rp {formatIDRPlain(serviceFee)}</span>
+          </div>
+          <div className="flex justify-between text-xs">
             <span className="font-medium text-stone-700">Subtotal</span>
             <span className="font-bold text-stone-900">Rp {formatIDRPlain(subtotal)}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="font-medium text-stone-700">{ppnLabel}</span>
-            <span className="font-bold text-stone-900">Rp {formatIDRPlain(ppn)}</span>
+            <span className="font-bold text-stone-900">Rp {formatIDRPlain(finalPpn)}</span>
           </div>
           <hr className="border-stone-900 border-t-2 my-2" />
           <div className="flex justify-between items-center">
@@ -263,7 +289,7 @@ export const InvoicePrintTemplate = React.forwardRef<HTMLDivElement, InvoicePrin
               Grand Total
             </span>
             <span className="text-xl font-black tracking-tight text-stone-900">
-              Rp {formatIDRPlain(grandTotal)}
+              Rp {formatIDRPlain(finalTotal)}
             </span>
           </div>
           <p className="text-[11px] font-medium text-stone-700 text-right italic mt-2">
