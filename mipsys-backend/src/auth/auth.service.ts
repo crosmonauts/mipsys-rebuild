@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 import type { StringValue } from 'ms';
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -13,6 +14,14 @@ import * as schema from '../database/schema';
 import { users } from '../database/schema';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+
+interface RefreshTokenPayload {
+  sub: number;
+  username: string;
+  role: string;
+  staffId: number | null;
+  typ?: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -41,15 +50,66 @@ export class AuthService {
   }
 
   async refresh(dto: RefreshDto) {
+    let payload: RefreshTokenPayload;
+
+    try {
+      payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(
+        dto.refreshToken,
+        {
+          issuer: 'mipsys-erp',
+          audience: 'mipsys-api',
+          algorithms: ['HS256'],
+        }
+      );
+    } catch {
+      throw new UnauthorizedException('Refresh token tidak valid.');
+    }
+
+    if (payload.typ !== 'refresh') {
+      throw new UnauthorizedException('Refresh token tidak valid.');
+    }
+
     const user = await this.db.query.users.findFirst({
-      where: eq(users.refreshToken, dto.refreshToken),
+      where: eq(users.id, payload.sub),
     });
 
-    if (!user) {
+    if (!user || user.deletedAt) {
+      throw new UnauthorizedException('Refresh token tidak valid.');
+    }
+
+    if (!this.refreshTokenMatches(dto.refreshToken, user.refreshToken)) {
       throw new UnauthorizedException('Refresh token tidak valid.');
     }
 
     return this.generateTokens(user);
+  }
+
+  async logout(userId: number) {
+    await this.db
+      .update(users)
+      .set({ refreshToken: null })
+      .where(eq(users.id, userId));
+
+    return { message: 'Logout berhasil.' };
+  }
+
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private refreshTokenMatches(
+    incoming: string,
+    stored: string | null
+  ): boolean {
+    if (!stored || !/^[a-f0-9]{64}$/i.test(stored)) return false;
+
+    const incomingHash = Buffer.from(this.hashToken(incoming), 'hex');
+    const storedHash = Buffer.from(stored, 'hex');
+
+    return (
+      incomingHash.length === storedHash.length &&
+      timingSafeEqual(incomingHash, storedHash)
+    );
   }
 
   private async generateTokens(user: typeof users.$inferSelect) {
@@ -60,21 +120,27 @@ export class AuthService {
       staffId: user.staffId,
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as StringValue,
-      issuer: 'mipsys-erp',
-      audience: 'mipsys-api',
-    });
+    const accessToken = this.jwtService.sign(
+      { ...payload, typ: 'access' },
+      {
+        expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as StringValue,
+        issuer: 'mipsys-erp',
+        audience: 'mipsys-api',
+      }
+    );
 
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-      issuer: 'mipsys-erp',
-      audience: 'mipsys-api',
-    });
+    const refreshToken = this.jwtService.sign(
+      { ...payload, typ: 'refresh', jti: randomUUID() },
+      {
+        expiresIn: '7d',
+        issuer: 'mipsys-erp',
+        audience: 'mipsys-api',
+      }
+    );
 
     await this.db
       .update(users)
-      .set({ refreshToken })
+      .set({ refreshToken: this.hashToken(refreshToken) })
       .where(eq(users.id, user.id));
 
     return {
