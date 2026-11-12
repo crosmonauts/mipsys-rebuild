@@ -28,7 +28,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('MIPSYS API')
-    .setDescription('Modular Monolith - 11 Modul')
+    .setDescription('Modular Monolith - 12 Modul')
     .setVersion('1.0')
     .addBearerAuth({
       type: 'http',
