@@ -112,7 +112,10 @@ export class ServiceRequestService {
     }
   }
 
-  async exportXlsx(filters: { search?: string; status?: string }): Promise<Buffer> {
+  async exportXlsx(filters: {
+    search?: string;
+    status?: string;
+  }): Promise<Buffer> {
     const { search, status } = filters;
     const conditions: SQL[] = [];
     if (search) {
@@ -120,12 +123,14 @@ export class ServiceRequestService {
         like(serviceRequests.ticketNumber, `%${search}%`),
         like(customers.name, `%${search}%`),
         like(serviceRequests.modelName, `%${search}%`),
-        like(serviceRequests.serialNumber, `%${search}%`),
+        like(serviceRequests.serialNumber, `%${search}%`)
       );
       if (searchCondition) conditions.push(searchCondition);
     }
     if (status && status !== 'ALL') {
-      conditions.push(eq(serviceRequests.statusService, status as StatusServiceType));
+      conditions.push(
+        eq(serviceRequests.statusService, status as StatusServiceType)
+      );
     }
     const adminStaff = alias(staff, 'admin_staff');
     const techStaff = alias(staff, 'tech_staff');
@@ -172,8 +177,17 @@ export class ServiceRequestService {
     };
 
     const fmtDate = (v: string | null | undefined) =>
-      v ? new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
-    const calcDurasi = (start: string | null | undefined, end: string | null | undefined) => {
+      v
+        ? new Date(v).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+        : '-';
+    const calcDurasi = (
+      start: string | null | undefined,
+      end: string | null | undefined
+    ) => {
       if (!start) return '-';
       const s = new Date(start).getTime();
       const e = end ? new Date(end).getTime() : Date.now();
@@ -184,7 +198,13 @@ export class ServiceRequestService {
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Summary Report', {
-      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+      pageSetup: {
+        paperSize: 9,
+        orientation: 'landscape',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+      },
     });
 
     ws.columns = [
@@ -214,9 +234,22 @@ export class ServiceRequestService {
 
     const headerRow = ws.getRow(1);
     headerRow.eachCell((cell) => {
-      cell.font = { name: 'Calibri', bold: true, size: 9, color: { argb: 'FFF8FAFC' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A2E1A' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.font = {
+        name: 'Calibri',
+        bold: true,
+        size: 9,
+        color: { argb: 'FFF8FAFC' },
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1A2E1A' },
+      };
+      cell.alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+        wrapText: true,
+      };
       cell.border = {
         top: { style: 'thin', color: { argb: 'FF334155' } },
         bottom: { style: 'thin', color: { argb: 'FF334155' } },
@@ -248,15 +281,24 @@ export class ServiceRequestService {
         readyDate: fmtDate(r.readyDate),
         closeDate: fmtDate(r.closeDate),
         pickUpDate: fmtDate(r.pickUpDate),
-        status: r.statusService ? statusLabel[r.statusService] ?? r.statusService : '-',
+        status: r.statusService
+          ? (statusLabel[r.statusService] ?? r.statusService)
+          : '-',
         statusSystem: r.statusSystem || '-',
-        serviceFee: r.serviceFee ? Number(r.serviceFee).toLocaleString('id-ID') : '0',
+        serviceFee: r.serviceFee
+          ? Number(r.serviceFee).toLocaleString('id-ID')
+          : '0',
         durasi,
       });
       row.eachCell((cell, colNumber) => {
         cell.font = { name: 'Calibri', size: 9, color: { argb: 'FF1E293B' } };
         cell.alignment = {
-          horizontal: colNumber === 1 || colNumber >= 12 ? 'center' : colNumber === 9 || colNumber === 6 ? 'left' : 'left',
+          horizontal:
+            colNumber === 1 || colNumber >= 12
+              ? 'center'
+              : colNumber === 9 || colNumber === 6
+                ? 'left'
+                : 'left',
           vertical: 'middle',
           wrapText: colNumber === 9 || colNumber === 6,
         };
@@ -267,10 +309,15 @@ export class ServiceRequestService {
           right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
         };
       });
-      if (row.getCell(9).value && String(row.getCell(9).value).length > 40) row.height = 30;
+      if (row.getCell(9).value && String(row.getCell(9).value).length > 40)
+        row.height = 30;
       if (idx % 2 === 1) {
         row.eachCell((cell) => {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF1F5F9' },
+          };
         });
       }
       row.commit();
@@ -280,7 +327,12 @@ export class ServiceRequestService {
       const row = ws.addRow({ ticketNumber: 'Tidak ada data' });
       ws.mergeCells(`B2:V2`);
       row.getCell(2).alignment = { horizontal: 'center' };
-      row.getCell(2).font = { name: 'Calibri', italic: true, size: 10, color: { argb: 'FF64748B' } };
+      row.getCell(2).font = {
+        name: 'Calibri',
+        italic: true,
+        size: 10,
+        color: { argb: 'FF64748B' },
+      };
     }
 
     ws.autoFilter = { from: 'A1', to: 'V1' };
@@ -384,10 +436,14 @@ export class ServiceRequestService {
           srId,
           'TICKET_CREATED',
           `Tiket ${finalTicket} dibuat untuk ${dto.customerName} (${dto.modelName} / ${dto.serialNumber})`,
-          adminId ?? null,
+          adminId ?? null
         );
 
-        return { success: true, ticketNumber: finalTicket };
+        return {
+          success: true,
+          id: srId,
+          ticketNumber: finalTicket,
+        };
       } catch (error) {
         this.logger.error('[CREATE_ENTRY] Error:', error);
         throw new InternalServerErrorException('Gagal membuat tiket service.');
@@ -410,16 +466,21 @@ export class ServiceRequestService {
           dto.phone !== undefined ||
           dto.customerType !== undefined
         ) {
-          await this.customerResolver.updateCustomer(tx, existingSR.customerId!, {
-            name: dto.customerName,
-            address: dto.address,
-            phone: dto.phone,
-            customerType: dto.customerType,
-          });
+          await this.customerResolver.updateCustomer(
+            tx,
+            existingSR.customerId!,
+            {
+              name: dto.customerName,
+              address: dto.address,
+              phone: dto.phone,
+              customerType: dto.customerType,
+            }
+          );
         }
 
         const srUpdate: Record<string, any> = { updatedAt: new Date() };
-        if (dto.serviceType !== undefined) srUpdate.serviceType = dto.serviceType;
+        if (dto.serviceType !== undefined)
+          srUpdate.serviceType = dto.serviceType;
         if (dto.problemDescription !== undefined)
           srUpdate.problemDescription = dto.problemDescription?.trim();
         if (dto.modelName !== undefined)
@@ -436,7 +497,7 @@ export class ServiceRequestService {
           existingSR.id,
           'TICKET_UPDATED',
           `Tiket ${ticketNumber} diperbarui`,
-          (dto.performedBy as number | undefined) ?? null,
+          (dto.performedBy as number | undefined) ?? null
         );
 
         return {
@@ -938,12 +999,12 @@ export class ServiceRequestService {
         });
         if (!inv) {
           throw new BadRequestException(
-            'Belum ada invoice untuk tiket ini. Buat invoice dulu.',
+            'Belum ada invoice untuk tiket ini. Buat invoice dulu.'
           );
         }
         if (inv.total !== 0 && inv.status !== 'PAID') {
           throw new BadRequestException(
-            `Tagihan belum lunas (${inv.status}). Lakukan pembayaran dulu.`,
+            `Tagihan belum lunas (${inv.status}). Lakukan pembayaran dulu.`
           );
         }
       }
